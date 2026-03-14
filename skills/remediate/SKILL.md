@@ -1,0 +1,166 @@
+---
+name: remediate
+description: >-
+  Auto-fixes runtime issues found during visual verification (Stage 6V) using a categorized fix loop.
+  This skill should be used when the user asks to "run runtime remediation",
+  "fix 6V failures", "run Stage 6R", "auto-fix verification issues",
+  "remediate runtime issues", "fix the verification report failures",
+  or "run the remediation loop", or when the transmute-pipeline agent
+  reaches Stage 6R of the pipeline.
+version: 1.0.0
+---
+
+# Stage 6R: Runtime Remediation
+
+Read the Stage 6V verification report, categorize every failure by fixability, auto-fix all mechanical issues, and produce a human-review TODO list for issues requiring judgment — then re-verify to confirm fixes work. Lead a multi-agent runtime remediation project using Claude Code Agent Teams.
+
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/remediation-detailed-guide.md` for full fixability taxonomy, teammate prompts, safety rules, and report templates.
+
+## Prerequisites
+
+1. **Stage 6V must have produced a report**: `./plancasting/_audits/visual-verification/report.md` must exist. If not, run Stage 6V first.
+
+2. **6V gate decision check**:
+   - **6V PASS**: Skip 6R entirely -- proceed to 6P. No failures to remediate.
+   - **6V CONDITIONAL PASS with Category A/B issues**: Proceed with 6R.
+   - **6V CONDITIONAL PASS with ONLY Category C issues**: Skip 6R -- proceed to 6P. 6R cannot fix Category C.
+   - **6V FAIL**: STOP -- fix critical issues manually first, then re-run 6V.
+
+3. Create output directory:
+   ```bash
+   mkdir -p ./plancasting/_audits/runtime-remediation
+   ```
+
+## Input
+
+- **6V Verification Report**: `./plancasting/_audits/visual-verification/report.md` (primary input)
+- **Feature Scenario Matrix**: `./plancasting/_audits/visual-verification/feature-scenario-matrix.md`
+- **Codebase**: Backend and frontend directories
+- **Tech Stack**: `./plancasting/tech-stack.md`
+- **Project Rules**: `./CLAUDE.md`
+- **PRD**: `./plancasting/prd/` (for understanding intended behavior)
+- **E2E Constants**: `./e2e/constants.ts`
+
+Check `./plancasting/tech-stack.md` for the `Session Language` setting. Generate all reports in that language. Code and file names remain in English.
+
+## Stack Adaptation
+
+Adapt to your `plancasting/tech-stack.md`: middleware path, route whitelist mechanism, loading state pattern, i18n files, data fetching patterns, backend directory. Replace `npm run` with your project's package manager per `CLAUDE.md`.
+
+## Phase 1: Lead Analysis & Issue Triage
+
+Complete BEFORE spawning teammates:
+
+1. **Check loop counter** (prevents infinite remediation loops):
+   - Read `./plancasting/_audits/runtime-remediation/loop-count.txt`. If absent, this is loop 1 -- create with `1`.
+   - If it exists, increment by 1 and overwrite.
+   - **Maximum 3 attempts**: If counter would become 4+, STOP immediately. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` and halt. Do NOT proceed to 6P.
+
+2. **Read project context**: `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/_audits/visual-verification/report.md`
+
+3. **Parse and categorize every failure**: For each 6V failure, record the reference (SC/US/FEAT/FS/NS/AS/ES/RS-NNN), description, severity, and assign to Category A (auto-fix), B (semi-auto), or C (human judgment).
+
+4. **Group fixes by domain** to prevent teammate conflicts:
+   - Navigation & Routing: middleware, route files, layout components, Link hrefs
+   - Component & UI: loading states, empty states, event handlers, i18n keys
+   - Backend & Data: mutations, type mismatches, auth context
+   - Ensure NO two teammates modify the same file.
+
+5. **Establish baseline**:
+   ```bash
+   bun run typecheck > ./plancasting/_audits/runtime-remediation/baseline-typecheck.log 2>&1
+   bun run test > ./plancasting/_audits/runtime-remediation/baseline-tests.log 2>&1
+   ```
+
+6. **Create the remediation plan** at `./plancasting/_audits/runtime-remediation/plan.md` with triage summary, Category A/B/C issue tables, and teammate assignments.
+
+## Phase 2: Spawn Remediation Teammates
+
+Spawn up to 3 teammates based on triage. Teammates work in parallel on SEPARATE file sets.
+
+### Teammate 1: "navigation-routing-fixer"
+Fixes: public routes blocked by middleware, dead links, broken hrefs, mobile nav gaps, sub-nav tab 404s, auth redirect issues. NEVER use wildcard middleware whitelists. For public route fixes, verify in a fresh unauthenticated browser session.
+
+### Teammate 2: "component-ui-fixer"
+Fixes: broken button handlers, missing loading/empty states, missing i18n keys, missing imports, TypeScript runtime errors, missing confirmation dialogs. NEVER change visual design. Verify mutations exist before wiring buttons.
+
+### Teammate 3: "backend-data-fixer"
+Fixes: wrong response shapes, auth context propagation, empty query results, missing error handling, subscription issues. NEVER create business logic. NEVER modify schema.
+
+Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes applied, files modified, issues escalated to Category C.
+
+## Phase 3: Integration & Verification
+
+1. **Merge and validate**: Verify no file conflicts. Run full validation:
+   ```bash
+   bun run typecheck
+   bun run lint
+   bun run test
+   ```
+   If any check regresses from baseline, identify the causing fix, revert it, move to Category C.
+
+2. **Start the dev server**: Check if running, start if needed. If it fails to start, mark fixes as "unverifiable" and proceed to report (unlike 6V/6P which ABORT, 6R proceeds because fixes are already applied to code).
+
+3. **Targeted re-verification**: For each fix, use Playwright browser tools (navigate, screenshot, console check) to verify the issue is resolved. For public route fixes, use `browser_close` + fresh session. Quick regression sweep of ~5-10 key pages. If a fix didn't resolve the issue, revert and move to Category C.
+
+4. **Update 6V report**: Append remediation results section to `./plancasting/_audits/visual-verification/report.md`.
+
+5. **Generate remediation report** at `./plancasting/_audits/runtime-remediation/report.md` with summary, triage results, verification status, files modified, remaining issues by severity, gate decision, and next steps.
+
+6. **Commit**: Identify backend directory from `plancasting/tech-stack.md`. Stage specific files (avoid `git add -A`):
+   ```bash
+   git add src/ <backend-dir>/ plancasting/_audits/runtime-remediation/ plancasting/_audits/visual-verification/report.md
+   git commit -m "fix: Stage 6R auto-remediation -- [n] issues resolved"
+   ```
+
+7. **Save commit hash**:
+   ```bash
+   git rev-parse HEAD > ./plancasting/_audits/runtime-remediation/last-remediated-commit.txt
+   ```
+
+## Phase 4: Shutdown
+
+1. Request shutdown for all teammates.
+2. Verify all modifications saved and committed.
+3. Leave the dev server running if Stage 6P will run immediately.
+
+## Gate Decision
+
+- **PASS**: All critical/high issues resolved. Remaining are medium/low and documented.
+- **CONDITIONAL PASS**: Some high-severity issues remain but documented with workarounds.
+- **FAIL**: Critical issues remain that block deployment.
+
+## Next Steps
+
+- PASS: proceed to Stage 6P (Visual Polish) -> Deploy -> 7V -> 7D
+- CONDITIONAL PASS: human reviews remaining issues, decides to deploy or fix first
+- FAIL: human resolves Category C critical issues, then re-run 6V -> 6R
+
+## Critical Rules
+
+1. NEVER make business logic decisions. Ambiguous fixes go to Category C.
+2. NEVER weaken security. Adding public routes is fine if PRD says public. Removing auth guards is NEVER acceptable.
+3. ALWAYS preserve test baseline. Zero test regressions is non-negotiable.
+4. ALWAYS typecheck after EVERY fix, not just at the end.
+5. ALWAYS verify fixes in the running app, not just in code.
+6. NEVER modify auto-generated files (`_generated/`, `.next/`, `node_modules/`).
+7. NEVER create database schema changes.
+8. If a Category B fix introduces a NEW failure of EQUAL or HIGHER severity, revert and move to Category C.
+9. ALWAYS read component/function context before fixing. Check git blame when a fix seems too simple.
+10. For i18n fixes: check ALL language files.
+11. For stub pages: ALWAYS include auth guards, loading states, and error handling.
+12. If 6V report has zero failures, output a clean report and exit.
+13. Maximum 3 remediation loops (tracked in `loop-count.txt`).
+14. ALWAYS respect the project's file organization conventions.
+
+## Output Specification
+
+| Artifact | Path |
+|----------|------|
+| Remediation Plan | `./plancasting/_audits/runtime-remediation/plan.md` |
+| Remediation Report | `./plancasting/_audits/runtime-remediation/report.md` |
+| Loop Counter | `./plancasting/_audits/runtime-remediation/loop-count.txt` |
+| Baseline Typecheck Log | `./plancasting/_audits/runtime-remediation/baseline-typecheck.log` |
+| Baseline Tests Log | `./plancasting/_audits/runtime-remediation/baseline-tests.log` |
+| Last Remediated Commit | `./plancasting/_audits/runtime-remediation/last-remediated-commit.txt` |
+| Updated 6V Report | `./plancasting/_audits/visual-verification/report.md` (appended) |

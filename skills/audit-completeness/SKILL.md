@@ -1,0 +1,204 @@
+---
+name: audit-completeness
+description: >-
+  Audits the codebase to verify every PRD feature is fully implemented, not just scaffolded.
+  This skill should be used when the user asks to "audit implementation completeness",
+  "check for stubs", "detect stub components", "run implementation audit",
+  "run Stage 5B", "verify feature completeness", or "find unfinished implementations",
+  or when the transmute-pipeline agent reaches Stage 5B of the pipeline.
+version: 1.0.0
+---
+
+# Transmute Audit Completeness — Stage 5B: Implementation Completeness Audit
+
+Lead a multi-agent implementation completeness audit using Claude Code Agent Teams. Systematically verify that EVERY feature in the PRD has been FULLY implemented — not just scaffolded — and fix any gaps found.
+
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-detailed-guide.md` for the complete teammate instructions, scan scripts, fix patterns, and coordination protocol.
+
+## Why This Stage Exists
+
+Stage 5 builds all features sequentially. In practice, a recurring pattern emerges: backend implementations are thorough, but many frontend components remain as stubs — scaffold-quality code with placeholder text, unconnected hooks, or missing interactive behavior. This happens because:
+- The orchestrator's context window degrades over hours of feature-by-feature implementation
+- Per-feature quality gates become less rigorous as the session progresses
+- Frontend teammates produce "looks done" output that passes a fatigued quality gate
+
+This stage runs with a FRESH context window, focused SOLELY on finding and fixing these gaps.
+
+## Prerequisite Checks
+
+1. Verify `./plancasting/prd/` exists with markdown files. If missing: STOP — "Stage 5B requires completed PRD. Run Stages 1-2 first."
+2. Verify `./plancasting/_progress.md` exists. If missing: STOP — "Stage 5B requires plancasting/_progress.md from Stage 5. Run Stage 5 first."
+3. Verify source code directories exist (check `plancasting/tech-stack.md` for paths). If no source code beyond scaffold: STOP — "Stage 5B requires Stage 5 implementation."
+4. Verify `./CLAUDE.md` exists. If missing: WARN — "Proceeding without project-specific conventions."
+
+## Known Failure Patterns
+
+### Frontend Stubs (PRIMARY — ~80% of issues)
+1. Scaffold component bodies (single `<div>` with feature name)
+2. Unconnected hooks (useState with mock data instead of real hook)
+3. Missing form handlers (onSubmit only calls preventDefault)
+4. Placeholder navigation (href="#" or empty onClick)
+5. Missing state handling (no loading, error, empty states)
+6. Orphan components (files never imported by any page)
+7. Inline page stubs (heading + `<p>` tag instead of composed components)
+8. Missing i18n keys
+9. Stub modals/dialogs
+10. Missing responsive behavior
+
+### Backend Stubs (SECONDARY — ~15%)
+1. Action stubs logging "not implemented"
+2. Missing validation of business rules
+3. Incomplete error handling
+
+### Duplication Pattern (SECONDARY — ~15%)
+1. Orphan component files + inline page UI for same purpose
+2. Bloated pages (200+ lines of inline UI)
+3. Duplicate hook imports in both orphan component and page
+4. Missing component composition
+
+### Integration Gaps (~5%)
+1. Cross-feature data flows using mock data
+2. Navigation gaps (not all features in sidebar/navbar)
+3. Dashboard widgets showing hardcoded zeros
+
+## Stack Adaptation
+
+Before running any scans, read `plancasting/tech-stack.md` to determine actual directory structure. Replace ALL placeholder paths (`[backend-dir]`, `[pages-dir]`, `[components-dir]`, `[hooks-dir]`) with actual project paths. Replace `npm run` with your package manager.
+
+## Execution Phases
+
+### Phase 1: Lead Analysis (Before Spawning Teammates)
+
+1. **Read project context**: `CLAUDE.md`, `plancasting/tech-stack.md`, `plancasting/_progress.md`, `plancasting/_implementation-report.md`, `plancasting/_briefs/`
+
+2. **Build Feature Inventory from PRD**:
+   - Read `plancasting/prd/02-feature-map-and-prioritization.md` — list ALL features
+   - Read `plancasting/prd/04-epics-and-user-stories.md` — list ALL user stories with acceptance criteria
+   - Read `plancasting/prd/08-screen-specifications.md` — list ALL screens
+   - Read `plancasting/prd/12-api-specifications.md` — list ALL API endpoints/functions
+   - Create master checklist: Feature -> User Stories -> Expected Screens -> Expected Functions
+
+3. **Run Automated Stub Scan** across the ENTIRE codebase (see detailed guide for full scan scripts):
+   - Text-pattern stub detection (grep for placeholder text)
+   - Minimal component detection (files under 20 lines)
+   - Orphan component detection (files never imported)
+   - Dead onClick / href="#" detection
+   - Mock data in production components
+   - Unconnected hooks (useState with empty/hardcoded values)
+   - Empty or near-empty page files
+   - Duplication pattern detection (bloated pages with zero component imports)
+   - Scaffold manifest cross-reference
+
+4. **Cross-reference PRD against implementation**: For each feature verify routes, backend functions, UI components, hooks, and acceptance criteria coverage.
+
+5. **Classify findings into three categories**:
+
+   **Category A — Quick Fix** (< 30 lines per file): Stub text replacement, missing handlers, missing states, simple orphan cleanup, missing i18n keys, dead links, missing responsive classes.
+
+   **Category B — Medium Fix** (30-100 lines per file): Components needing real UI, hooks needing real data connections, forms needing submission logic, modals needing content, duplication fixes, bloated page decomposition.
+
+   **Category C — Large Gap** (escalate for Stage 5 re-run if 4+ issues): New hooks/backend functions that should exist, single files needing 100+ lines, entirely unbuilt frontend features, features where both backend AND frontend are stubs. Mark in `plancasting/_progress.md` as Needs Re-implementation.
+
+   **Multi-file rule**: Classify by LARGEST single-file change. Independent issues in same feature classified separately.
+
+6. **Generate audit report** at `./plancasting/_audits/implementation-completeness/report.md`
+
+7. **Create fix plan** with teammate assignments.
+
+### Phase 2: Spawn Fix Teammates
+
+Apply the early exit decision table:
+
+| Cat A/B count | Cat C count | Action |
+|---|---|---|
+| 0 | 0 | Skip Phase 2-3 -> PASS |
+| 0 | 1-3 | Skip Phase 2-3, document Cat C -> CONDITIONAL PASS |
+| 0 | 4+ | Skip Phase 2-3, document Cat C -> FAIL (Stage 5 re-run) |
+| 1+ | any | Spawn teammates for A/B fixes, document Cat C |
+
+Spawn Teammates 1 and 2 in parallel. Teammate 3 MUST wait until both complete.
+
+**Teammate 1: "frontend-stub-fixer"** (PRIMARY — 70% of effort)
+- Fix all Category A and B frontend issues
+- Replace every stub with FUNCTIONAL implementation
+- Connect components to existing backend hooks
+- Implement all states (loading, error, empty, data)
+- Fix duplication pattern (move inline page UI into scaffold components)
+- Decompose bloated pages into component composition
+- Run full stub scan, typecheck, lint, and tests after all fixes
+
+**Teammate 2: "backend-stub-fixer"** (if backend issues found)
+- Fix all backend stubs with real business logic
+- Add missing validation from BRD business rules
+- Fix integration gaps (cross-feature data flows)
+- Verify all function exports match frontend expectations
+
+**Teammate 3: "e2e-verification"** (ALWAYS run last, after Teammates 1+2)
+- Run full test suite (typecheck, lint, unit, integration, E2E)
+- Run final stub scan — must return zero results
+- Run orphan component scan
+- Spot-check all pages with Category B fixes + 5 random pages
+- Report results in structured format
+
+### Phase 3: Coordination
+
+While teammates work:
+1. Monitor for Category C escalations — document in `plancasting/_progress.md`
+2. If FAIL gate triggered (4+ Cat C), note systemic frontend failure in audit report
+3. Resolve conflicts between backend and frontend fixes
+4. Reclassify any fix exceeding Category B scope (>100 lines) as Category C
+
+### Phase 4: Audit Report & Gate Decision
+
+After all teammates complete:
+
+1. **Update audit report** at `./plancasting/_audits/implementation-completeness/report.md` with:
+   - Summary (total issues by category, fixed counts)
+   - Fix summary (components fixed, orphans deleted, i18n keys added, backend functions fixed)
+   - Verification results (TypeScript, lint, unit tests, E2E, stub scan, orphan scan)
+   - Gate decision
+   - Category C escalations (if any)
+   - Issues by feature (detailed breakdown)
+
+2. **Update `plancasting/_progress.md`**: Mark Category C features as Needs Re-implementation. Add Stage 5B Audit section.
+
+3. **Gate Decision**:
+   - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs remain -> Stage 6
+   - **CONDITIONAL PASS**: Zero A/B remaining, 1-3 Cat C documented -> Stage 6 with known gaps
+   - **FAIL (re-run 5B)**: 1+ A/B unfixed OR test failures from 5B fixes
+   - **FAIL (re-run Stage 5)**: 4+ Cat C OR systemic implementation failure
+
+### Phase 5: Shutdown
+
+Shut down all teammates. Output final summary: gate decision, issues fixed, escalations.
+
+## Session Recovery
+
+If interrupted:
+1. Check if `./plancasting/_audits/implementation-completeness/report.md` exists.
+2. If it has Fix Summary + Verification Results: skip to Phase 4.
+3. If it has Fix Summary but no Verification Results: check which teammates finished, re-spawn incomplete ones, then spawn Teammate 3.
+4. If no Fix Summary: proceed to Phase 2.
+5. If report does not exist: restart from Phase 1.
+6. Check `plancasting/_progress.md` for features already marked as Needs Re-implementation.
+
+## Critical Rules
+
+1. NEVER skip the automated stub scan. It is the objective foundation.
+2. NEVER mark a stub as "acceptable" — stubs are ALWAYS bugs at this stage.
+3. NEVER delete test files to make the suite pass. Fix the code, not the tests.
+4. ALWAYS read the feature brief and PRD screen spec before fixing a component.
+5. ALWAYS follow CLAUDE.md conventions when writing fix code.
+6. ALWAYS run the full verification suite before declaring complete.
+7. Frontend fixes are the PRIMARY focus (70% of effort).
+8. If a component fix requires backend changes that don't exist, classify as Category C.
+9. The goal is completeness, not perfection. Every feature should be FUNCTIONAL. Polish happens in Stage 6.
+10. Fix, don't redesign. Maintain Stage 5's architectural decisions.
+
+## Output Specification
+
+| Artifact | Path | Description |
+|---|---|---|
+| Audit report | `plancasting/_audits/implementation-completeness/report.md` | Full findings, fixes, verification, gate decision |
+| Progress tracker | `plancasting/_progress.md` (updated) | Cat C features marked for re-implementation |
+| Fixed codebase | Source directories | All Category A/B issues resolved |

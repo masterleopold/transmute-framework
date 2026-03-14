@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Ulysses
+.Ulysses-Group.plist
+**/.Ulysses-Group.plist
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Runtime artifacts
+node_modules/
+.seed-ids.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
