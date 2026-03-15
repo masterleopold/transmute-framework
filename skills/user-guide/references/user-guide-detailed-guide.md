@@ -80,7 +80,7 @@ user-guide/
 - Config file: `docs.json` (NOT `mint.json`)
 - Schema: `"$schema": "https://mintlify.com/docs.json"`
 - Required fields: `name`, `theme`, `colors.primary`, `navigation`
-- 7 built-in themes: `mint`, `maple`, `palm`, `willow`, `linden`, `almond`, `aspen`
+- 9 built-in themes: `mint`, `maple`, `palm`, `willow`, `linden`, `almond`, `aspen`, `luma`, `sequoia`
 - Icons: Font Awesome, Lucide, or Tabler (configured via `icons.library` in docs.json)
 - Static assets go in `public/` directory (files in `public/` are served at the URL root — e.g., `public/logo.png` → `/logo.png`). Screenshots and media go in `images/` at the docs root (e.g., `user-guide/images/` → served at `/images/...`). The `images/` directory is Mintlify's conventional static asset location for documentation media. Do NOT use `public/screenshots/` — Mintlify's monorepo mode may not correctly serve files from `public/` subdirectories, causing 403 errors on the CDN.
 - Custom React components go in `snippets/` as `.jsx` files (no nested imports)
@@ -137,19 +137,49 @@ Valid structure: `tabs`, `anchors`, and `dropdowns` are **siblings** under `navi
 
 ### Multi-Language Configuration
 
+Multi-language uses `navigation.languages` inside the root `docs.json`:
+
+```json
+{
+  "navigation": {
+    "languages": [
+      {
+        "language": "en",
+        "name": "English",
+        "isDefault": true,
+        "groups": [
+          { "group": "Getting Started", "pages": ["introduction", "quickstart"] }
+        ]
+      },
+      {
+        "language": "ja",
+        "name": "Japanese",
+        "groups": [
+          { "group": "Getting Started", "pages": ["introduction", "quickstart"] }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The `navigation.languages` array defines per-language navigation directly in the root `docs.json`. Each language entry contains `groups` (and optionally `tabs`, `anchors`, `dropdowns`). Per-language `docs.json` files may still exist for navigation overrides but are no longer the primary pattern.
+
+For per-language branding overrides (banner, footer, navbar), add a top-level `languages` array alongside `navigation`:
 ```json
 {
   "languages": [
     { "language": "en", "banner": {}, "footer": {}, "navbar": {} },
     { "language": "ja", "banner": {}, "footer": {}, "navbar": {} }
-  ]
+  ],
+  "navigation": {
+    "languages": [...]
+  }
 }
 ```
 
-Root `languages` array configures per-language branding overrides. Each language directory gets its own `docs.json` for navigation.
-
-**Multi-language**: Root `docs.json` has branding + `languages` array ONLY (no navigation). Per-language `docs.json` has `navigation`.
-**Single-language**: Root `docs.json` has BOTH branding AND navigation. No per-language directories.
+**Multi-language**: Root `docs.json` has branding + `navigation.languages` with per-language groups. Per-language `docs.json` may still be used for navigation overrides.
+**Single-language**: Root `docs.json` has BOTH branding AND navigation as `{ "groups": [...] }`. No per-language directories.
 
 ### API Playground (Conditional)
 
@@ -295,9 +325,35 @@ Component usage: `<Steps>`/`<Step>` for procedures (NEVER numbered markdown list
 
 ### Teammate 3: "config-and-structure"
 
-1. **Root docs.json**: Branding config with product name, theme, logo, colors, navbar, search, feedback, canonical URL. Add `languages` array if multi-language. For English-only, include navigation directly.
+1. **Root docs.json**: Branding config with product name, theme, logo, colors, navbar, search, feedback, canonical URL. For multi-language, use `navigation.languages` pattern inside the root `docs.json`. For English-only, include navigation as `{ "groups": [...] }`.
 
-2. **Per-language docs.json** (multi-language only): Navigation with anchors -> groups -> pages hierarchy (Guides, Concepts, Help anchors + conditional API Reference tab).
+   Use this VALIDATED template as the starting point (adapt names, colors, and pages):
+   ```json
+   {
+     "$schema": "https://mintlify.com/docs.json",
+     "theme": "mint",
+     "name": "Product Name",
+     "logo": { "light": "/logo-light.svg", "dark": "/logo-dark.svg" },
+     "favicon": "/favicon.svg",
+     "colors": { "primary": "#0891b2", "light": "#22d3ee", "dark": "#0891b2" },
+     "navigation": {
+       "languages": [
+         {
+           "language": "en",
+           "name": "English",
+           "isDefault": true,
+           "groups": [
+             { "group": "Getting Started", "pages": ["introduction", "quickstart"] }
+           ]
+         }
+       ]
+     }
+   }
+   ```
+
+   DO NOT add: `colors.anchors`, top-level `anchors` array, top-level `languages` array, or `navigation` as a bare array.
+
+2. **Per-language docs.json** (multi-language only): Navigation with anchors -> groups -> pages hierarchy (Guides, Concepts, Help anchors + conditional API Reference tab). Per-language `docs.json` files may still be used for navigation overrides, but the primary navigation is defined via `navigation.languages` in the root `docs.json`.
 
 3. **Static assets** (`public/`): Copy product logo, create favicon.
 

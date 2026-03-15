@@ -36,7 +36,7 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/user-guide-detailed-
 
 Generate a complete Mintlify documentation site under `./user-guide/`. Also generate `./plancasting/_audits/user-guide/report.md`.
 
-**Multi-language** (session language differs from English): Root `docs.json` with `languages` array + `en/` and `<session-lang>/` subdirectories, each with their own `docs.json` for navigation.
+**Multi-language** (session language differs from English): Root `docs.json` with `navigation.languages` array containing per-language groups + `en/` and `<session-lang>/` subdirectories. Per-language `docs.json` files may still be used for navigation overrides.
 
 **English-only**: Root `docs.json` with both branding and navigation. Content at root level (no `en/` subdirectory).
 
@@ -73,7 +73,7 @@ Spawn 3 teammates in parallel for content creation. Teammate 3's validation step
 
 **Teammate 2 -- "concepts-and-reference-writer"**: Write concept pages, FAQ (as `<AccordionGroup>`), troubleshooting (problem -> cause -> solution), changelog (using `<Update>` components), and API reference (conditional -- only if product has public API without OpenAPI spec). For visual embedding, check recordings first (use `<video>` tag), then screenshots (use markdown `![alt](/images/file.png)` syntax). ALWAYS escape dollar signs before numbers. NEVER start the MDX body with a `# Title` heading.
 
-**Teammate 3 -- "config-and-structure"**: Create root `docs.json` (branding, theme, colors from `plancasting/tech-stack.md`), per-language `docs.json` with navigation (multi-language only), static assets in `public/`, snippets (`prerequisites.mdx`, `support-cta.mdx`). After Teammates 1 and 2 complete, run validation: `mint validate`, `mint broken-links`, `mint a11y`, jargon scan (two categories: always-flag technical identifiers vs flag-with-context common words), verify `![](/images/...)` references point to actual files in `user-guide/images/`, frontmatter description check, translation parity check.
+**Teammate 3 -- "config-and-structure"**: Create root `docs.json` (branding, theme, colors from `plancasting/tech-stack.md`) using the validated template from the detailed guide. For multi-language, use `navigation.languages` pattern in root `docs.json`. Per-language `docs.json` may still be used for navigation overrides. Static assets in `public/`, snippets (`prerequisites.mdx`, `support-cta.mdx`). DO NOT add: `colors.anchors`, top-level `anchors` array, top-level `languages` array, or `navigation` as a bare array. After Teammates 1 and 2 complete, run validation: `mint validate`, `mint broken-links`, `mint a11y`, jargon scan (two categories: always-flag technical identifiers vs flag-with-context common words), verify `![](/images/...)` references point to actual files in `user-guide/images/`, frontmatter description check, translation parity check.
 
 ### Phase 3: Coordination
 
@@ -119,6 +119,9 @@ For each guide page, follow this transformation pipeline:
 5. Limit group nesting to ONE level deep in docs.json.
 6. NEVER reference pages with file extensions in docs.json navigation.
 7. ALWAYS validate docs.json as valid JSON.
+7a. ALWAYS include `"theme"` in docs.json -- it is a REQUIRED field. Valid values: `mint`, `maple`, `palm`, `willow`, `linden`, `almond`, `aspen`, `luma`, `sequoia`.
+7b. ALWAYS structure `navigation` in docs.json as an OBJECT, not an array. For multi-language: `{ "languages": [{ "language": "en", "groups": [...] }, ...] }`. For single-language: `{ "groups": [...] }`. A bare array WILL fail.
+7c. NEVER use `colors.anchors` or top-level `anchors` in docs.json -- these are deprecated. Use only `colors.primary`, `colors.light`, `colors.dark`.
 8. ALWAYS include meaningful `description` in every page's frontmatter.
 9. ALWAYS cross-reference Stage 5B to avoid documenting incomplete features.
 10. ALWAYS extract branding from `plancasting/tech-stack.md` -- never use placeholders.
