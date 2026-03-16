@@ -39,7 +39,7 @@ Read the scenario generation guide at `${CLAUDE_SKILL_ROOT}/references/feature-s
 
 - **`full`** (default) -- All screens in `plancasting/prd/08-screen-specifications.md`. ~30-60 min.
 - **`critical`** -- P0/P1 features only. ~15-30 min.
-- **`diff`** -- Only screens related to files changed since last verification. ~10-20 min. **Note**: `last-verified-commit.txt` is created at the END of a 6V run, so `diff` mode only works on the second or subsequent run. If the file does not exist, automatically falls back to `full`.
+- **`diff`** -- Only screens related to files changed since last verification. ~10-20 min. **Note**: `last-verified-commit.txt` is created at the END of a 6V run, so `diff` mode only works on the second or subsequent run. If the file does not exist, automatically falls back to `full`. **Warning**: diff mode requires a previous 6V report to diff against — do NOT use for the first 6V run.
 
 **How to specify scope**: Append `MODE: full`, `MODE: critical`, or `MODE: diff` on a new line after pasting the prompt, or as a separate follow-up message. Default is `full`.
 
@@ -76,7 +76,7 @@ Complete BEFORE spawning teammates:
    - Save to `./plancasting/_audits/visual-verification/feature-scenario-matrix.md` and gap-fill matrix to `./plancasting/_audits/visual-verification/verification-matrix.md`
 
 3. **Start the application**:
-   - Kill any existing process on the dev port: `lsof -ti:3000 | xargs kill 2>/dev/null || true`
+   - Kill any existing process on the dev port: `lsof -ti:3000 | xargs kill 2>/dev/null || true` (Adapt port to your framework's default: Next.js: 3000, Vite/SvelteKit: 5173, Remix: 3000, Astro: 4321)
    - Run the dev server. If BaaS dev server fails non-interactively, set the BaaS URL env var in `.env.local` and run only the frontend dev server.
    - Wait up to 60 seconds. If the server fails to start, ABORT.
 

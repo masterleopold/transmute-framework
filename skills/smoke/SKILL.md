@@ -18,14 +18,15 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/smoke-detailed-guide
 
 1. Verify the production URL is accessible and responding. Check with `curl -sI <production-url> | head -1` (expect HTTP 200 or 301/302). If unreachable, STOP and verify deployment status.
 2. Check `./plancasting/_launch/readiness-report.md` exists. If it shows FAIL, stop and report the blocker. If READY or CONDITIONAL PASS with documented minor issues, proceed. If it does not exist, proceed but note in the report: "Stage 6H pre-launch verification was not completed."
-3. Verify `./plancasting/_audits/visual-verification/report.md` or `./plancasting/_audits/visual-polish/report.md` exists. Warn if neither is found.
-4. Verify scenario generation file exists: `./plancasting/transmute-framework/feature_scenario_generation.md`. If missing, copy from the Transmute Framework Template directory. See CLAUDE.md § "Pre-6V Setup" for copy instructions.
-5. Create output directories:
+3. If 6R was run, verify `./plancasting/_audits/runtime-remediation/report.md` shows PASS or CONDITIONAL PASS. If FAIL, STOP — 6R must pass before Stage 7.
+4. Verify `./plancasting/_audits/visual-verification/report.md` or `./plancasting/_audits/visual-polish/report.md` exists. Warn if neither is found.
+5. Verify scenario generation file exists: `./plancasting/transmute-framework/feature_scenario_generation.md`. If missing, copy from the Transmute Framework Template directory. See CLAUDE.md § "Pre-6V Setup" for copy instructions.
+6. Create output directories:
    ```bash
    mkdir -p ./plancasting/_audits/production-smoke
    mkdir -p ./screenshots/production
    ```
-6. Read `CLAUDE.md`, `plancasting/tech-stack.md`, and check `plancasting/tech-stack.md` for the `Session Language` setting. Generate all reports in the specified language.
+7. Read `CLAUDE.md`, `plancasting/tech-stack.md`, and check `plancasting/tech-stack.md` for the `Session Language` setting. Generate all reports in the specified language.
 
 ## Inputs
 
@@ -46,6 +47,8 @@ This is a single-agent sequential check. Target completion: 25-45 minutes (3-5 m
 ### Step 0: Generate Smoke Scenario Matrix
 
 Before any verification, generate a targeted test plan. Save to `./plancasting/_audits/production-smoke/smoke-scenario-matrix.md`.
+
+Scope: SMOKE — P0+P1 features only, max 15 scenarios.
 
 **Generation mode: SMOKE** — P0/P1 features only, happy path Feature Scenarios + one authenticated/unauthenticated Auth Context check per route. No Entity State, Role Permission, or Negative Scenarios. Target: 15 scenarios max.
 

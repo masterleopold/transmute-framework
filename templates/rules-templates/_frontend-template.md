@@ -5,11 +5,11 @@ globs: ["[FRONTEND_DIR]/**"]
 
 # Frontend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
 
 ## Component States
 
-<!-- Source: Stage 3 | Evidence: tech-stack.md | Confidence: HIGH -->
+<!-- TODO: Stage 3 — replace with actual component state pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #1, every component must handle all five states (default, loading, empty, error, disabled). For data-fetching components, use `[LOADING_COMPONENT]` for loading states and `[ERROR_COMPONENT]` for error states (include a retry action where appropriate); never render a blank screen.
 - Empty states must have a descriptive message and, where applicable, a call-to-action.
@@ -39,8 +39,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual breakpoint system. Source: tech-stack.md | Confidence: HIGH -->
 
-- Use the project's breakpoint system (`[BREAKPOINT_CONFIG]`) — never hardcode pixel widths; write base styles mobile-first, then layer larger breakpoints.
-- Test all pages at 320px, 768px, 1024px, and 1440px minimum.
+- Use the project's breakpoint system (`[BREAKPOINT_CONFIG]`) — never hardcode pixel widths; write base styles mobile-first, then layer larger breakpoints. Test all pages at 320px, 768px, 1024px, and 1440px minimum.
 - Navigation must collapse to a mobile-friendly pattern below `[MOBILE_BREAKPOINT]`.
 
 ## Design Tokens
@@ -55,15 +54,13 @@ globs: ["[FRONTEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual image component. Source: tech-stack.md | Confidence: HIGH -->
 
-- Use `[IMAGE_COMPONENT]` for all images — never use raw `<img>` tags; always specify `width`/`height` or use `fill` with a sized container.
-- Provide `alt` text for all images (empty `alt=""` only for purely decorative images) and use appropriate formats: WebP/AVIF for photos, SVG for icons and illustrations.
+- Use `[IMAGE_COMPONENT]` for all images — never use raw `<img>` tags; always specify `width`/`height` or use `fill` with a sized container. Provide `alt` text for all images (empty `alt=""` only for purely decorative) and use WebP/AVIF for photos, SVG for icons.
 
 ## Accessibility
 
 <!-- TODO: Stage 3 — replace with actual ARIA and keyboard patterns for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
-- Per CLAUDE.md Part 1 Component Rules #2 and #3, all interactive elements must have appropriate ARIA attributes and support keyboard navigation — use semantic HTML first, add ARIA only when native semantics are insufficient.
-- Tab order follows visual order, focus is trapped in modals, Escape closes overlays.
+- Per CLAUDE.md Part 1 Component Rules #2 and #3, all interactive elements must have appropriate ARIA attributes and support keyboard navigation — use semantic HTML first, add ARIA only when native semantics are insufficient; tab order follows visual order, focus is trapped in modals, Escape closes overlays.
 
 ## Icon Usage
 
@@ -76,8 +73,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace [CLIENT_ENV_PREFIX] with actual prefix (e.g., NEXT_PUBLIC_ for Next.js, VITE_ for Vite). Source: tech-stack.md | Confidence: HIGH -->
 
-- Only variables prefixed with `[CLIENT_ENV_PREFIX]` are exposed to the browser — never reference server-only secrets without the prefix.
-- Reference env var names exactly as defined in `.env.local.example` — never invent alternative names (see Stage 3 Known Failure Pattern #9).
+- Only variables prefixed with `[CLIENT_ENV_PREFIX]` are exposed to the browser — never reference server-only secrets without the prefix. Reference env var names exactly as defined in `.env.local.example` — never invent alternative names.
 
 ## Error Boundaries
 

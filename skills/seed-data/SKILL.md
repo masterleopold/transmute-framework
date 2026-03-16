@@ -160,6 +160,8 @@ Generate `./plancasting/_audits/seed-data/report.md` containing:
 - Edge cases covered
 - Constraints or manual steps required
 
+Gate: PASS / CONDITIONAL PASS / FAIL — see prompt for criteria.
+
 Include under a `## Gate Decision` heading (6H parses this heading):
 - **PASS**: All tiers generated successfully, referential integrity verified, seed data renders correctly in UI.
 - **CONDITIONAL PASS**: Generated with documented constraints (e.g., auth users need manual creation, deferred features have no seed data). Document alternative test credentials.

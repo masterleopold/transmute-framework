@@ -199,7 +199,7 @@ After all teammates complete:
    - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs remain -> Stage 6
    - **CONDITIONAL PASS**: All A/B fixes attempted; 0–2 A/B remain unfixed (each documented with explanation), OR all A/B fixed AND 1–3 Cat C documented. If BOTH unfixed A/B AND Cat C exist, apply CONDITIONAL PASS only if total unfixed (A/B + C) ≤ 3; otherwise FAIL-RETRY -> Stage 6 with known gaps
    - **FAIL-RETRY**: 3+ A/B unfixed, OR test failures from 5B fixes, OR 4–5 Cat C -> re-run 5B (max 3 re-runs; 3 consecutive FAIL-RETRY = auto-escalate). Before re-running, diagnose WHY the fix failed — re-running without diagnosis will loop. If Run 4+, skip Phase 2 and escalate all remaining A/B to Cat C.
-   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues across all categories combined AFTER Phase 2/3 fix attempts (i.e., remaining unfixed A/B that Phase 2 could not resolve + all Category C), OR 3 consecutive FAIL-RETRY outcomes for the same feature -> re-run Stage 5 for affected features
+   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues across all categories combined AFTER Phase 2/3 fix attempts (i.e., remaining unfixed A/B that Phase 2 could not resolve + all Category C), OR 3 consecutive FAIL-RETRY outcomes for the same feature -> re-run Stage 5 for affected features (FAIL-RETRY and FAIL-ESCALATE both block Stage 6)
 
 ### Phase 5: Rule Extraction (Post-Gate)
 
@@ -239,7 +239,7 @@ If interrupted:
 6. ALWAYS run the full verification suite before declaring complete.
 7. Frontend fixes are the PRIMARY focus (70% of effort).
 8. If a component fix requires backend changes that don't exist, classify as Category C.
-9. The goal is completeness, not perfection. Every feature should be FUNCTIONAL. Polish happens in Stage 6.
+9. The goal is completeness, not perfection. Every feature should be FUNCTIONAL. Polish happens in Stage 6. **5B Quality Standard**: 5B fixes should bring components from 'scaffold' to 'working' — happy path complete, loading/error states present, no obvious bugs. This is NOT production polish (Stage 6P handles that).
 10. Fix, don't redesign. Maintain Stage 5's architectural decisions.
 
 ## Output Specification

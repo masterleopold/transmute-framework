@@ -128,7 +128,7 @@ After all teammates complete:
 
 3. **Generate `ARCHITECTURE.md`** with system architecture diagram (mermaid), directory structure, data flow diagrams, cross-feature flows, auth flow, feature flag flow, and PRD-to-code traceability matrix.
 
-4. Update `CLAUDE.md` Part 2 ONLY — fill in placeholder sections with actual project details. NEVER modify Part 1. Replace ALL bracketed placeholders (`[PROJECT_NAME]`, `[e.g., ...]`, `[N]`) with actual values.
+4. Update `CLAUDE.md` Part 2 ONLY — fill in placeholder sections with actual project details. NEVER modify Part 1. Replace ALL bracketed placeholders (`[PROJECT_NAME]`, `[e.g., ...]`, `[N]`) with actual values. After verification passes (all Part 1 sections intact, no Part 2 placeholders remain), commit: `git add CLAUDE.md && git commit -m 'chore: complete Stage 4 (CLAUDE.md verification)'`
 
 5. **Generate `.claude/rules/` starter rules**:
    - Create the `.claude/rules/` directory
@@ -146,7 +146,7 @@ After all teammates complete:
 
 7. **Update the Path-Scoped Rules table** in CLAUDE.md Part 2 with actual rule files (paths, globs, rule counts).
 
-8. **Copy framework files into project**: Copy `execution-guide.md` and `feature_scenario_generation.md` from the Transmute Framework Template into `./plancasting/transmute-framework/` so they are available for later stages (6V, 7V) without depending on the template location.
+8. **Copy framework files into project**: Copy `execution-guide.md` and `feature_scenario_generation.md` from the Transmute Framework Template into `./plancasting/transmute-framework/` so they are available for later stages (6V, 7V) without depending on the template location. Note: The CLAUDE.md template lives at the ROOT of the Transmute Framework Template, not inside `plancasting/transmute-framework/`.
 
 9. Fix any inconsistencies found during review.
 
@@ -158,6 +158,8 @@ After all teammates complete:
     - **FAIL**: PRD coverage < 80%, OR CLAUDE.md Part 2 not populated, OR `_progress.md` missing, OR required output files missing → re-run Stage 3
 
 > **Terminology note**: "Coverage" in this stage means scaffold coverage — the percentage of PRD screens (SC-xxx), API endpoints, and data entities that have corresponding scaffold files. This differs from Stage 2B's "coverage" (BRD→PRD requirement traceability).
+>
+> **Scaffold Coverage Definition**: Scaffold coverage is the percentage of PRD-specified features that have at least one scaffold file. Coverage ≥95% = PASS, ≥80% = CONDITIONAL PASS, <80% = FAIL. Note: this differs from Stage 2B's requirement traceability coverage.
 
 ### Phase 5: Shutdown
 

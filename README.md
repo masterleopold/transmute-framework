@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.3.0** — Gate precision, terminology alignment, standalone project support, crash recovery improvements
+> **v2.4.0** — Comprehensive template sync, agent hardening, prerequisite hook fix
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -145,9 +145,9 @@ Stages **4** and **7** are manual and cannot be invoked via commands.
 
 The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are checked before each stage runs. If a stage fails, fix the issue and run `/transmute:cast resume`.
 
-### Gate Logic (v2.0.0)
+### Gate Logic (v2.4.0)
 
-- **5B**: FAIL triggers RETRY (re-run Stage 5 for affected features) or ESCALATE (4+ Category C issues)
+- **5B**: PASS requires zero issues + all tests pass; FAIL triggers RETRY (4-5 Category C, 3+ A/B unfixed, or test failures) or ESCALATE (6+ Category C); per-feature consecutive FAIL-RETRY tracking (3x → auto-escalate)
 - **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
 - **6R**: Max 3 internal fix-verify cycles per run before escalation; max 2 outer 6V→6R cycles total
 - **7V**: Binary gate — PASS proceeds to 7D, FAIL requires hotfix + re-deploy or rollback
@@ -250,7 +250,37 @@ transmute-framework/
 
 ## Changelog
 
-### v2.1.0
+### v2.4.0
+
+**Comprehensive Template Sync & Agent Hardening**
+
+**Templates** (synced from canonical Transmute Framework Template)
+- **CLAUDE.md**: Structural overhaul — replaced verbose Pipeline Execution Guide sections (Prerequisites, CLI Workflow, Critical Per-Stage Warnings, Key Gates & Recovery) with concise Safety-Critical Rules + Cross-References table pattern; added inline style exception (Component Rules #4); added third-party `any` type wrapping guidance (TypeScript Rules); added traceability exemptions for utility/config/test files; added Icon Registry and Design Tokens rows to Part 2 Technology Stack
+- **execution-guide.md**: 30+ changes — scaffold coverage definition (≥95% PASS), 5B gate tightening (test-pass requirement, CONDITIONAL PASS ≤3 with workarounds), 6R cycle counter reset semantics (requires full 6V re-run), assumption review timing (before Stage 2, not 2B), credential canonical source moved to execution-guide.md, 6A scope expansion (invitation acceptance, password-reset edge case), recovery procedures for 6A-6G/8/9/7V, Stage 4 copy path fix and commit instruction, 6V duration updated to 30-120 min
+- **feature_scenario_generation.md**: Unresolvable cycle fallback with WARNING documentation, scenario cap override via tech-stack.md, `_progress.md` fallback for pre-Stage-5 runs
+- **_rules-candidates.md**: Staleness policy fixed (OR condition, was AND), overflow handling at 30 candidates, corrected example to MEDIUM confidence
+- **rules-templates** (all 6): Fixed grep verification pattern (`\[[A-Z_]+\]` — was false-positive matching markdown links), Stage 3 TODO comment format, backend sanitization guidance (exclude credentials/tokens/PII), auth provider built-in feature check, test count preservation section, data model cross-references to backend rules
+
+**Agents**
+- **transmute-pipeline.md**: Full Stage 7 prerequisite chain (6H+6V+6R+6P+6D), 5B FAIL-RETRY thresholds expanded (3+ A/B unfixed, test failures), per-feature consecutive FAIL-RETRY escalation tracking, 6R cycle counter reset semantics, "always run 5B" core responsibility, 6P input fallback (6V report if 6R skipped)
+- **brd-writer.md**: 8 Known Failure Patterns, Language Rule (session language from tech-stack.md), Deduplication Rule (Variant Test)
+- **prd-writer.md**: 7 Known Failure Patterns, Language Rule
+- **feature-backend.md**: 5 Known Failure Patterns, Cross-Feature Integration Levels (Data-only/UI reference/Workflow)
+- **feature-frontend.md**: 6 Known Failure Patterns, dynamic design token path (from Part 2 table), Cross-Feature UI Updates note
+- **feature-tests.md**: 2 Known Failure Patterns, Cross-Feature E2E note (integration tests + responsive viewports)
+
+**Skills**
+- **scaffold**: Scaffold coverage definition with gate thresholds, CLAUDE.md template location note, Stage 4 commit instruction
+- **implement**: 🔄 recovery semantics (rebuild from scratch), completion check includes Blocked, Rule 11 Launch Readiness Assessment check
+- **audit-completeness**: FAIL-RETRY/ESCALATE blocking note, 5B Quality Standard (scaffold→working, not production polish)
+- **audit-security**: Password-reset edge case, Safety-Critical Rules reference
+- **verify**: Port adaptation note (framework-specific defaults), diff mode first-run warning
+- **remediate**: 6R cycle counter reset semantics, outer cycle tracking guidance
+- **smoke**: 6R prerequisite added, SMOKE scope paragraph
+- **docs** / **seed-data**: Gate mention added
+
+**Hooks**
+- **Created `check-prerequisites.sh`** — was referenced by hooks.json but missing (blocking bug). Lightweight script: checks for `plancasting/` directory, warns on missing `CLAUDE.md` and `tech-stack.md`, always exits 0 (warns, never blocks)
 
 ### v2.3.0
 

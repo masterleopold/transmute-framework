@@ -49,6 +49,7 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold �
 4. **Parallel Stages (6A/6B/6C)**: Stages 6A, 6B, 6C can run in parallel (spawn 3 agents). **Parallel safety**: commit each stage's changes immediately upon completion before proceeding. Shared config files (e.g., `next.config.ts`, `middleware.ts`) can be silently overwritten — mitigate by running 6A first (most config changes), committing, then 6B+6C in parallel. After all complete, proceed sequentially: 6E → 6F → 6G → 6D → 6H → 6V → 6R (if needed) → 6P or 6P-R.
 5. **Recovery**: If a stage fails, log the failure in `plancasting/_progress.md` and stop. The user can fix the issue and run `/transmute:cast resume`.
 6. **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json` and lock files. Run one, commit, then the other.
+7. **Always run 5B after Stage 5** — never skip. Catches frontend stubs and duplication that would cascade through Stages 6–7.
 
 ## Stage Execution Protocol
 
@@ -83,9 +84,9 @@ For each stage:
 | 6H | prelaunch | 6A–6G complete | `plancasting/_launch/readiness-report.md` |
 | 6V | verify | 6H READY | `plancasting/_audits/visual-verification/report.md` |
 | 6R | remediate | 6V (if failures) | `plancasting/_audits/runtime-remediation/report.md` |
-| 6P | polish | 6R PASS or 6V PASS | `plancasting/_audits/visual-polish/report.md` |
-| 6P-R | redesign | 6R PASS or 6V PASS (alternative to 6P) | `plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md` |
-| 7 | Manual deployment | 6P or 6P-R PASS/CONDITIONAL PASS | Production environment |
+| 6P | polish | Running app + 6R report (or 6V report if 6R was skipped) | `plancasting/_audits/visual-polish/report.md` |
+| 6P-R | redesign | Running app + 6R report (or 6V report if 6R was skipped) (alternative to 6P) | `plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md` |
+| 7 | Manual deployment | 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (recommended) | Production environment |
 | 7V | smoke | Stage 7 complete | `plancasting/_audits/production-smoke/report.md` |
 | 7D | user-guide | 7V PASS | `user-guide/` directory |
 | 8 | feedback | 7V PASS (if 7D was run, must be PASS or WARN) | Updated specs + code |
@@ -94,10 +95,11 @@ For each stage:
 ## Gate Logic
 
 ### 5B Gate
-- **PASS** (zero Category C issues) → proceed to Stage 6
-- **CONDITIONAL PASS** (1–3 Category C documented) → proceed to Stage 6
-- **FAIL-RETRY** (4–5 Category C, or total unfixed 4–5 only when no CONDITIONAL PASS condition is met) → set affected features to `🔄 Needs Re-implementation` in `plancasting/_progress.md`, re-run Stage 5, then re-run 5B
+- **PASS** (zero remaining issues AND all tests pass — no regressions from 5B fixes) → proceed to Stage 6
+- **CONDITIONAL PASS** (≤3 Category C, each documented with workaround; ALL issues must have documented workarounds) → proceed to Stage 6
+- **FAIL-RETRY** (4–5 Category C, OR 3+ A/B unfixed, OR total unfixed 4–5, OR test failures from 5B fixes) → set affected features to `🔄 Needs Re-implementation` in `plancasting/_progress.md`, re-run Stage 5, then re-run 5B
 - **FAIL-ESCALATE** (6+ Category C, OR 6+ total unfixed across all categories combined) → stop pipeline, escalate to operator for manual intervention
+- **Per-feature tracking**: If a single feature reports FAIL-RETRY three consecutive times, automatically escalate that feature to FAIL-ESCALATE. Track per-feature run counts in the 5B report's Run History section.
 - **Auto-escalation**: 3 consecutive FAIL-RETRY reports automatically escalate to FAIL-ESCALATE
 
 ### 6V Gate (Dual System)
@@ -122,7 +124,7 @@ For each stage:
 ### Post-6R
 - PASS/CONDITIONAL PASS → proceed to 6P or 6P-R
 - FAIL → resolve, re-run 6V → 6R
-- **Max 3 internal fix-verify cycles per run**: After 3 cycles within a single 6R run, persistent issues escalate to 6V-C. Operator may: (a) manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed. **Max 2 outer 6V→6R cycles total** — after 2 cycles, document remaining issues as known limitations and proceed to 6P/6P-R.
+- **Max 3 internal fix-verify cycles per run**: After 3 cycles within a single 6R run, persistent issues escalate to 6V-C. The 3-cycle counter resets only after a full 6V re-run between 6R sessions — simply re-running 6R without a 6V re-run does NOT reset it. Track outer cycle count by noting cycle number in report headers. Operator may: (a) manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed. **Max 2 outer 6V→6R cycles total** — after 2 cycles, document remaining issues as known limitations and proceed to 6P/6P-R.
 - **Rule extraction**: Successful 6V-A/6V-B fixes are captured as verified fix patterns in `.claude/rules/` (highest confidence — battle-tested).
 
 ### 6P vs 6P-R Selection

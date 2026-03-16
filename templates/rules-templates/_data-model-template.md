@@ -3,17 +3,18 @@ description: Template for data model rules — index definitions, soft-delete pa
 globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 ---
 
+<!-- Glob note: if the backend is schemaless (e.g., Convex has no migration directory), Stage 3 should remove the `[MIGRATION_DIR]/**` glob and omit the Schema Changes section. -->
+
 # Data Model Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
 
 ## Indexes
 
-<!-- Source: Stage 3 | Evidence: tech-stack.md | Confidence: HIGH -->
+<!-- TODO: Stage 3 — replace with actual index definition pattern for [SCHEMA_DIR]. Source: tech-stack.md | Confidence: HIGH -->
 
-- Every query pattern used in production code must have a supporting index in `[SCHEMA_DIR]` — add the corresponding index in the same commit as the query (backend rules enforce indexed queries; coordinate when adding new query patterns).
+- Every query pattern used in production code must have a supporting index in `[SCHEMA_DIR]` — add the corresponding index in the same commit as the query. Review index usage during Stage 9 — remove unused indexes to reduce write overhead.
 - Compound indexes: place equality fields before range fields for optimal performance.
-- Review index usage periodically — remove unused indexes to reduce write overhead.
 
 ```typescript
 // TODO: Replace with actual index definition pattern
@@ -66,3 +67,4 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 
 - Every table containing user data must include a `[TENANT_ID_FIELD]` foreign key (e.g., `orgId`, `workspaceId`) — queries must always filter by tenant scope.
 - Unique constraints on user-facing fields (e.g., project name, slug) must be composite with the tenant ID to allow the same name across different tenants.
+- See `.claude/rules/backend.md` § Query Filters for the corresponding query-level enforcement pattern.

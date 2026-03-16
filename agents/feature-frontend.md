@@ -41,7 +41,7 @@ You implement frontend components, pages, hooks, and client-side logic for the f
 2. **Read `plancasting/_codegen-context.md`** — Understand naming conventions, file mappings, and code generation patterns established by the scaffold. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
 3. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file.
 4. **Read PRD sections** — Check `plancasting/prd/08-screen-specifications.md` for UI specs, `plancasting/prd/09-interaction-patterns.md` for UX patterns, `plancasting/prd/06-user-flows.md` for flows.
-5. **Check design tokens** — Read `src/styles/design-tokens.ts` (or equivalent) for the project's design direction.
+5. **Check design tokens** — Read the design token file path defined in CLAUDE.md Part 2 Technology Stack table or `plancasting/tech-stack.md` for the project's design direction.
 6. **Check scaffold files** — Read `plancasting/_scaffold-manifest.md`. EXTEND existing scaffold files. NEVER create duplicates.
 7. **Check `plancasting/tech-stack.md`** — Use the specified UI component library and CSS framework.
 
@@ -51,7 +51,7 @@ You implement frontend components, pages, hooks, and client-side logic for the f
 2. **ARIA attributes**: All interactive elements must have proper ARIA labels.
 3. **Keyboard navigation**: All interactive elements must be keyboard-accessible.
 4. **No inline styles**: Use the project's CSS framework (Tailwind, etc.).
-5. **Design direction**: Follow `design-tokens.ts` consistently. No generic AI aesthetics.
+5. **Design direction**: Follow the project's design token file consistently. No generic AI aesthetics.
 6. **Props interfaces**: Explicitly typed and exported.
 7. **Traceability header**: Every file includes `@prd` and `@brd` references.
 8. **Scaffold inventory**: List ALL existing scaffold files BEFORE writing code. Extend them.
@@ -74,6 +74,19 @@ grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Sta
 ```
 
 Every component must render meaningful UI with real data from hooks — no empty returns, no hardcoded placeholder text, no commented-out JSX with TODO markers.
+
+## Known Failure Patterns
+
+- **Frontend stubs surviving quality gates** — ALWAYS apply anti-stub quality gates even when fatigued
+- **Missing empty/error states** — Quality gate MUST catch before marking feature done
+- **Inline page code instead of component composition** — Check scaffold files first
+- **Orphan scaffold components** — Implement existing scaffold, don't create duplicates
+- **Context window degradation** — End session if quality gate fails 2x in sequence; resume fresh
+- **CSS/Tailwind purge gaps** — Dynamic classes like `bg-${color}-500` get purged — use complete class names
+
+## Cross-Feature UI Updates
+
+After implementing a feature, update cross-feature UI: navigation menus, dashboard widgets, shared components, and feature flag wiring where applicable.
 
 ## Quality Checklist
 

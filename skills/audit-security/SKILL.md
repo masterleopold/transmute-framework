@@ -111,7 +111,7 @@ Scope: HTTP security headers, CORS, CSP, dependencies, rate limiting, audit logg
 - Check CORS configuration — flag `Access-Control-Allow-Origin: *`. Verify credentials mode is correctly configured.
 - Run dependency vulnerability scan. For Bun projects: use `bunx audit-ci`, `npx better-npm-audit audit`, or `npx snyk test`. For npm/yarn: `npm audit`. For pnpm: `pnpm audit`. If none can be installed, document that scanning could not be performed and recommend manual review. Flag critical/high severity issues and known CVEs. Verify lock file integrity.
 - **Rate Limiting — 6A/6G Scope Boundary**: Rate limiting for AUTH endpoints (login, signup, password reset, forgot password, MFA challenge/verify, token refresh, session management — logout, session revocation) is Stage 6A's responsibility — implement these now. Rate limiting for DATA-MUTATION endpoints (create, update, delete, file uploads) is Stage 6G's responsibility. Flag data-mutation rate limiting gaps for Stage 6G to implement.
-  - **Edge case classifications**: Password change = AUTH (6A). User profile update = DATA-MUTATION (6G). Email verification re-send = AUTH (6A). MFA device management = AUTH (6A). Invitation acceptance = AUTH (6A). Account linking = AUTH (6A). Signup = AUTH (6A).
+  - **Edge case classifications**: Password change = AUTH (6A). User profile update = DATA-MUTATION (6G). Email verification re-send = AUTH (6A). MFA device management = AUTH (6A). Invitation acceptance = AUTH (6A). Account linking = AUTH (6A). Signup = AUTH (6A). Password-reset email send = AUTH (6A, auth flow).
   - If Stage 6G report already exists (`./plancasting/_audits/resilience/report.md`), verify no scope overlap. If ambiguous, flag as a decision point for the lead to reconcile.
 - Verify security-sensitive operations are logged and logs contain no sensitive data.
 - Fix each issue found.
@@ -181,3 +181,4 @@ Use these consistently — do not deflate:
 8. ALWAYS verify rate limiting on auth endpoints. Flag data-mutation gaps for Stage 6G. See the 6A/6G scope boundary: 6A = auth-protecting endpoints; 6G = data-mutation endpoints. Do NOT implement data-mutation rate limiting in Stage 6A.
 9. Use commands from CLAUDE.md for running tests.
 10. Reference Stage 5B output to avoid auditing stub/incomplete features.
+11. For safety-critical rules and pipeline-level security constraints, see CLAUDE.md § Pipeline Execution Guide → Safety-Critical Rules (or execution-guide.md if CLAUDE.md defers to it).

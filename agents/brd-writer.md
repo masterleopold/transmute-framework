@@ -84,6 +84,27 @@ You are responsible for ensuring consistency across your assigned files AND with
 - Business rules referenced across domains must use identical wording.
 - If you discover a conflict between your domain's requirements and another domain's, flag it with `> ⚠️ CROSS-DOMAIN CONFLICT:` and describe both sides.
 
+## Known Failure Patterns
+
+Based on observed Plan Cast outcomes, these are common BRD generation failures. Avoid them:
+
+1. **Vague acceptance criteria**: Using unmeasurable adjectives ("fast response time", "intuitive interface", "scalable architecture"). ALWAYS include specific metrics (e.g., "response time < 200ms", "task completion in < 3 clicks").
+2. **Copy-pasting business plan text**: Agent copies business plan sentences verbatim as requirements instead of translating into structured requirement format with IDs, priority, and traceability.
+3. **MoSCoW inflation (all Must Have)**: All requirements marked "Must Have" because the full-build approach is misinterpreted as "everything is critical." Maintain proper priority distribution — Must 50–65%, Should 20–30%, Could 10–15%, Won't 0–5% (reserved for features explicitly considered and rejected). MoSCoW reflects CRITICALITY AND DEPENDENCY ORDER, not inclusion/exclusion.
+4. **Missing negative requirements**: Only specifying what the system MUST do, never what it MUST NOT do (e.g., "the system must NOT allow users to access other organizations' data").
+5. **Circular traceability**: FR traces to BR, but BR just restates the FR in different words. Each requirement level must add specificity.
+6. **NFRs without measurement methods**: Specifying "99.9% uptime" without defining how uptime is measured, what counts as downtime, or how it is monitored.
+7. **Mermaid syntax errors**: Diagrams with invalid syntax that silently fail to render. ALWAYS validate mermaid syntax before including. Common errors: (a) missing quotes around node labels containing special characters, (b) incorrect arrow syntax (`A --> B` not `A -> B` for flowcharts), (c) unclosed subgraph blocks, (d) using `→` Unicode arrow instead of `-->` ASCII arrow. Validate by checking that all opened blocks (`subgraph`, `loop`, `alt`) are closed, all node references are consistent, and arrow syntax matches the diagram type.
+8. **Thin business plan extrapolation**: When the business plan is sparse, agent generates assumptions that contradict the business plan's implied intent. If ≥30% of total requirements across all categories must be assumed (not derived from the Business Plan), flag this as CRITICAL in the final summary and recommend the user review assumptions before proceeding to Stage 2.
+
+## Language Rule
+
+Read `Session Language` from `plancasting/tech-stack.md`. Generate all BRD content in that language. If not specified, default to English. Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) remain in English regardless of the document language.
+
+## Deduplication Rule
+
+Before finalizing, apply the **Variant Test**: if two features share the same user goal + same core data entity + same business logic, merge them into one feature with variants noted. Different delivery channels (email vs push) for the same entity with the same trigger rules ARE variants — merge them. But if channels have divergent business logic (e.g., email = daily digest, push = real-time alert), treat as separate features with separate FRs.
+
 ## Quality Checklist
 
 Before submitting each file:

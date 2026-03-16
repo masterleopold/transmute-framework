@@ -197,7 +197,7 @@ After ALL features are Done in `plancasting/_progress.md`:
 If resuming a previously interrupted implementation:
 1. Read `plancasting/_progress.md` for feature status.
 2. For In Progress features: check `plancasting/_briefs/` to determine where implementation stopped. Inspect the codebase to establish sub-status: (a) Backend: check if backend functions exist with real logic (not just scaffolds), (b) Frontend: check if components/pages render real UI connected to hooks, (c) Tests: check if test files exist with passing assertions. Resume from the first incomplete layer — do NOT re-spawn teammates for layers that are already complete.
-3. For Needs Re-implementation features (set by Stage 5B): read `./plancasting/_audits/implementation-completeness/report.md` for specific gaps. Focus frontend teammate on replacing stubs. Only re-run backend teammate if audit explicitly flags backend issues.
+3. For Needs Re-implementation features (set by Stage 5B): read `./plancasting/_audits/implementation-completeness/report.md` for specific gaps. Focus frontend teammate on replacing stubs. Only re-run backend teammate if audit explicitly flags backend issues. For features with `🔄` status: keep as 🔄 (not 🔧) so next session rebuilds from scratch.
 4. For `⏸ Blocked` features: check if blocking dependency is now Done. If yes, unblock and add to queue.
 5. Resume from first incomplete step. Do NOT restart from beginning.
 
@@ -213,8 +213,8 @@ If resuming a previously interrupted implementation:
 8. ALWAYS update `plancasting/_progress.md` after each feature cycle.
 9. ALWAYS run FULL test suite at each quality gate.
 10. Split features requiring 15+ files into sub-features.
-11. ALWAYS run the Full-Product Completion Sequence before the final report.
-12. The final report must show 100% PRD coverage.
+11. ALWAYS run the Full-Product Completion Sequence before the final report. If `plancasting/_implementation-report.md` exists but lacks a 'Launch Readiness Assessment' section, re-run the Full-Product Completion Sequence.
+12. The final report must show 100% PRD coverage. All features MUST show Done (or Blocked with documented reason).
 
 ## Output Specification
 

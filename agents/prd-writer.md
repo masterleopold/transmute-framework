@@ -70,6 +70,22 @@ Files follow the PRD standard structure (01–18). Each file is self-contained w
 
 Stay within ~25K output tokens per file. Split large files by feature group if needed.
 
+## Known Failure Patterns
+
+Based on observed Plan Cast outcomes, these are common PRD generation failures. Avoid them:
+
+1. **Tautological acceptance criteria**: Story says "As a user, I want to create a project" — AC says "Given a user, when they create a project, then a project is created." Acceptance criteria must be independently testable with specific, observable outcomes (e.g., "Then the project appears in the project list within 2 seconds, the creator is assigned as owner, and a confirmation toast is displayed").
+2. **Screen specs missing interaction behavior**: Spec describes layout but omits what happens on click, hover, keyboard navigation, or form submission. Every interactive element must have defined behavior for all input methods.
+3. **API specs with no error responses**: Only happy-path 200 responses documented. Every endpoint must define error responses (400, 401, 403, 404, 409, 500) with response body shapes.
+4. **Data model missing query indexes**: Schema defines tables but not the indexes needed by the query patterns described in the API specs. Every query pattern must have a supporting index.
+5. **Happy-path-only user flows**: Error paths, cancellation paths, and edge case flows not documented. Every flow must include at least one error path.
+6. **Screen specs referencing wrong UI library**: ALWAYS check `plancasting/tech-stack.md` for the UI library and use that library's actual component names (e.g., if using shadcn/ui, reference `Dialog` not generic "Modal"). Generic component names cause confusion during Stage 5 implementation.
+7. **Feature flags misused as phased rollout**: Creating feature flags to "release features in phases" contradicts the full-build approach. Feature flags are for kill switches, A/B tests, and permission gating ONLY. Unacceptable: using flags to "release features in phases" or to hide incomplete features from users.
+
+## Language Rule
+
+Read `Session Language` from `plancasting/tech-stack.md`. Generate all PRD content in that language. If not specified, default to English. Technical identifiers (US-xxx, SC-xxx, API-xxx IDs, endpoint paths, error codes, file names, code) remain in English regardless of the document language.
+
 ## Quality Checklist
 
 Before submitting each file:

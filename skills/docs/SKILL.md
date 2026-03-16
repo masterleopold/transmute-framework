@@ -178,6 +178,8 @@ Exception: Changelog should be in Session Language even though it is developer g
 
 ## Gate Decision
 
+Gate: PASS / CONDITIONAL PASS / FAIL — see prompt for criteria.
+
 Include in the report under a `## Gate Decision` heading (6H parses this heading):
 
 - **PASS**: All features documented, all code examples verified, all internal links resolve.

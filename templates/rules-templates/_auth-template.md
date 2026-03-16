@@ -1,16 +1,17 @@
 ---
 description: Template for auth rules — middleware configuration, public route whitelisting, session handling, and role-based authorization.
 globs: ["[AUTH_DIR]/**", "[MIDDLEWARE_PATH]"]
-# Glob note: the first pattern matches the auth directory recursively, the second matches a single middleware file (e.g., middleware.ts).
 ---
+
+<!-- Glob note: the first pattern matches the auth directory recursively, the second matches a single middleware file (e.g., middleware.ts). -->
 
 # Auth Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/auth.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[AUTH_HELPER]`, `[MIDDLEWARE_PATH]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/auth.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/auth.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[AUTH_HELPER]`, `[MIDDLEWARE_PATH]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/auth.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/auth.md` instead.
 
 ## Public Routes
 
-<!-- Source: Stage 3 | Evidence: tech-stack.md | Confidence: HIGH -->
+<!-- TODO: Stage 3 — replace with actual public route configuration for [AUTH_DIR]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Add routes to the public whitelist EXPLICITLY in `[PUBLIC_ROUTES_CONFIG]` — never use wildcard patterns (e.g., `/api/*`).
 - Every new public route must have a comment explaining why it is public.
@@ -47,7 +48,7 @@ globs: ["[AUTH_DIR]/**", "[MIDDLEWARE_PATH]"]
 
 <!-- TODO: Stage 3 — replace with actual role/permission model. Source: tech-stack.md, BRD security requirements | Confidence: HIGH -->
 
-- **Permission model**: `[RBAC / ABAC / Custom]` — see `[ROLE_DEFINITIONS_PATH]` for the authoritative role/permission list.
+- **Permission model**: `[PERMISSION_MODEL]` (e.g., RBAC, ABAC, or Custom) — see `[ROLE_DEFINITIONS_PATH]` for the authoritative role/permission list.
 - Verify role or permission before allowing mutations that modify shared resources.
 - Role definitions live in `[ROLE_DEFINITIONS_PATH]`. Roles are scoped per-tenant — a user can have different roles in different organizations.
 - Use the principle of least privilege — default to denied, explicitly grant access.

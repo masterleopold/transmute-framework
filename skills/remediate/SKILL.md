@@ -57,7 +57,7 @@ Complete BEFORE spawning teammates:
    - Read `./plancasting/_audits/runtime-remediation/loop-count.txt`. If absent, this is run 1 — proceed.
    - If it contains `1` or `2`, previous runs have completed — proceed.
    - If it contains `3`, 3 runs have already completed — STOP immediately. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` and halt. Do NOT proceed to 6P or 6P-R.
-   - **Counter increment**: Do NOT write to `loop-count.txt` here. The counter is incremented at the END of Phase 4 (after verification completes) to ensure it tracks completed runs, not started runs.
+   - **Counter increment**: Do NOT write to `loop-count.txt` here. The counter is incremented at the END of Phase 4 (after verification completes) to ensure it tracks completed runs, not started runs. **Important**: The 3-cycle counter resets only after a full 6V re-run between 6R sessions — simply re-running 6R without a 6V re-run does NOT reset it.
 
 2. **Read project context**: `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/_audits/visual-verification/report.md`
 
@@ -161,6 +161,7 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/6V-B issues p
 - Create `remaining-blockers.md` listing all unresolved issues
 - Operator must: (a) manually resolve, re-run 6V, then 6R if needed, OR (b) document as known limitations and proceed to 6P
 - If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed
+- **Outer cycle tracking**: Track outer cycle count by counting 6R report files or noting cycle number in report headers
 
 ## Gate Decision
 
