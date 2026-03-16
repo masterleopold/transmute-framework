@@ -122,7 +122,7 @@ For each stage:
 ### Post-6R
 - PASS/CONDITIONAL PASS → proceed to 6P or 6P-R
 - FAIL → resolve, re-run 6V → 6R
-- **Max 3 completed loops**: After 3 loops, persistent issues escalate to Category C. Operator may: (a) manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed. Choose based on severity and available time.
+- **Max 3 internal fix-verify cycles per run**: After 3 cycles within a single 6R run, persistent issues escalate to 6V-C. Operator may: (a) manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed.
 - **Rule extraction**: Successful Category A/B fixes are captured as verified fix patterns in `.claude/rules/` (highest confidence — battle-tested).
 
 ### 6P vs 6P-R Selection

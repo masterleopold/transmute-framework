@@ -33,7 +33,7 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/redesign-detailed-gu
 
 **Mutual Exclusion with 6P**: 6P and 6P-R are mutually exclusive. To switch from 6P to 6P-R: (1) commit all current work including 6P changes, (2) revert the 6P commit with `git revert <6P-commit-hash>`, (3) start a new session and run 6P-R.
 
-**Stage Sequence**: ... → 6V → [6R — only if 6V found A/B issues] → **6P-R** → 7 (Deploy) → 7V → 7D → 8 / 9
+**Stage Sequence**: ... → 6V → [6R — only if 6V found 6V-A/B issues] → **6P-R** → 7 (Deploy) → 7V → 7D → 8 / 9
 
 ## Prerequisites
 
@@ -41,8 +41,8 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/redesign-detailed-gu
 
 2. **Stage 6V/6R should be complete** (if applicable):
    - If 6R report exists: must show PASS or CONDITIONAL PASS
-   - If only 6V report exists: must show PASS or CONDITIONAL PASS with only Category C issues (6R correctly skipped)
-   - If 6V shows CONDITIONAL PASS with Category A/B issues: STOP — run 6R first
+   - If only 6V report exists: must show PASS or CONDITIONAL PASS with only 6V-C issues (6R correctly skipped — 6R cannot fix human-judgment issues)
+   - If 6V shows CONDITIONAL PASS with 6V-A/6V-B issues: STOP — run 6R first
    - If neither exists: verify with operator that prior stages were intentionally skipped
 
 3. **Browser automation tools available**: Playwright MCP tools required (browser_navigate, browser_resize, browser_take_screenshot, browser_fill_form, browser_click, browser_console_messages, browser_snapshot, browser_evaluate).

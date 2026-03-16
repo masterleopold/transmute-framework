@@ -17,8 +17,8 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-detailed-guide
 
 ## Why This Stage Exists
 
-Stage 5 builds all features sequentially. In practice, a recurring pattern emerges: backend implementations are thorough, but many frontend components remain as stubs — scaffold-quality code with placeholder text, unconnected hooks, or missing interactive behavior. This happens because:
-- Even with the pipeline model's full context window (see tech-stack.md), quality degrades over extended sessions as accumulated context competes with per-feature attention
+Stage 5 (Feature Implementation) builds all features sequentially. In practice, a recurring pattern emerges: backend implementations are thorough and complete, but many frontend components remain as stubs — scaffold-quality code with placeholder text, unconnected hooks, missing interactive behavior, or components that exist in files but are never rendered. This happens because:
+- Even with the pipeline model's full context window (see tech-stack.md § Model Specifications), quality degrades over extended sessions (beyond the session feature limit) as accumulated context competes with per-feature attention
 - Per-feature quality gates become less rigorous as the session progresses
 - Frontend teammates produce "looks done" output that passes a fatigued quality gate
 
@@ -29,14 +29,14 @@ This stage runs with a FRESH context window, focused SOLELY on finding and fixin
 Issues found during this audit are classified into three SIZE-BASED categories:
 
 - **Category A**: <30 non-blank non-comment lines per affected file — stub text replacement, dead links, missing simple states
-- **Category B**: 30-100 lines per file AND <150 lines total across all affected files — component body rebuild, form handler wiring, modal content population
-- **Category C**: >=100 lines in any single file OR >=150 lines total across all affected files OR unbuilt features — escalate to Stage 5 re-run
+- **Category B**: 30–100 lines per file AND <150 lines total across affected files — component body rebuild, form handler wiring, modal content population
+- **Category C**: ≥100 lines in any single file OR ≥150 lines total across all affected files OR unbuilt features — escalate to Stage 5 re-run
 
 > This differs from Stage 6V/6R, which classifies by FIXABILITY (A = auto-fixable, B = semi-auto, C = needs human judgment). Size-based categories here determine whether the fix is small enough for a 5B teammate to handle or requires a full Stage 5 re-run.
 
-**Multi-file classification rule**: Category A — all files need <30 lines each. Category B — largest file needs <100 lines AND total across all files <150 lines. Category C — largest file needs >=100 lines OR total >=150 lines. If ambiguous, default to the higher category.
+**Multi-file classification rule**: Category A — all files need <30 lines each. Category B — largest file needs <100 lines AND total across all files <150 lines. Category C — largest file needs ≥100 lines OR total ≥150 lines across all affected files. If ambiguous, default to the higher category. If multiple independent issues happen to be in the same feature, classify each issue separately.
 
-**What Stage 5B Does NOT Do**: Does NOT create entirely new backend functions (Stage 5), refactor architecture (6E), add error handling patterns (6G), or fix security issues (6A). If a fix requires >100 lines of net-new code in a single file, it's Category C and gets escalated.
+**What Stage 5B Does NOT Do**: Stage 5B fixes cosmetic/moderate gaps (Category A/B) and documents large gaps (Category C). It does NOT: (1) create entirely new backend functions or API endpoints — that's Stage 5 re-implementation, (2) build new features from scratch — only completes partially-built features, (3) refactor architecture — that's Stage 6E, (4) add error handling patterns — that's Stage 6G, (5) fix security issues — that's Stage 6A. If a fix requires >100 lines of net-new code in a single file, it's Category C and gets escalated back to Stage 5.
 
 ## Prerequisite Checks
 
@@ -45,35 +45,43 @@ Issues found during this audit are classified into three SIZE-BASED categories:
 3. Verify source code directories exist (check `plancasting/tech-stack.md` for paths). If no source code beyond scaffold: STOP — "Stage 5B requires Stage 5 implementation."
 4. Verify `./CLAUDE.md` exists. If missing: WARN — "Proceeding without project-specific conventions."
 
-## Known Failure Patterns
+## Known Failure Patterns (Prioritized)
 
-### Frontend Stubs (PRIMARY — ~80% of issues)
-1. Scaffold component bodies (single `<div>` with feature name, e.g., `<div>Task Management</div>`)
-2. Unconnected hooks (useState with mock data instead of real hook, e.g., `const [items] = useState([])`)
-3. Missing form handlers (onSubmit only calls preventDefault, e.g., `onSubmit={(e) => e.preventDefault()}`)
-4. Placeholder navigation (href="#" or empty onClick, e.g., `<a href="#">View Details</a>`)
-5. Missing state handling (no loading, error, empty states — component only renders the happy path)
-6. Orphan components (files never imported by any page — detected by import analysis)
-7. Inline page stubs (heading + `<p>` tag instead of composed components, e.g., `<h1>Settings</h1><p>Coming soon</p>`)
-8. Missing i18n keys (hardcoded English strings instead of translation keys)
-9. Stub modals/dialogs (empty modal body or placeholder content)
-10. Missing responsive behavior (no mobile breakpoint handling)
+Based on observed Plan Cast outcomes, these are the most common stub patterns, ordered by frequency:
 
-### Backend Stubs (SECONDARY — ~15%)
-1. Action stubs logging "not implemented"
-2. Missing validation of business rules
-3. Incomplete error handling
+### Frontend Stubs (PRIMARY — ~80% of issues) (observed across early Plan Casts; percentages are approximate)
+1. **Scaffold component bodies**: Components that return a single `<div>` or `<p>` with the feature name and description, no real UI
+2. **Unconnected hooks**: Components that import a hook but use `useState("")` or hardcoded mock data instead of the hook's return value
+3. **Missing form handlers**: Forms with `onSubmit` that calls `e.preventDefault()` and nothing else
+4. **Placeholder navigation**: Links using `href="#"` or `onClick={() => {}}` instead of real routes
+5. **Missing state handling**: Components that render the happy-path state but skip loading, error, and empty states entirely
+6. **Orphan components**: Component files that exist but are never imported by any page or parent component
+7. **Inline page stubs**: Pages that render a heading and a `<p>` tag instead of composing the feature's components
+8. **Missing i18n keys**: Components using translation keys that don't exist in the messages file
+9. **Stub modals/dialogs**: Modal triggers that exist but the modal component is a placeholder
+10. **Missing responsive behavior**: Components that only work at desktop width with no mobile consideration
 
-### Duplication Pattern (SECONDARY — ~15%)
-1. Orphan component files + inline page UI for same purpose
-2. Bloated pages (200+ lines of inline UI)
-3. Duplicate hook imports in both orphan component and page
-4. Missing component composition
+### Backend Stubs (SECONDARY — ~15% of issues)
+1. **Action stubs**: Actions that log "not implemented" instead of calling external APIs
+2. **Missing validation**: Functions that accept arguments but don't validate business rules from BRD
+3. **Incomplete error handling**: Functions that catch errors but return generic messages instead of your backend error type (e.g., `ConvexError` for Convex) with proper codes
 
-### Integration Gaps (~5%)
-1. Cross-feature data flows using mock data
-2. Navigation gaps (not all features in sidebar/navbar)
-3. Dashboard widgets showing hardcoded zeros
+### Duplication Pattern (SECONDARY — ~15% of issues in well-scaffolded projects; overlaps with frontend stubs)
+
+This pattern is DISTINCT from stubs. It occurs when Stage 5's frontend teammate builds UI inline in page files instead of implementing inside existing scaffold component files. The result is:
+1. **Orphan components**: Scaffold component files exist in `[components-dir]` but are never imported by any page — because the page rebuilt the same UI inline
+2. **Bloated pages**: Page files that contain 200+ lines of inline UI (hooks, state, JSX) that should be decomposed into the scaffold's component files
+3. **Duplicate logic**: The same hook is imported in both the orphan component AND the page file, but only the page's version is rendered
+4. **Missing component composition**: Pages that should compose 3-5 components instead render everything in a single monolithic return statement
+
+**Root cause**: Stage 5's frontend teammate reads the feature brief and PRD screen spec, then writes fresh code in the page file without first checking what scaffold files already exist. The scaffold manifest (`plancasting/_scaffold-manifest.md`) was not consulted.
+
+**Detection**: Pages with many hook imports but zero component imports from `[components-dir]` are suspicious. Cross-reference with the scaffold manifest if it exists.
+
+### Integration Gaps (~5% of issues)
+1. **Cross-feature data flows**: Feature A produces data that Feature B should display, but B uses mock data
+2. **Navigation gaps**: Sidebar/navbar links that don't include all implemented features
+3. **Dashboard aggregation**: Dashboard widgets that show hardcoded zeros instead of real query results
 
 ## Stack Adaptation
 
@@ -83,7 +91,12 @@ Before running any scans, read `plancasting/tech-stack.md` to determine actual d
 
 ### Phase 1: Lead Analysis (Before Spawning Teammates)
 
-1. **Read project context**: `CLAUDE.md`, `plancasting/tech-stack.md`, `plancasting/_progress.md`, `plancasting/_implementation-report.md`, `plancasting/_briefs/`
+1. **Read project context**:
+   - `./CLAUDE.md` — internalize all conventions
+   - `./plancasting/tech-stack.md` — understand the stack
+   - `./plancasting/_progress.md` — see what Stage 5 marked as "Done"
+   - `./plancasting/_implementation-report.md` — see Stage 5's own assessment
+   - `./plancasting/_briefs/` — read relevant feature briefs to understand Stage 5's planned implementation scope
 
 2. **Build Feature Inventory from PRD**:
    - Read `plancasting/prd/02-feature-map-and-prioritization.md` — list ALL features
@@ -116,16 +129,20 @@ Before running any scans, read `plancasting/tech-stack.md` to determine actual d
 
 ### Phase 2: Spawn Fix Teammates
 
-Apply the early exit decision table:
+Apply the early exit decision table (covers cases where no teammate spawning is needed — if Category A/B count >= 1, proceed to teammate spawning regardless):
 
 | Cat A/B count | Cat C count | Gate Decision | Action |
 |---|---|---|---|
-| 0 | 0 | PASS | Skip Phase 2-3 -> Stage 6 |
-| 0 | 1-3 | CONDITIONAL PASS | Skip Phase 2-3, document Cat C -> Stage 6 |
-| 0 | 4-5 | FAIL-RETRY | Skip Phase 2-3, document Cat C -> re-run 5B (max 3 runs) |
+| 0 | 0 | PASS | Skip Phase 2-3 -> generate report -> Stage 6 |
+| 0 | 1–3 | CONDITIONAL PASS | Skip Phase 2-3, document Cat C -> Stage 6 |
+| 0 | 4–5 | FAIL-RETRY | Skip Phase 2-3, document Cat C -> re-run 5B (max 3 runs) |
 | 0 | 6+ (or total unfixed >=6) | FAIL-ESCALATE | Skip Phase 2-3, document Cat C -> re-run Stage 5 |
 | 1+ | any | *(after fixes)* | Spawn teammates for A/B fixes, document Cat C |
-| any (Run 4+) | any | FAIL-ESCALATE | Skip Phase 2 auto-fixes, reclassify remaining A/B as Cat C |
+| any (Run 4+) | any | FAIL-ESCALATE | Skip Phase 2 auto-fixes, reclassify all remaining A/B as Cat C |
+
+**Per-feature escalation rule**: If a single feature (same FEAT-ID) reports FAIL-RETRY three consecutive times across 5B re-runs, that feature automatically escalates to FAIL-ESCALATE regardless of overall category counts.
+
+When skipping Phase 2-3, the lead MUST still generate the audit report with gate decision and Category C details. Phase 4 (report) and Phase 5 (rule extraction) ALWAYS run regardless of early exit.
 
 Spawn Teammates 1 and 2 in parallel. Teammate 3 MUST wait until both complete.
 
@@ -153,17 +170,21 @@ Spawn Teammates 1 and 2 in parallel. Teammate 3 MUST wait until both complete.
 
 ### Phase 3: Coordination
 
+**Mandatory file conflict prevention**: Before spawning, assign mutually exclusive file sets to Teammates 1 and 2. If shared files exist, assign them to Teammate 1 exclusively. Teammate 2 MUST NOT modify frontend-owned files.
+
 While teammates work:
-1. Monitor for Category C escalations — document in `plancasting/_progress.md`
-2. If FAIL-ESCALATE gate triggered (6+ Cat C, or 6+ total unfixed, or 3 consecutive FAIL-RETRY), note systemic frontend failure in audit report
-3. Resolve conflicts between backend and frontend fixes
-4. Reclassify any fix exceeding Category B scope (>100 lines) as Category C
+1. After each teammate completes, review their completion message for Category C escalations — document in `plancasting/_progress.md`
+2. If FAIL-ESCALATE gate triggered (6+ Cat C, or 6+ total unfixed, or 3 consecutive FAIL-RETRY), note systemic frontend failure in audit report, recommend FULL Stage 5 re-run rather than targeted fixes. For FAIL-RETRY (4–5 Cat C), recommend re-running 5B with targeted fixes.
+3. Resolve conflicts between backend and frontend fixes. If both modify same file, lead reviews and merges.
+4. If teammate stuck on fix exceeding Category B scope (>100 lines), reclassify as Category C and move on.
 
 ### Phase 4: Audit Report & Gate Decision
 
 After all teammates complete:
 
-1. **Update audit report** at `./plancasting/_audits/implementation-completeness/report.md` with:
+1. **Ensure output directory exists**: `mkdir -p ./plancasting/_audits/implementation-completeness/`
+
+2. **Update audit report** at `./plancasting/_audits/implementation-completeness/report.md` with:
    - Summary (total issues by category, fixed counts, Run Number)
    - Fix summary (components fixed, orphans deleted, i18n keys added, backend functions fixed)
    - Verification results (TypeScript, lint, unit tests, E2E, stub scan, orphan scan)
@@ -171,13 +192,13 @@ After all teammates complete:
    - Category C escalations (if any)
    - Issues by feature (detailed breakdown)
 
-2. **Update `plancasting/_progress.md`**: Mark Category C features as Needs Re-implementation. Add Stage 5B Audit section.
+3. **Update `plancasting/_progress.md`**: Mark Category C features as Needs Re-implementation. Add Stage 5B Audit section.
 
-3. **Gate Decision**:
+4. **Gate Decision**:
    - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs remain -> Stage 6
-   - **CONDITIONAL PASS**: All A/B fixes attempted; 0-2 A/B remain unfixed, OR all A/B fixed AND 1-3 Cat C documented -> Stage 6 with known gaps
-   - **FAIL-RETRY**: 3+ A/B unfixed, OR test failures from 5B fixes, OR 4-5 Cat C -> re-run 5B (max 3 re-runs; 3 consecutive FAIL-RETRY = auto-escalate to FAIL-ESCALATE)
-   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues, OR 3 consecutive FAIL-RETRY reports -> re-run Stage 5 for affected features
+   - **CONDITIONAL PASS**: All A/B fixes attempted; 0–2 A/B remain unfixed (each documented with explanation), OR all A/B fixed AND 1–3 Cat C documented. If BOTH unfixed A/B AND Cat C exist, apply CONDITIONAL PASS only if total unfixed (A/B + C) ≤ 3; otherwise FAIL-RETRY -> Stage 6 with known gaps
+   - **FAIL-RETRY**: 3+ A/B unfixed, OR test failures from 5B fixes, OR 4–5 Cat C -> re-run 5B (max 3 re-runs; 3 consecutive FAIL-RETRY = auto-escalate). Before re-running, diagnose WHY the fix failed — re-running without diagnosis will loop. If Run 4+, skip Phase 2 and escalate all remaining A/B to Cat C.
+   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues across all categories combined, OR 3 consecutive FAIL-RETRY reports -> re-run Stage 5 for affected features
 
 ### Phase 5: Rule Extraction (Post-Gate)
 
@@ -196,12 +217,14 @@ Shut down all teammates. Output final summary: gate decision, issues fixed, esca
 
 If interrupted:
 1. Check if `./plancasting/_audits/implementation-completeness/report.md` exists.
-2. If it has Fix Summary + Verification Results: skip to Phase 4.
-3. If it has Fix Summary but no Verification Results: check which teammates finished, re-spawn incomplete ones, then spawn Teammate 3.
-4. If it has Issues Found but no Fix Summary: skip to Phase 2.
-5. If report does not exist: restart from Phase 1.
-6. Check `plancasting/_progress.md` for features already marked as Needs Re-implementation.
-7. Determine Run Number: If existing report has Run Number, increment by 1. If Run 4+, skip Phase 2 auto-fixes — escalate all remaining A/B to Category C.
+2. If it exists, check its contents:
+   - (a) If it has Fix Summary + Verification Results with test results: Phase 2+3 completed — skip to Phase 4 for gate decision.
+   - (b) If it has Fix Summary but no Verification Results: check which teammates finished (if 'Components fixed:' line exists, Teammate 1 completed; if 'Backend functions fixed:' line exists, Teammate 2 completed; missing line = incomplete teammate). Re-spawn incomplete ones, then spawn Teammate 3.
+   - (c) If it has Issues Found but no Fix Summary: Phase 1 completed, Phase 2 not started — skip to Phase 2.
+   - (d) If no Issues Found section: Phase 1 scan did not complete — restart Phase 1.
+3. If report does not exist: restart from Phase 1.
+4. Check `plancasting/_progress.md` for features already marked as Needs Re-implementation.
+5. Determine Run Number: If existing report has Run Number, increment by 1. If Run 4+ (third re-run), skip Phase 2 auto-fixes — escalate all remaining A/B to Category C. Common causes for reaching Run 4: (a) backend dependencies still missing, (b) teammate repeatedly making identical mistakes.
 
 ## Critical Rules
 

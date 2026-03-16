@@ -1489,7 +1489,7 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 |---|---|
 | PASS | → 6P or 6P-R |
 | CONDITIONAL PASS | Human reviews, then 6P or 6P-R |
-| FAIL | Fix Category C manually, re-run 6V, then 6R if needed (max 3 completed 6R loops total) |
+| FAIL | Fix 6V-C manually, re-run 6V, then 6R if needed (max 3 internal fix-verify cycles per 6R run) |
 
 **Post-6P / 6P-R routing**:
 

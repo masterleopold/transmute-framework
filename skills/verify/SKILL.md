@@ -156,8 +156,8 @@ A flaky scenario fails inconsistently (fails once, passes on retest). Retest a f
 ## Next Steps
 
 - PASS: skip 6R -> proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
-- CONDITIONAL PASS with Category A/B issues: proceed to Stage 6R (Runtime Remediation)
-- CONDITIONAL PASS with ONLY Category C issues: skip 6R -> proceed to Stage 6P or 6P-R
+- CONDITIONAL PASS with 6V-A/B issues: proceed to Stage 6R (Runtime Remediation)
+- CONDITIONAL PASS with ONLY 6V-C issues: skip 6R -> proceed to Stage 6P or 6P-R
 - FAIL: fix critical issues manually, then re-run Stage 6V
 
 ## Phase 5: Shutdown

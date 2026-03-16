@@ -159,13 +159,14 @@ If a runtime issue requires architectural changes beyond this stage's scope:
 3. Include in final report under 'Category C Escalations'
 4. Continue fixing remaining A/B issues -- do not block the loop
 
-## Post-3-Loops Escalation
+## Post-3-Cycles Escalation
 
-After 3 completed loops, if Category A/B issues persist:
-- Escalate ALL remaining A/B to Category C
+After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist:
+- Escalate ALL remaining 6V-A/B to 6V-C
 - Update gate to CONDITIONAL PASS
 - Create `remaining-blockers.md` as authoritative list of unresolved issues
-- Operator must: (a) manually resolve, re-run 6V, reset loop-count.txt to 0, OR (b) document as known limitations and proceed to 6P
+- Operator must: (a) manually resolve, re-run 6V, then 6R if needed, OR (b) document as known limitations and proceed to 6P
+- If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed
 
 ## Report Template
 
@@ -210,7 +211,7 @@ After 3 completed loops, if Category A/B issues persist:
 - **CONDITIONAL PASS**: Some high-severity issues remain but documented
 - **FAIL**: Critical issues remain that block deployment
 
-**Loop limit rule**: After 3 completed loops, if A/B issues persist, escalate to Category C. Update gate to CONDITIONAL PASS and proceed to 6P/6P-R.
+**Cycle limit rule**: After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist, escalate to 6V-C. Update gate to CONDITIONAL PASS and proceed to 6P/6P-R. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed.
 
 ## Rules Extracted
 - HIGH confidence (auto-promoted): [n] rules added to `.claude/rules/`
@@ -237,9 +238,9 @@ After 3 completed loops, if Category A/B issues persist:
 11. For i18n fixes: check ALL language files.
 12. For stub pages: ALWAYS include proper auth guards, loading states, and error handling.
 13. If 6V report has zero failures, output a clean report and exit.
-14. Maximum 3 remediation loops. Counter tracks COMPLETED runs:
-    - After 1st session completes -> file contains `1`
-    - After 2nd session completes -> file contains `2`
-    - After 3rd session completes -> file contains `3`
+14. Maximum 3 internal fix-verify cycles per run. Counter tracks COMPLETED cycles:
+    - After 1st cycle completes -> file contains `1`
+    - After 2nd cycle completes -> file contains `2`
+    - After 3rd cycle completes -> file contains `3`
     - When you read `3` at start -> STOP immediately. Do NOT increment to 4.
 15. ALWAYS respect the project's file organization conventions.

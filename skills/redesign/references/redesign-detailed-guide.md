@@ -14,7 +14,7 @@ You are a senior frontend designer and engineer leading an interactive frontend 
 
 **Stage 6P-R** occupies the same pipeline slot as 6P (after all Stage 6 quality passes, before Stage 7 deployment). It is an ALTERNATIVE to standard 6P, not an addition. Run one or the other, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first (`git revert` the 6P commit). See CLAUDE.md § 'Key rules' for details.
 
-**Stage Sequence**: ... → 6V (Verification) → [6R (Runtime Remediation) — only if 6V found A/B issues] → **6P-R (this stage)** → 7 (Deploy) → 7V (Production Smoke) → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
+**Stage Sequence**: ... → 6V (Verification) → [6R (Runtime Remediation) — only if 6V found 6V-A/B issues] → **6P-R (this stage)** → 7 (Deploy) → 7V (Production Smoke) → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
 
 ## Known Failure Patterns
 
@@ -75,7 +75,7 @@ This stage is idempotent — re-running detects existing work (via `progress.md`
 
 2. **Stage 6V/6R should be complete** (if applicable). All functional issues resolved before visual redesign. Check:
    - If `./plancasting/_audits/runtime-remediation/report.md` exists: must show PASS or CONDITIONAL PASS
-   - If only `./plancasting/_audits/visual-verification/report.md` exists: must show PASS or CONDITIONAL PASS with only Category C issues (6R correctly skipped — 6R cannot fix human-judgment issues). If 6V shows CONDITIONAL PASS with Category A/B issues, STOP — run 6R first.
+   - If only `./plancasting/_audits/visual-verification/report.md` exists: must show PASS or CONDITIONAL PASS with only 6V-C issues (6R correctly skipped — 6R cannot fix human-judgment issues). If 6V shows CONDITIONAL PASS with 6V-A/6V-B issues, STOP — run 6R first.
    - If neither exists: verify with operator that prior stages were intentionally skipped
 
 3. **Browser automation tools available**: This stage requires Playwright MCP tools. Adapt tool names if using a different browser automation solution.

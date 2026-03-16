@@ -11,8 +11,7 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 <!-- Source: Stage 3 | Evidence: tech-stack.md | Confidence: HIGH -->
 
-- Enforce CLAUDE.md Part 1 "API Contract Alignment" rules using these project-specific paths:
-- Backend response types live in `[BACKEND_DIR]` — frontend types that mirror them live in `[HOOKS_DIR]` or `[FRONTEND_TYPES_DIR]`.
+- Enforce CLAUDE.md Part 1 "API Contract Alignment" rules: backend response types live in `[BACKEND_DIR]`, frontend types that mirror them live in `[HOOKS_DIR]` or `[FRONTEND_TYPES_DIR]`.
 - When the backend adds or removes a field, update the frontend type in the same PR.
 - Run type checking (`[TYPECHECK_COMMAND]`) before committing any API-related change.
 

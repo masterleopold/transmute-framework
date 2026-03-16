@@ -24,7 +24,7 @@ All stages follow the **Transmute Full-Build Approach**: every feature described
 
 > **Stage reference table**: See `plancasting/transmute-framework/execution-guide.md` § "Transmute Pipeline Overview" for the full stage table (prompt files, inputs, outputs, durations).
 
-**Stage 6 ordering**: Parallel: 6A + 6B + 6C (commit each before proceeding). Sequential: 6E → 6F → 6G → 6D → 6H → 6V → 6R (only if 6V finds Category A/B issues) → 6P or 6P-R → 7 (Deploy) → 7V → 7D. 6D is optimal after 6G (all code changes finalized); alternatively, run after 5B for an early draft, but re-run after 6E–6G if code changed. See execution-guide.md for full ordering details. **Parallel safety**: When running 6A+6B+6C in parallel across separate sessions, shared config files (e.g., `next.config.ts`, `middleware.ts`) can be overwritten silently. Mitigate by: (a) committing each stage's changes immediately upon completion, or (b) running 6A first (it modifies config files most), committing, then 6B+6C in parallel.
+**Stage 6 ordering**: Parallel: 6A + 6B + 6C (commit each before proceeding). Sequential: 6E → 6F → 6G → 6D → 6H → 6V → 6R (only if 6V finds 6V-A/B issues) → 6P or 6P-R → 7 (Deploy) → 7V → 7D. 6D (Internal Documentation) is optimal after 6G (all code changes finalized); alternatively, run 6D immediately after 5B PASS for an early draft, then re-run after 6E–6G if code changed. See execution-guide.md for full ordering details. **Parallel safety**: When running 6A+6B+6C in parallel across separate sessions, shared config files (e.g., `next.config.ts`, `middleware.ts`) can be overwritten silently. Mitigate by: (a) committing each stage's changes immediately upon completion, or (b) running 6A first (it modifies config files most), committing, then 6B+6C in parallel.
 
 ### Prerequisites
 
@@ -36,6 +36,10 @@ All stages follow the **Transmute Full-Build Approach**: every feature described
 - 🟠 Before Stage 7: deployment (hosting, domains, CDN)
 - 🔵 Before Stage 7D: documentation (Mintlify, optional)
 
+> **Full credential details**: See `execution-guide.md` § "Prerequisites" for the complete credential table, platform-specific deployment commands, validation procedures, and safety rules.
+
+**`.env.local` timing**: Stage 0 generates `.env.local` with placeholder values. Populate all 🔴 pipeline infrastructure credentials in `.env.local` with real values BEFORE starting Stage 3 — Stage 3 validates that no placeholders remain and will STOP if any 🔴 credentials are missing.
+
 **Backend deployment timing**: After Stage 3 generates the backend, immediately deploy all 🔴 pipeline infrastructure credentials to your hosting platform (e.g., `bunx convex env set E2B_API_KEY <value>` for Convex, or via dashboard for Railway/Render/AWS). See execution-guide.md § "Prerequisites" for platform-specific commands.
 
 **Adding credentials mid-pipeline**: If a credential is missing at its required stage, the stage will fail validation. To add: (1) obtain the credential, (2) add to `.env.local`, (3) deploy to backend environment if applicable (e.g., `bunx convex env set KEY <value>`), (4) re-run the failed stage in a new session. No earlier stages need re-running — credentials are forward-only dependencies.
@@ -44,20 +48,22 @@ All stages follow the **Transmute Full-Build Approach**: every feature described
 
 Each stage: `cd ~/project` → `claude --dangerously-skip-permissions` (allows autonomous execution without per-action permission prompts — required for agent teams) → paste prompt from `plancasting/transmute-framework/` → `/exit` → `git add -A && git commit -m "chore: complete Stage N (description)"`. Pipeline stage commits use a simplified `chore:` format without scope or PRD-ID — see Git Conventions below for the full format used during feature development. See execution-guide.md for per-stage details.
 
+**Pre-Stage 3 Setup**: The scaffold generation (Stage 3) reads rule templates from `plancasting/transmute-framework/rules-templates/` to generate starter `.claude/rules/` files. These templates must be accessible in the project's `./plancasting/transmute-framework/rules-templates/` directory during Stage 3. If starting from a clean directory (not cloned from the Transmute Framework Template), copy the `rules-templates/` directory before running Stage 3.
+
 **Pre-6V Setup**: Copy `feature_scenario_generation.md` into your project's `./plancasting/transmute-framework/` directory before the first 6V/7V run. This file is a reusable, project-agnostic algorithm for extracting test scenarios from PRD — do NOT modify it. The 6V and 7V prompts read it internally. See execution-guide.md § "Pre-6V Setup" for instructions.
 
 ### Critical Per-Stage Warnings
 
-> Full session conventions (fresh sessions, stack adaptation, review checkpoints, package manager) in execution-guide.md.
+> Full session conventions in execution-guide.md: fresh sessions (§ "Safety Rules" #6), stack adaptation (§ each stage's "Stack Adaptation" section), review checkpoints (§ per-stage "Human Review Checkpoints"), package manager (§ "Prerequisites").
 
 - **Stage 0**: Interactive — stay at terminal. Skip only if `plancasting/tech-stack.md` is fully populated.
-- **Stages 1–2B**: No critical warnings. See execution-guide.md for standard stage procedures.
+- **Stages 1–2B**: No critical warnings. **Assumption review timing** (between Stages 1 and 2B): After Stage 1 completes, read `./plancasting/brd/_review-log.md` § "Assumption Review Status". If assumption volume ≥ 30%, operator MUST review assumptions in BRD files and update the review status to `Operator reviewed: YES` before running Stage 2B. If < 30%, proceed directly. Stage 2B gate rule 2 checks this marker. See execution-guide.md for standard stage procedures.
 - **Stage 4** (manual verification, no prompt file): Verify Part 1 intact (no edits to immutable rules), Part 2 filled — search for `[PROJECT_NAME]`, `[N]`, `[e.g.,` markers (none should remain). If verification fails: (1) manually populate Part 2 using Stage 0 outputs and `plancasting/tech-stack.md`, (2) search Part 2 for remaining placeholders (all `[` in Part 2 are placeholders): `sed -n '/^## Part 2/,$p' CLAUDE.md | grep -n '\['`, (3) commit: `git add CLAUDE.md && git commit -m "chore: complete Stage 4 (CLAUDE.md verification)"`.
 - **Stage 5 pre-flight**: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return empty. Stop dev server first.
 - **Stage 5 session limit**: Orchestrator resumes from `_progress.md`. If limit reached, start new session and re-paste prompt.
 - **Stage 5 large features**: Split 15+ source file features into sub-features (FEAT-003a, FEAT-003b).
-- **Stage 6A/6G rate limiting scope**: 6A = auth-related rate limiting (login attempts, password resets, token refresh, email verification, MFA, etc.); 6G = data-mutation rate limiting (create, update, delete operations). See execution-guide.md for detailed scope boundary.
-- **Stage 6V/6R/6P/6P-R**: The prompt starts the dev server automatically. Do NOT start it manually. Before running: `lsof -i :3000` — if busy, kill with `kill -9 <PID>`.
+- **Stage 6A/6G rate limiting scope**: 6A = auth-related rate limiting (login attempts, password resets, password changes, token refresh, email verification, MFA device management); 6G = data-mutation rate limiting (user profile updates, API writes, bulk operations). Edge cases: password change = 6A (auth operation), user profile update = 6G (data mutation). See execution-guide.md § "6A. Security Audit" for the full scope boundary.
+- **Stage 6V/6R/6P/6P-R**: The prompt includes dev server startup as part of its execution. Before running: `lsof -i :3000` — if port is busy, kill the existing process with `kill -9 <PID>`. Do NOT start the dev server manually before pasting the prompt.
 - **Stage 6P-R**: Interactive (Phases 0–2), autonomous (Phase 3+). Creates branch `redesign/frontend-elevation`. If abandoned or switching back to 6P, delete the branch if not needed: `git branch -D redesign/frontend-elevation`.
 - **Stage 6P-R Hybrid theme**: NEVER use `setTheme()` — causes localStorage flicker. Use CSS `prefers-color-scheme` instead.
 - **Stage 6P-R → 7D**: After merge, always re-run 7D to recapture screenshots. Verify image paths: `grep -r 'src="' user-guide/ --include='*.mdx'`.
@@ -65,29 +71,31 @@ Each stage: `cd ~/project` → `claude --dangerously-skip-permissions` (allows a
   - `MODE: full` — Comprehensive verification of all components, pages, API routes, and state management (default). Use for first verification or after major changes.
   - `MODE: critical` — Verification of P0/P1 features and critical user flows only. Use for time-constrained runs.
   - `MODE: diff` — Verification of only screens/components affected by recent changes since the last 6V run. Use for incremental re-verification.
-- **Stage 6R**: Max 3 completed loops; persistent issues escalate to Category C. After 3 loops: (a) operator may manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed to 6P or 6P-R. Choose based on severity and available time.
+- **Stage 6R**: Max 3 internal fix-verify cycles within a single 6R run; persistent issues escalate to 6V-C. After 3 cycles: (a) operator may manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed to 6P or 6P-R. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed.
 - **Recovery**: All stages except 0 are idempotent — re-run prompt in new session. Stage 5 resumes from `_progress.md`.
 
 ### Key Gates & Recovery
 
-> **Full details**: See `execution-guide.md` § "Gate Decision Outcomes" for all gate definitions, category systems, routing tables, thresholds, and recovery procedures. This section is a compact summary.
+> **Full details**: See `execution-guide.md` § "Gate Decision Outcomes (Universal)" for all gate definitions, category systems, routing tables, thresholds, and recovery procedures. This section is a compact summary.
 
 **Gate outcomes by stage** (see execution-guide.md for conditions and routing):
-- **2B**: PASS / CONDITIONAL PASS / FAIL (coverage + issue counts; PASS requires 0 CRITICAL, 0 HIGH, ≥95% overall; CONDITIONAL PASS allows ≤3 HIGH with no P0-blockers, ≥90% overall; P0 coverage ≥95% is binding constraint)
-- **3**: PASS / CONDITIONAL PASS / FAIL (scaffold coverage ≥95% / ≥80% / <80%)
-- **5B**: PASS / CONDITIONAL PASS / FAIL-RETRY / FAIL-ESCALATE (size-based categories A/B/C). FAIL-ESCALATE threshold: 6+ Category C issues, OR 6+ total unfixed issues across all categories combined. Additionally, 3 consecutive FAIL-RETRY reports automatically escalate to FAIL-ESCALATE. Recovery: set `🔄` on affected features in `_progress.md`, re-run Stage 5, then re-run 5B. See execution-guide.md § "Gate Decision Outcomes" → "5B gate" for the full threshold table.
+- **2B**: PASS / CONDITIONAL PASS / FAIL (coverage + issue counts + BRD assumption review). FAIL if: unresolved CRITICAL issues OR BRD assumption volume ≥30% not operator-reviewed OR P0 coverage <95% OR overall coverage <90%. CONDITIONAL PASS if: CRITICAL=0, HIGH≤3 (each with fix plan), P0≥95%, overall≥90%. PASS if: CRITICAL=0, HIGH=0, coverage≥95%. See execution-guide.md § "Gate Decision Outcomes (Universal)" → "2B gate" for full 8-rule decision tree.
+- **3**: PASS / CONDITIONAL PASS / FAIL (scaffold coverage ≥95% / ≥80% / <80%; PASS also requires CLAUDE.md Part 2 populated, `_progress.md` lists all features, and `.claude/rules/` generated from templates)
+- **5B**: PASS / CONDITIONAL PASS / FAIL-RETRY / FAIL-ESCALATE (size-based categories A/B/C). FAIL-ESCALATE threshold: 6+ Category C issues, OR 6+ total unfixed issues across all categories combined. Additionally, if a single feature reports FAIL-RETRY three consecutive times (fail → fix → re-run 5B → fail again, repeated 3×), it automatically escalates to FAIL-ESCALATE. Recovery: set `🔄` on affected features in `_progress.md`, re-run Stage 5, then re-run 5B. Also produces rule candidates and updates `.claude/rules/` (HIGH confidence patterns only). See execution-guide.md § "Gate Decision Outcomes (Universal)" → "5B gate" for the full threshold table.
 - **6A–6G**: PASS / CONDITIONAL PASS / FAIL (criteria differ per stage — see each prompt's `## Gate Decision` section for specifics)
 - **6H**: READY / NOT READY (binary pre-launch gate)
-- **6V**: PASS / CONDITIONAL PASS / FAIL (dual system: percentage-based ≥90%/80–90%/<80% AND fixability-based categories A/B/C — gate is the worse of the two). Components with mixed categories are classified by most severe issue (A = auto-fixable, C = human-judgment). Use `6V-` prefix in reports to distinguish from 5B categories.
-- **6R**: PASS / CONDITIONAL PASS / FAIL (max 3 completed loops; FAIL → fix Category C manually, re-run 6V, then 6R if needed). Same mixed-category classification as 6V.
+- **6V**: PASS / CONDITIONAL PASS / FAIL (dual system: percentage-based ≥90%/80–90%/<80% AND fixability-based categories 6V-A/6V-B/6V-C, where A = auto-fixable mechanical issues, B = fixable with code changes and testing, C = requires human judgment or architectural decision — gate is the worse of the two). Components with mixed categories are classified by most severe issue. Routing: PASS → skip 6R, CONDITIONAL PASS with 6V-A/B → run 6R, CONDITIONAL PASS with only 6V-C → skip 6R. Stages 6V and 6R MUST use `6V-` prefix in reports (e.g., `6V-A`, `6V-B`, `6V-C`) to distinguish from Stage 5B's size-based categories. Note: 6A–6G use their own stage-specific category systems (severity levels, WCAG levels, Core Web Vitals, etc.) — the `6V-` prefix applies only to the fixability-based A/B/C system used by 6V and 6R.
+- **6R**: PASS / CONDITIONAL PASS / FAIL (max 3 internal fix-verify cycles per run; FAIL → fix 6V-C manually, re-run 6V, then 6R if needed). Same fixability-based category system as 6V (uses `6V-` prefix).
 - **6P**: PASS / CONDITIONAL PASS / FAIL (visual defect categories: O = objective defects, E = enhancements, D = design elevation)
 - **6P-R**: PASS / CONDITIONAL PASS / FAIL (Critical/Major/Minor severity — distinct from 6P's O/E/D categories)
 - **7V**: PASS / FAIL (binary; flaky = FAIL in production, informational in 6V)
-- **7D**: PASS / WARN / FAIL (skip entirely if `tech-stack.md` Documentation = `not needed: true`)
+- **7D**: PASS / WARN / FAIL (skip entirely if `tech-stack.md` Documentation section indicates user documentation is not needed)
 - **8**: PASS / CONDITIONAL PASS / FAIL (feedback resolution completeness)
 - **9**: PASS / CONDITIONAL PASS / FAIL (dependency update safety)
 
-**Key rules**: Never skip 6V, 6P/6P-R, or 7V. Exactly one of 6P or 6P-R always runs. 6P and 6P-R are mutually exclusive — to switch from 6P to 6P-R, first commit any non-6P work, then revert 6P changes (`git checkout -- src/` — CAUTION: discards ALL uncommitted changes in `src/`; alternatively, `git revert <6P-commit>` if 6P was already committed). Max 3 completed 6R loops. Default to 6P (20–40 min) for styling fixes; use 6P-R (2–4 hrs, interactive) only for full design overhaul or rebranding. For 6P-R: if 6V found Category A/B issues, 6R must PASS or CONDITIONAL PASS before running 6P-R. If 6V found only Category C issues, skip 6R and proceed to 6P or 6P-R.
+**CONDITIONAL PASS cascading**: A CONDITIONAL PASS in any Stage 6[A–G] does NOT automatically block 6H's READY decision. The 6H lead must evaluate each inherited CONDITIONAL PASS condition: if the condition is a documented workaround that doesn't block core functionality, 6H proceeds as READY; if the condition is an unresolved blocker awaiting human decision, 6H must be NOT READY unless the operator explicitly accepts the risk. Document the override in the readiness report with: reason, accepted blockers, risk assessment, and mitigation plan.
+
+**Key rules**: Never skip 6V, 6P/6P-R, or 7V. Exactly one of 6P or 6P-R always runs. 6P and 6P-R are mutually exclusive — to switch from 6P to 6P-R: (1) commit all current work including 6P changes: `git add -A && git commit -m "chore: Stage 6P changes"`, (2) revert the 6P commit: `git revert <6P-commit-hash>` (creates a new commit reversing 6P — safer than `git checkout -- src/`), (3) start a new session and run 6P-R. Max 3 internal fix-verify cycles per 6R run. Default to 6P (20–40 min) for styling fixes; use 6P-R (2–4 hrs, interactive) only for full design overhaul or rebranding. For 6P-R: if 6V found 6V-A/B issues, 6R must PASS or CONDITIONAL PASS before running 6P-R. If 6V found only 6V-C issues, skip 6R and proceed to 6P or 6P-R.
 
 **Stage 7 prerequisites**: 6V complete + 6H READY + 6P or 6P-R PASS/CONDITIONAL PASS (one always runs, even if 6V passes clean) + 6D complete (recommended; if skipped, Stage 7 falls back to hosting provider documentation).
 **Stage 8 prerequisite**: Stage 7V PASS (production live and verified).
@@ -256,7 +264,7 @@ Implementation progress is tracked in `./plancasting/_progress.md`. Update this 
 
 Valid status values: `⬜ Not Started`, `🔧 In Progress`, `✅ Done`, `🔄 Needs Re-implementation` (set by operator after 5B FAIL to trigger re-build in next Stage 5 session), `⏸ Blocked` (feature blocked by dependency or external issue — document blocker in Notes column). File location: `plancasting/_progress.md`.
 
-**Valid state transitions**: `⬜` → `🔧` (Stage 5 starts feature) → `✅` (Stage 5 completes feature) → `🔄` (operator sets after 5B FAIL) → `🔧` (Stage 5 re-run picks up feature) → `✅`. Also: `⬜`/`🔧` → `⏸` (blocked) → `🔧` (unblocked).
+**Valid state transitions**: `⬜` → `🔧` (Stage 5 starts feature) → `✅` (Stage 5 completes feature) → `🔄` (operator sets after 5B FAIL) → `🔧` (Stage 5 re-run picks up feature) → `✅`. Also: `⬜`/`🔧` → `⏸` (blocked) → `🔧` (unblocked). When transitioning `🔧` → `⏸`, preserve sub-status columns (Backend/Frontend/Tests) as-is — they indicate which layers were completed before the blocker. When unblocked (`⏸` → `🔧`), Stage 5 resumes from the first incomplete layer.
 
 **Stage 5 resumption**: The Feature Orchestrator (Stage 5) reads this file at startup and resumes from the first `⬜ Not Started` or `🔄 Needs Re-implementation` feature, skipping all `✅ Done` and `⏸ Blocked` features. Features marked `🔧 In Progress` from a crashed session are inspected for sub-status (backend/frontend/tests completeness) and resumed from the first incomplete layer — see `prompt_feature_orchestrator.md` § "Session Recovery" and execution-guide.md § "Stage 5" for details. (`⏸ Blocked` features are treated like `✅ Done` for resumption purposes but retain their `⏸` status so the operator can unblock and re-run later.) This enables multi-session execution when the feature count exceeds the session limit.
 
@@ -271,7 +279,7 @@ Claude Code natively reads `.claude/rules/` files and applies matching rules bas
 **Generation points**:
 - **Stage 3** (Scaffold): Generates **starter rules** from `tech-stack.md` using the templates in `plancasting/transmute-framework/rules-templates/` — known patterns, gotchas, and best practices for the selected stack. These are tech-stack knowledge (theoretical). Templates: `_backend-template.md`, `_frontend-template.md`, `_api-contracts-template.md`, `_auth-template.md`, `_data-model-template.md`, `_testing-template.md`.
 - **Stage 5B** (Audit): Extracts **implementation lessons** from recurring audit findings — patterns that caused stubs, duplication, or gaps across 2+ features. These are observed patterns (empirical).
-- **Stage 6R** (Remediation): Captures **verified fix patterns** from successful Category A/B fixes — confirmed working solutions to runtime issues. These have the highest confidence (battle-tested).
+- **Stage 6R** (Remediation): Captures **verified fix patterns** from successful 6V-A/B fixes — confirmed working solutions to runtime issues. These have the highest confidence (battle-tested).
 
 **Confidence hierarchy**: Rules generated later in the pipeline carry higher inherent confidence — Stage 3 rules are theoretical (tech-stack knowledge), Stage 5B rules are empirical (observed across features), and Stage 6R rules are battle-tested (verified working fixes). When rules from different stages conflict, prefer the later stage's rule.
 

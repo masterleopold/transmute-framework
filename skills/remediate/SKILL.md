@@ -152,14 +152,15 @@ If a runtime issue requires architectural changes beyond this stage's scope:
 3. Include in final report under 'Category C Escalations'
 4. Continue fixing remaining A/B issues — do not block the loop
 
-## Post-3-Loops Escalation
+## Post-3-Cycles Escalation
 
-After 3 completed loops, if Category A/B issues persist:
-- Escalate ALL remaining A/B to Category C (human judgment required)
+After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist:
+- Escalate ALL remaining 6V-A/B to 6V-C (human judgment required)
 - Update gate to CONDITIONAL PASS
-- Proceed to 6P/6P-R without further loop attempts
+- Proceed to 6P/6P-R without further cycle attempts
 - Create `remaining-blockers.md` listing all unresolved issues
-- Operator must: (a) manually resolve, re-run 6V, reset loop-count.txt to 0, OR (b) document as known limitations and proceed to 6P
+- Operator must: (a) manually resolve, re-run 6V, then 6R if needed, OR (b) document as known limitations and proceed to 6P
+- If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed
 
 ## Gate Decision
 
@@ -187,7 +188,7 @@ After 3 completed loops, if Category A/B issues persist:
 10. For i18n fixes: check ALL language files.
 11. For stub pages: ALWAYS include auth guards, loading states, and error handling.
 12. If 6V report has zero failures, output a clean report and exit.
-13. Maximum 3 remediation loops (tracked in `loop-count.txt`).
+13. Maximum 3 internal fix-verify cycles per run (tracked in `loop-count.txt`).
 14. ALWAYS respect the project's file organization conventions.
 
 ## Output Specification

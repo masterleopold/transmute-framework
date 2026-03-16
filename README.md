@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.0.0** — Gate logic overhaul, credential tiers, scenario generation, path-scoped rules
+> **v2.1.0** — Template sync: 6R cycle semantics, 6V routing, assumption review, `6V-` prefix consistency
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -149,7 +149,7 @@ The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are 
 
 - **5B**: FAIL triggers RETRY (re-run Stage 5 for affected features) or ESCALATE (4+ Category C issues)
 - **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
-- **6R**: Max 3 remediation loops before escalation
+- **6R**: Max 3 internal fix-verify cycles per run before escalation
 - **7V**: Binary gate — PASS proceeds to 7D, FAIL requires hotfix + re-deploy or rollback
 - **6P**: Issues categorized as Omission (O), Execution (E), or Design (D)
 - **6P-R**: Severity levels — Critical, Major, Minor
@@ -250,12 +250,38 @@ transmute-framework/
 
 ## Changelog
 
+### v2.1.0
+
+**6R Cycle Semantics**
+- Clarified "Max 3 completed loops" → "Max 3 internal fix-verify cycles within a single 6R run" — cycles happen within one session, not across separate runs
+- Added explicit FAIL recovery: "do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed"
+
+**6V Routing**
+- Added explicit routing rules: PASS → skip 6R, CONDITIONAL PASS with 6V-A/B → run 6R, CONDITIONAL PASS with only 6V-C → skip 6R
+
+**`6V-` Prefix Consistency**
+- All fixability-based A/B/C categories now consistently use `6V-` prefix across all skills, agents, and templates to distinguish from Stage 5B's size-based categories
+
+**Assumption Review Timing**
+- New operator checkpoint between Stages 1 and 2B: review `_review-log.md` when BRD assumption volume ≥30%
+
+**Stage Skill Updates**
+- 5B (audit-completeness): Enhanced known failure patterns, multi-file classification, session recovery restructuring
+- 6P (polish): Dark mode escalation to 6P-R, expanded prerequisites, 22 critical rules
+- 6P-R (redesign): `6V-` prefix consistency
+- 6R (remediate): Cycle terminology, FAIL recovery guidance
+
+**Template Updates**
+- CLAUDE.md: `.env.local` timing, Pre-Stage 3 setup, CONDITIONAL PASS cascading, enhanced gate criteria
+- execution-guide.md: 6R gate table updated
+- API contracts template: Bullet consolidation
+
 ### v2.0.0
 
 **Gate Logic Overhaul**
 - 5B: FAIL now triggers RETRY (re-run Stage 5 for affected features) or ESCALATE (4+ Category C issues)
 - 6V: Dual gate system — PASS/CONDITIONAL PASS/FAIL routing with scenario-driven verification
-- 6R: Max 3 remediation loops before mandatory escalation
+- 6R: Max 3 internal fix-verify cycles per run before mandatory escalation
 - 7V: Binary gate — PASS or FAIL (hotfix + re-deploy / rollback)
 - 8 + 9: NEVER concurrent rule enforced
 
