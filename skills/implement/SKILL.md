@@ -195,7 +195,7 @@ After ALL features are Done in `plancasting/_progress.md`:
 ## Session Recovery
 
 If resuming a previously interrupted implementation:
-1. Read `plancasting/_progress.md` for feature status.
+1. Read `plancasting/_progress.md` for feature status. Perform a **positional scan** (top-to-bottom, not status-prioritized).
 2. For In Progress features: check `plancasting/_briefs/` to determine where implementation stopped. Inspect the codebase to establish sub-status: (a) Backend: check if backend functions exist with real logic (not just scaffolds), (b) Frontend: check if components/pages render real UI connected to hooks, (c) Tests: check if test files exist with passing assertions. Resume from the first incomplete layer — do NOT re-spawn teammates for layers that are already complete.
 3. For Needs Re-implementation features (set by Stage 5B): read `./plancasting/_audits/implementation-completeness/report.md` for specific gaps. Focus frontend teammate on replacing stubs. Only re-run backend teammate if audit explicitly flags backend issues. For features with `🔄` status: keep as 🔄 (not 🔧) so next session rebuilds from scratch.
 4. For `⏸ Blocked` features: check if blocking dependency is now Done. If yes, unblock and add to queue.

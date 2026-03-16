@@ -5,14 +5,14 @@ globs: ["[FRONTEND_DIR]/**"]
 
 # Frontend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[FRONTEND_FRAMEWORK]`, `[LOADING_COMPONENT]`, `[ERROR_COMPONENT]`, `[EMPTY_COMPONENT]`, `[IMAGE_COMPONENT]`, `[DESIGN_TOKENS_PATH]`, `[ICON_LIBRARY]`, `[ICON_REGISTRY_PATH]`, `[BREAKPOINT_CONFIG]`, `[MOBILE_BREAKPOINT]`, `[CLIENT_ENV_PREFIX]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
 
 ## Component States
 
 <!-- TODO: Stage 3 — replace with actual component state pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #1, every component must handle all five states (default, loading, empty, error, disabled). For data-fetching components, use `[LOADING_COMPONENT]` for loading states and `[ERROR_COMPONENT]` for error states (include a retry action where appropriate); never render a blank screen.
-- Additionally: empty states must have a descriptive message and, where applicable, a call-to-action (stack-specific enhancement beyond Part 1).
+- Additionally: empty states must use `[EMPTY_COMPONENT]` (a shared component or layout pattern for empty-state messaging — if none exists, Stage 3 should create one during scaffold generation) with a descriptive message and, where applicable, a call-to-action (stack-specific enhancement beyond Part 1).
 
 ```typescript
 // TODO: Replace with actual state handling pattern for [FRONTEND_FRAMEWORK]
@@ -39,8 +39,8 @@ globs: ["[FRONTEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual breakpoint system. Source: tech-stack.md | Confidence: HIGH -->
 
-- Use the project's breakpoint system (`[BREAKPOINT_CONFIG]`) — never hardcode pixel widths; write base styles mobile-first, then layer larger breakpoints. Test all pages at the project's defined breakpoints (typically: mobile 320px, tablet 768px, desktop 1024px, wide 1440px — adjust to match your `[BREAKPOINT_CONFIG]` scale).
-- Navigation must collapse to a mobile-friendly pattern below `[MOBILE_BREAKPOINT]`.
+- Use the project's breakpoint system (`[BREAKPOINT_CONFIG]` — the path to the project's breakpoint definitions, e.g., `tailwind.config.ts` or CSS custom properties file) — never hardcode pixel widths; write base styles mobile-first, then layer larger breakpoints. Test all pages at the project's defined breakpoints (mobile, tablet, desktop, and wide breakpoints as defined in the project's Tailwind/CSS configuration — adjust to match your `[BREAKPOINT_CONFIG]` scale).
+- Navigation must collapse to a mobile-friendly pattern below `[MOBILE_BREAKPOINT]` (the pixel value for the mobile/tablet cutoff, e.g., `768px`).
 
 ## Design Tokens
 
@@ -66,7 +66,7 @@ globs: ["[FRONTEND_DIR]/**"]
 <!-- TODO: Stage 3 — replace [ICON_LIBRARY] and [ICON_REGISTRY_PATH] with actual values from tech-stack.md. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #6, never use inline SVG `<path>` elements for standard UI icons — import all icons from `[ICON_LIBRARY]` using the project's established pattern; inline SVGs are permitted only for product logos, brand marks, or custom illustrations.
-- If an icon registry exists at `[ICON_REGISTRY_PATH]`, register new icons there first and import from the registry. If no registry is used, import directly from `[ICON_LIBRARY]` in component files.
+- If an icon registry exists at `[ICON_REGISTRY_PATH]`, register new icons there first and import from the registry. If no registry is used (check tech-stack.md "Icon Registry" field — if empty or absent, omit this bullet in the generated rule), import directly from `[ICON_LIBRARY]` in component files.
 
 ## Environment Variables
 
@@ -74,8 +74,17 @@ globs: ["[FRONTEND_DIR]/**"]
 
 - Only variables prefixed with `[CLIENT_ENV_PREFIX]` are exposed to the browser — never reference server-only secrets without the prefix. Reference env var names exactly as defined in `.env.local.example` — never invent alternative names.
 
+## SSR/Hydration
+
+<!-- Stage 3: Include this section ONLY if the frontend framework uses SSR (e.g., Next.js, Nuxt, Remix, SvelteKit). Omit for pure SPA frameworks (e.g., Vite+React without SSR). -->
+<!-- TODO: Stage 3 — replace with actual SSR hydration pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
+
+- Avoid referencing `window`, `document`, or `localStorage` during server-side rendering — use dynamic imports with `ssr: false` or `useEffect`/`onMounted` for browser-only code.
+- Components that depend on browser APIs must be wrapped in client-only boundaries (e.g., `'use client'` in Next.js, `<ClientOnly>` in Nuxt) to prevent hydration mismatches.
+
 ## Error Boundaries
 
+<!-- Stage 3: If the frontend framework is NOT React-based, adapt this section to the framework's error handling mechanism (e.g., Vue errorHandler, Svelte error boundary, Angular ErrorHandler). -->
 <!-- TODO: Stage 3 — replace with actual error boundary pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Place error boundaries at route segment level (one per page/layout) and around independently-failing widgets — do not wrap the entire app in a single boundary.

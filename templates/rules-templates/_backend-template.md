@@ -5,7 +5,7 @@ globs: ["[BACKEND_DIR]/**"]
 
 # Backend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/backend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[ERROR_TYPE]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Glob note: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/backend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/backend.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/backend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[BACKEND_FRAMEWORK]`, `[ERROR_TYPE]`, `[AUTH_HELPER]`, `[VALIDATOR_SYSTEM]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Glob note: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/backend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/backend.md` instead.
 
 ## Validation
 
@@ -52,7 +52,7 @@ globs: ["[BACKEND_DIR]/**"]
 
 - Always apply soft-delete filter (`[SOFT_DELETE_FIELD] === null` or equivalent) on all queries (see `.claude/rules/data-model.md` § Soft Delete for field name and retention period).
 - Never return soft-deleted records to the frontend unless explicitly requested by an admin view.
-- Apply tenant isolation filters (org/workspace scoping) on every query.
+- Apply tenant isolation filters (org/workspace scoping) on every query — filter by `[TENANT_ID_FIELD]` (see `.claude/rules/data-model.md` § Tenant Isolation for the field name).
 
 ## Index Usage
 

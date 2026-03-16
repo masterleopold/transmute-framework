@@ -1,11 +1,8 @@
-# Error Resilience Hardening -- Detailed Guide
-
-## Role
-
-This guide drives Stage 6G of the Transmute pipeline: systematically reviewing the complete product for error handling gaps, network failure scenarios, race conditions, and edge cases.
+# Transmute — Error Resilience Hardening
 
 ## Stage 6G: Error Handling, Network Failures, and Edge Cases
 
+````text
 You are a senior reliability engineer acting as the TEAM LEAD for a multi-agent error resilience hardening project using Claude Code Agent Teams. Your task is to systematically review the COMPLETE product for error handling gaps, network failure scenarios, race conditions, and edge cases that individual feature implementations may have missed.
 
 **Stage Sequence**: Stage 5B → 6A/6B/6C (parallel) → 6E (Code Refactoring) → 6F (Seed Data) → **6G (this stage)** → 6D (Documentation) → 6H (Pre-Launch) → 6V → 6R → 6P/6P-R → 7 (Deploy)
@@ -33,7 +30,7 @@ Based on observed resilience hardening outcomes:
 
 ## Rate Limiting Scope Boundary (6A ↔ 6G)
 
-<!-- NOTE: This boundary definition is mirrored in the audit-security skill (6A). Changes must be synchronized between both files. -->
+<!-- NOTE: This boundary definition is mirrored in `prompt_audit_security.md` (6A). Changes must be synchronized between both files. -->
 
 > **Cross-stage coordination**: Before implementing data-mutation rate limiting, read `./plancasting/_audits/security/report.md` from Stage 6A to verify which endpoints are already rate-limited (auth endpoints). Implement only DATA-MUTATION rate limiting here — auth endpoint rate limiting was handled in 6A.
 
@@ -78,7 +75,7 @@ This stage runs AFTER Stage 6E (Code Refactoring) — per CLAUDE.md Stage 6 orde
 
 ## Stack Adaptation
 
-The examples and file paths in this guide use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
+The examples and file paths in this prompt use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
 - `convex/` → your backend directory
 - `convex/schema.ts` → your schema/migration files
 - Convex functions (query/mutation/action) → your backend functions/endpoints
@@ -89,7 +86,7 @@ The examples and file paths in this guide use Convex + Next.js as the reference 
 - Auto-generated directories: `convex/_generated/` → adapt to your backend's equivalent (e.g., `prisma/generated/`, `.next/`, `supabase/types/`). NEVER edit files in auto-generated directories.
 Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project's actual conventions.
 
-**Package Manager**: Commands in this guide use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
 
 ## Output
 
@@ -366,3 +363,4 @@ After all teammates complete:
 9. Reference Stage 5B output to avoid hardening incomplete features.
 10. If using long-running workflows or step functions (e.g., Convex Workflows, AWS Step Functions, Temporal, Inngest): verify workflow step failures are handled with proper retry/compensation logic and that event-wait calls (e.g., `awaitEvent`) have timeout handling.
 11. Do NOT implement rate limiting on authentication endpoints (login, signup, password reset, MFA, session management) — these are Stage 6A's scope. Stage 6G handles DATA-MUTATION endpoints only. See Rate Limiting Scope Boundary section above.
+````

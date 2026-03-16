@@ -3,11 +3,9 @@ description: Template for data model rules — index definitions, soft-delete pa
 globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 ---
 
-<!-- Glob note: if the backend is schemaless (e.g., Convex has no migration directory), Stage 3 should remove the `[MIGRATION_DIR]/**` glob and omit the Schema Changes section. -->
-
 # Data Model Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: OMIT ... -->`, `<!-- Stage 3: Fill ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
+> **This is a template.** Glob note: if the backend is schemaless (e.g., Convex has no migration directory), Stage 3 should remove the `[MIGRATION_DIR]/**` glob and omit the Schema Changes section. Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[MIGRATION_DIR]`, `[BACKEND_FRAMEWORK]`, `[SOFT_DELETE_FIELD]`, `[RETENTION_PERIOD]`, `[TIMESTAMP_FORMAT]`, `[TENANT_ID_FIELD]`, `[DATABASE]`, `[MIGRATION_LOG_PATH]`, `[MIGRATION_PATTERN]`). For schemaless backends (e.g., Convex), remove the `[MIGRATION_DIR]/**` glob from frontmatter and omit the Schema Changes section entirely. Document the chosen `[RETENTION_PERIOD]` value in CLAUDE.md Part 2 § Architecture, (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: OMIT ... -->`, `<!-- Stage 3: Fill ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
 
 ## Indexes
 
@@ -32,6 +30,8 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 - All queries must filter out soft-deleted records by default (`[SOFT_DELETE_FIELD] === null`). Backend functions are responsible for filtering — do NOT rely on database triggers.
 - Admin/audit views may include soft-deleted records — mark these queries explicitly.
 - Retention policy: soft-deleted records are permanently purged after `[RETENTION_PERIOD]`.
+- When soft-deleting a parent entity, apply the documented child strategy: cascade soft-delete (mark children too) or orphan (children remain active but lose parent reference). Document the chosen pattern in CLAUDE.md Part 2 § Architecture.
+<!-- Stage 3: Determine the child entity strategy based on BRD data integrity requirements. Default if BRD doesn't specify: cascade soft-delete for owned entities (e.g., tasks owned by a project), orphan for shared entities (e.g., users referenced by multiple orgs). -->
 <!-- Stage 3: Fill [RETENTION_PERIOD] based on BRD data retention requirements. Default if BRD doesn't specify: 90 days (allows GDPR 30-day erasure grace period + buffer). Document the chosen value in CLAUDE.md Part 2. Source: BRD data retention | Confidence: HIGH -->
 
 ## Schema Changes
@@ -47,7 +47,7 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual reserved word list for the database. Source: database documentation | Confidence: HIGH -->
 
-- Check field names against `[DATABASE]` reserved words before defining them — if a reserved word is needed semantically, prefix it (e.g., `taskType` instead of `type`, `sortOrder` instead of `order`).
+- Check field names against `[DATABASE]` reserved words before defining them — if a reserved word is needed semantically, prefix it (e.g., `taskType` instead of `type`, `sortOrder` instead of `order`, `itemStatus` instead of `status`, `displayName` instead of `name`, `indexKey` instead of `key`).
 
 ## Timestamps
 

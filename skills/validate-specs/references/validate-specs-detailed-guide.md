@@ -1,11 +1,8 @@
-# Specification Validation -- Detailed Guide
-
-## Role
-
-This guide drives Stage 2B of the Transmute pipeline: independently cross-validating the BRD and PRD for consistency, completeness, and correctness before they propagate into code.
+# Transmute — Specification Validation
 
 ## Stage 2B: BRD ↔ PRD Cross-Validation
 
+````text
 You are a senior quality assurance analyst acting as the TEAM LEAD for a multi-agent specification validation project using Claude Code Agent Teams. Your task is to independently cross-validate the BRD and PRD for consistency, completeness, and correctness — catching errors before they propagate into code.
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → **2B (this stage)** → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -55,7 +52,7 @@ If splitting validation by feature group, the lead MUST perform Phase 4 cross-fe
 
 ## Stack Adaptation
 
-This guide validates specification documents and does not reference stack-specific code paths. However, feasibility checks (Teammate 3) should adapt to the product type in `plancasting/tech-stack.md`:
+This prompt validates specification documents and does not reference stack-specific code paths. However, feasibility checks (Teammate 3) should adapt to the product type in `plancasting/tech-stack.md`:
 - **Mobile apps**: Check that screen specs include platform-specific interaction patterns
 - **IoT/Embedded**: Check that hardware-software interface specs exist
 - **AI/ML products**: Check that model behavior specs include accuracy/latency requirements
@@ -305,7 +302,7 @@ After all teammates complete:
    > **IMPORTANT — Rule evaluation order**: Rules 1–4 are **blocking gates** evaluated first. Rules 5–8 are evaluated ONLY if rules 1–4 all pass. Do not skip to rule 5+ if any of rules 1–4 match.
 
    1. Any unresolved CRITICAL issues? → FAIL
-   2. BRD assumption volume ≥ 30% AND operator has NOT confirmed review? Check `./plancasting/brd/_review-log.md` for an "Assumption Review Status" section with `Operator reviewed: YES`. If this marker is missing or set to `NO` → FAIL (the gate checks review STATUS, not assumption existence — if assumptions were reviewed and confirmed, rule 7 applies instead). Remediation: remediate Business Plan, re-run Stage 1, then re-run 2B.
+   2. BRD assumption volume ≥ 30% AND operator has NOT confirmed review? Check `./plancasting/brd/_review-log.md` for an "Assumption Review Status" section with `Operator reviewed: YES`. If this marker is missing or set to `NO` → FAIL. (Evaluation note: this rule only fires when the operator has NOT reviewed. If `Operator reviewed: YES` IS present, this rule does not match — evaluation continues to rules 3+, and the confirmed-assumption case is handled by rule 7.) Remediation: remediate Business Plan, re-run Stage 1, then re-run 2B.
    3. P0 feature coverage < 95%? → FAIL — P0 coverage is an independent gate checked separately from overall coverage.
    4. Overall coverage < 90%? → FAIL
    5. CRITICAL = 0 AND HIGH = 0 AND overall coverage ≥ 95%? → PASS
@@ -362,3 +359,4 @@ Teammates terminate automatically upon task completion. Verify all output files 
 - BRD '99.9% uptime' → PRD '99.9% uptime with <5min MTTR' = **ENHANCEMENT** (correct)
 - BRD 'response time < 200ms' → PRD 'fast response time' = **REGRESSION** (fix by restoring metric)
 - BRD 'response time < 200ms' → PRD 'response time < 200ms at p95' = **ENHANCEMENT** (correct)
+````

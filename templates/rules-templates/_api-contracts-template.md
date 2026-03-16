@@ -5,7 +5,7 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 # API Contract Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/api-contracts.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[HOOKS_DIR]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/api-contracts.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/api-contracts.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/api-contracts.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[HOOKS_DIR]`, `[FRONTEND_TYPES_DIR]`, `[TYPECHECK_COMMAND]` — use the project's TypeScript check command from CLAUDE.md Part 2 § Commands), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/api-contracts.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/api-contracts.md` instead.
 
 ## Type Alignment
 
@@ -57,6 +57,8 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 ## Response Versioning
 
+<!-- Stage 3: If the backend is reactive/real-time (e.g., Convex, Firebase), replace this section with the reactive alternative below. For REST/GraphQL backends, keep the default versioning rules. -->
+<!-- Stage 3: Reactive backend alternative: "When adding new fields to a schema, add them as optional with server-side defaults. Existing subscribers receive the new shape immediately — ensure frontend components handle the field being absent for previously-created records. When removing fields, first stop reading them in the frontend, deploy, then remove from the schema." -->
 <!-- TODO: Stage 3 — replace with actual versioning strategy if applicable. Source: tech-stack.md | Confidence: HIGH -->
 
 - When adding new fields to a backend response, make them optional with sensible defaults in the frontend type — this prevents breakage for already-deployed frontends reading the old shape.

@@ -1,11 +1,8 @@
-# Runtime Remediation -- Detailed Guide
-
-## Role
-
-Stage 6R reads the Stage 6V verification report, categorizes every failure by fixability, auto-fixes all mechanical issues, and produces a human-review TODO list for issues requiring judgment -- then re-verifies to confirm fixes work.
+# Transmute — Runtime Remediation
 
 ## Stage 6R: Automated Fix-Verify Cycle for 6V Verification Failures
 
+````text
 You are a senior software engineer acting as the TEAM LEAD for a multi-agent runtime remediation project using Claude Code Agent Teams. Your task is to read the Stage 6V verification report, categorize every failure by fixability, auto-fix all mechanical issues, and produce a human-review TODO list for issues requiring judgment — then re-verify to confirm fixes work.
 
 ## Why This Stage Exists
@@ -115,7 +112,7 @@ Based on observed remediation outcomes:
 
 ## Stack Adaptation
 
-The examples in this guide use Next.js + Convex as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt accordingly:
+The examples in this prompt use Next.js + Convex as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt accordingly:
 - `src/middleware.ts` → your middleware/route guard file
 - `PUBLIC_ROUTES` → your route whitelist mechanism
 - `loading.tsx` → your loading state pattern
@@ -125,7 +122,7 @@ The examples in this guide use Next.js + Convex as the reference architecture. I
 - Auto-generated directories: `convex/_generated/` → adapt to your backend's equivalent (e.g., `prisma/generated/`, `.next/`). NEVER modify files in auto-generated directories.
 Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actual commands and conventions.
 
-**Package Manager**: Commands in this guide use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
 
 ## Prerequisites
 
@@ -661,3 +658,4 @@ If a runtime issue requires architectural changes beyond this stage's scope (e.g
     - When you read `Current cycle: 3` at the start of a new session → STOP immediately. All remaining issues become 6V-C requiring manual intervention. Output `./plancasting/_audits/runtime-remediation/remaining-blockers.md` listing all unresolved issues. The operator must resolve 6V-C issues, re-run 6V, then re-run 6R (which will see a fresh report with no cycle tracking).
     Note: This 3-cycle maximum applies to a single 6R run. Across the entire pipeline, there is also a maximum of 2 outer 6V→6R cycles (see execution-guide.md § "Gate Decision Outcomes (Universal)"). If the second outer 6V→6R cycle still has issues, document as known limitations and proceed to 6P/6P-R.
 15. ALWAYS respect the project's file organization conventions. New files go in the correct directory following the established patterns (read `CLAUDE.md` and existing code structure).
+````

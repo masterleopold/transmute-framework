@@ -1,11 +1,8 @@
-# Seed Data Generation -- Detailed Guide
-
-## Role
-
-This guide drives Stage 6F of the Transmute pipeline: generating comprehensive, realistic seed data that covers all entities in the data model, supports all user flows, and enables meaningful testing and demonstrations.
+# Transmute — Seed Data Generation
 
 ## Stage 6F: Realistic Test Data for All Environments
 
+````text
 You are a senior data engineer acting as the TEAM LEAD for a multi-agent seed data generation project using Claude Code Agent Teams. Your task is to generate comprehensive, realistic seed data that covers all entities in the data model, supports all user flows, and enables meaningful testing and demonstrations of the COMPLETE product.
 
 **Stage Sequence**: Stage 5B → 6A/6B/6C (parallel) → 6E (Code Refactoring) → **6F (this stage)** → 6G (Error Resilience Hardening) → 6D (Documentation) → 6H (Pre-Launch) → 6V → 6R → 6P/6P-R → 7 (Deploy)
@@ -42,7 +39,7 @@ Based on observed seed data generation outcomes:
 
 ## Stack Adaptation
 
-The examples and file paths in this guide use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
+The examples and file paths in this prompt use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
 - `convex/` → your backend directory
 - `convex/schema.ts` → your schema/migration files
 - Convex functions (query/mutation/action) → your backend functions/endpoints
@@ -52,7 +49,7 @@ The examples and file paths in this guide use Convex + Next.js as the reference 
 - `src/app/` → your frontend pages directory
 Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project's actual conventions.
 
-**Package Manager**: Commands in this guide use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
 
 ## Prerequisites
 
@@ -125,7 +122,7 @@ Your tasks:
 1. Create `./seed/core.ts` — a TypeScript module that exports seed data functions:
    - **SAFETY**: All seed functions MUST include a production environment check at the top.
      **Important**: Read the Serverless Runtime Note below before implementing — some backends require different environment variable access patterns.
-     **Stack Adaptation**: The code below shows Convex as the primary example. For other backends, uncomment and adapt the relevant section. Add your stack's production detection logic to the Stack Adaptation section at the top of this guide.
+     **Stack Adaptation**: The code below shows Convex as the primary example. For other backends, uncomment and adapt the relevant section. Add your stack's production detection logic to the Stack Adaptation section at the top of this prompt.
      ```typescript
      if (process.env.NODE_ENV === 'production' || process.env.CONVEX_DEPLOYMENT?.includes('prod')) {
        throw new Error('Seed functions cannot run in production.');
@@ -418,3 +415,4 @@ If integrity checks fail:
 12. Verify the schema's soft-delete field name early in Phase 1 (common names: `deletedAt`, `deleted_at`, `isDeleted`, `deletionTimestamp`). Use the actual field name consistently across all teammate instructions. If no soft-delete field exists in the schema, skip soft-deleted record generation for that entity (do not assume a `deletedAt` field — adding it would alter the schema).
 13. NEVER hard-code API keys, secrets, or real credentials in seed scripts. Use environment variables or placeholder values (e.g., `test-api-key-seed-001`). Seed scripts may be committed to version control.
 14. If Stage 6A has added rate limiting (check `./plancasting/_audits/security/report.md`), seed scripts MUST either: (a) use internal/admin-level functions that bypass rate limiting while still validating schema constraints, or (b) add delays between batch operations to stay within rate limits. This is especially critical for stress-tier data (500+ records). Note: Stage 6G runs AFTER 6F per pipeline ordering, so 6G rate limiting is not yet in effect. If 6G later adds rate limiting on endpoints used by seed scripts, re-run seed scripts with appropriate delays.
+````

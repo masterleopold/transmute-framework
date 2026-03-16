@@ -1,11 +1,8 @@
-# Accessibility Audit -- Detailed Guide
-
-## Role
-
-This guide drives Stage 6B of the Transmute pipeline: auditing the complete frontend codebase against BRD/PRD WCAG requirements, identifying violations, and fixing them.
+# Transmute — Accessibility Audit
 
 ## Stage 6B: WCAG Compliance Review
 
+````text
 You are a senior accessibility specialist acting as the TEAM LEAD for a multi-agent accessibility audit using Claude Code Agent Teams. Your task is to audit the COMPLETE frontend codebase against BRD/PRD WCAG requirements, identify violations, and fix them.
 
 **Stage Sequence**: Stage 5B → (6A ‖ **6B (this stage)** ‖ 6C) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy). Note: 6A, 6B, and 6C run **in parallel** (each in a separate session). **Parallel safety**: Commit this stage's changes immediately upon completion (`git add -A && git commit`) before other parallel stages finish — shared config files can be overwritten silently. See CLAUDE.md § "Stage 6 ordering".
@@ -42,14 +39,14 @@ This stage runs AFTER Stage 5B (Implementation Completeness Audit). Before begin
 
 ## Stack Adaptation
 
-The examples in this guide use Next.js + React Aria (or equivalent accessibility-first component library) as the reference. Adapt to your stack:
+The examples in this prompt use Next.js + React Aria (or equivalent accessibility-first component library) as the reference. Adapt to your stack:
 - `src/app/` → your pages/routes directory
 - `src/components/` → your component directory
 - React Aria patterns → your accessibility library's patterns
 - `next/link` vs `<a>` → your framework's link component
 Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actual conventions.
 
-**Package Manager**: Commands in this guide use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `pnpm run`, `yarn`).
 
 **⚠️ Component Library Rule**: If using a component library with built-in accessibility (React Aria, HeadlessUI, Radix, shadcn/ui, Untitled UI), many ARIA patterns are already handled. Do NOT add redundant ARIA attributes that conflict with the library's implementation — this can actually break accessibility. Check the library's documentation before adding ARIA attributes to library-provided components. Example: if the library already sets `role='button'` and `aria-pressed`, do NOT re-add those attributes. Additions are safe only if the library doesn't already handle that aspect.
 
@@ -306,3 +303,4 @@ After all teammates complete:
 9. Use the commands from CLAUDE.md for testing (e.g., `bun run test`).
 10. Reference Stage 5B output (`./plancasting/_audits/implementation-completeness/report.md`) to identify incomplete features — skip accessibility auditing for those features entirely. In the final report, list which features were skipped and why. Calculate compliance percentages based on audited features only (e.g., "Audited 12/15 features; 3 skipped as incomplete per Stage 5B").
 11. **Parallel execution**: This stage may run concurrently with 6A and 6C. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`, `globals.css`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit.
+````

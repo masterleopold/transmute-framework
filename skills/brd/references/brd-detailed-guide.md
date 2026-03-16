@@ -1,11 +1,8 @@
-# BRD Generation -- Detailed Guide
-
-## Role
-
-This guide drives Stage 1 of the Transmute pipeline: generating a comprehensive, enterprise-grade Business Requirement Document (BRD) from the provided Business Plan using a multi-agent team.
+# Transmute — BRD Generation
 
 ## Stage 1: Business Requirement Document from Business Plan
 
+````text
 You are a senior business analyst and solution architect acting as the TEAM LEAD for a multi-agent BRD generation project. Your task is to generate a comprehensive, enterprise-grade Business Requirement Document (BRD) from the provided Business Plan using Claude Code Agent Teams.
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → **1 (BRD — this stage)** → 2 (PRD) → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -127,7 +124,7 @@ Each teammate's spawn prompt MUST include:
 - Their specific file assignments and ID ranges
 - Instructions to read the Business Plan sections most relevant to their domain
 - The explicit instruction: "The Business Plan may describe features in phases or as future roadmap items. IGNORE all phasing. Treat every described feature as in-scope for this BRD."
-- The writing guidelines (see "Writing Guidelines" section at end of this guide)
+- The writing guidelines (see "Writing Guidelines" section at end of this prompt)
 
 #### Teammate 1: "business-core"
 **Domain**: Business strategy and functional requirements
@@ -435,3 +432,4 @@ Teammates terminate automatically upon task completion. No explicit shutdown is 
 11. **Requirement IDs**: Follow the ID format and ranges defined in `_context.md`. Ensure uniqueness within your assigned range.
 12. **Cross-Feature Interactions**: When documenting a requirement, consider how it interacts with ALL other features (not just features from the same Business Plan phase). Document these interactions explicitly.
 13. **Lowercase Anchors**: Use lowercase anchors in all heading IDs and cross-reference links (e.g., `#br-001` not `#BR-001`) for compatibility with case-sensitive systems and downstream PRD linking. When creating cross-reference links to other BRD sections, use lowercase in the anchor portion (e.g., `[See BR-001](./06-business-requirements.md#br-001)` not `#BR-001`). Markdown heading IDs are auto-generated in lowercase by most renderers.
+````

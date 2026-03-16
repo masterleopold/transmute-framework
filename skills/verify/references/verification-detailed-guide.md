@@ -1,18 +1,15 @@
-# Visual & Functional Verification -- Detailed Guide
-
-## Role
-
-Stage 6V verifies the RUNNING application against every screen specification and acceptance criterion in the PRD by navigating the app in a browser. It closes the gap between static code analysis (prior stages) and actual runtime behavior.
+# Transmute — Visual & Functional Verification
 
 ## Stage 6V: Live App Verification Against PRD Specifications
 
+````text
 You are a senior QA engineer acting as the TEAM LEAD for a multi-agent visual and functional verification project using Claude Code Agent Teams. Your task is to verify the RUNNING application against every screen specification and acceptance criterion in the PRD by actually navigating the app in a browser.
 
 ## Why This Stage Exists
 
 All prior stages (5B, 6A–6H) are static code analysis — they read source files but never launch the application. This creates a critical blind spot: code that looks correct in files may fail at runtime due to broken imports, missing data hooks, SSR hydration errors, incorrect routing, invisible components, or mismatched API contracts. This stage closes that gap by running the app in the DEV environment and verifying every feature works as specified.
 
-Production-specific deployment issues (env vars, CDN, CSP) are covered separately in Stage 7V (Production Smoke Verification — the `production-smoke-verification` skill). After deploying to production, ALWAYS run Stage 7V to catch environment-specific failures that don't exist in dev.
+Production-specific deployment issues (env vars, CDN, CSP) are covered separately in Stage 7V (Production Smoke Verification — `prompt_production_smoke_verification.md`). After deploying to production, ALWAYS run Stage 7V to catch environment-specific failures that don't exist in dev.
 
 **Stage Sequence**: Stage 5B → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → **6V (this stage)** → 6R (only if 6V finds 6V-A/B issues) → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
 
@@ -89,7 +86,7 @@ Default: `full`.
 
 ## Stack Adaptation
 
-The examples in this guide use Playwright + Next.js + Convex as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt accordingly:
+The examples in this prompt use Playwright + Next.js + Convex as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt accordingly:
 - `e2e/` → your test directory
 - `playwright.config.ts` → your E2E test config
 - `e2e/helpers/auth.ts` → your auth test helpers
@@ -99,7 +96,7 @@ The examples in this guide use Playwright + Next.js + Convex as the reference ar
 - `useQuery`/`useMutation` → your data fetching patterns
 Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actual commands and conventions.
 
-**Package Manager**: Commands in this guide use `bun run` / `bunx` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run` / `npx`, `pnpm run` / `pnpx`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` / `bunx` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run` / `npx`, `pnpm run` / `pnpx`, `yarn`).
 
 ## Input
 
@@ -1068,3 +1065,4 @@ After all teammates complete:
 19. ALWAYS test auth middleware redirects for ALL public routes. The most frequent post-deploy error is a public page (privacy, terms, sitemap.xml, robots.txt) being blocked by auth middleware because it wasn't added to the `PUBLIC_ROUTES` whitelist.
 20. ALWAYS test conditional navigation states (e.g., project tabs that enable/disable based on entity status) with entities in DIFFERENT lifecycle stages, not just the happy path.
 21. ALWAYS test public routes from a FRESH unauthenticated browser context (no cookies, no localStorage, no session tokens) BEFORE logging in. Testing public routes while logged in hides middleware/auth guard failures — the most common post-deploy bug is public pages being blocked for unauthenticated users. The lead performs this in Phase 1 step 4, and Teammate 1 repeats it as Task 0 for independent verification.
+````

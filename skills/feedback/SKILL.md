@@ -21,7 +21,7 @@ The BRD and PRD are NOT frozen artifacts. They are living documents that evolve 
 ## Prerequisites
 
 1. Read `CLAUDE.md` and `plancasting/tech-stack.md`.
-2. Verify Stage 7V PASS: Check that `./plancasting/_audits/production-smoke/report.md` exists and shows PASS. If missing or FAIL, STOP -- Stage 7V must pass before processing feedback.
+2. Verify Stage 7V PASS or CONDITIONAL PASS: Check that `./plancasting/_audits/production-smoke/report.md` exists and shows PASS or CONDITIONAL PASS. If missing or FAIL, STOP -- Stage 7V must achieve PASS or CONDITIONAL PASS before processing feedback.
 3. Verify `./feedback/input.md` exists. If not, stop: "No feedback to process. Create `./feedback/input.md` with feedback items before running Stage 8. Schedule Stage 8 after feedback batch is collected."
 4. **Input Validation**: Verify `./feedback/input.md` follows the required structure. Required fields per feedback item: (1) ID (TICKET-001, etc.), (2) Category (Bug / UX Issue / Missing Feature / Enhancement / Performance / Documentation), (3) Description, (4) Affected Feature ID (FEAT-XXX or NEW). If required fields are missing, ask operator to provide them before Phase 1 begins.
 5. Check `plancasting/tech-stack.md` for the `Session Language` setting. Generate all reports in the specified language.

@@ -1,11 +1,8 @@
-# Tech Stack Discovery & Configuration -- Detailed Guide
-
-## Role
-
-This guide drives Stage 0 of the Transmute pipeline: interactively defining the technology stack for a product by analyzing the Business Plan, researching technologies, presenting curated options, and producing a complete tech stack configuration document.
+# Transmute — Tech Stack Discovery & Configuration
 
 ## Stage 0: Interactive Product Definition and Technology Selection
 
+````text
 You are a senior solutions architect helping a product owner define the technology stack for their product. Your job is to understand what they're building, research the latest and most appropriate technologies, present curated options, and produce a complete tech stack configuration document that all subsequent pipeline stages will reference.
 
 **Stage Sequence**: Business Plan → **0 (this stage)** → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -609,7 +606,7 @@ Based on the selected stack, generate a checklist of required credentials. Categ
 
 ### ⚙️ Pipeline Infrastructure (required only if the product uses the Transmuter platform — skip for standalone projects)
 These credentials power the Transmute pipeline itself. If your product uses Transmuter as its backend orchestration layer, all three are required. For standalone products that do not use E2B sandboxes, skip items 2 and 3. For standalone products that do not use the Transmuter platform at all, skip all three items — the Anthropic API key for Claude Code itself is separate from `TRANSMUTER_ANTHROPIC_API_KEY`.
-> **Note**: If skipped, Stage 3's credential gate must also be configured to skip these checks. See the scaffold skill § "Pre-Scaffold Credential Gate (MUST verify before proceeding)" for the standalone-project exception.
+> **Note**: If skipped, Stage 3's credential gate must also be configured to skip these checks. See `prompt_generate_scaffolding.md` § "Pre-Scaffold Credential Gate (MUST verify before proceeding)" for the standalone-project exception.
 1. Anthropic API Key (`TRANSMUTER_ANTHROPIC_API_KEY`) — Get it at: https://console.anthropic.com/
    This is the AI that powers the Transmuter platform's backend pipeline stages (not Claude Code itself). MUST be set on the backend deployment if using Transmuter. Skip for standalone projects.
 2. E2B API Key (`E2B_API_KEY`) — Get it at: https://e2b.dev/dashboard (skip if not using E2B sandboxes)
@@ -1047,7 +1044,7 @@ Your credentials are saved in ./.env.local
 Next steps in the pipeline:
 1. Your Business Plan at ./plancasting/businessplan/ has been analyzed and will be referenced by all downstream stages.
 2. Start a NEW Claude Code session (each stage = fresh session to avoid context degradation).
-3. Run Stage 1: BRD Generation (the brd skill)
+3. Run Stage 1: BRD Generation (prompt_generate_brd.md)
    → The BRD prompt will read ./plancasting/tech-stack.md to inform technical requirements
 4. Continue through the pipeline as described in execution-guide.md
 
@@ -1062,7 +1059,7 @@ The tech stack document will be automatically referenced by:
 
 ## Adapting to Product Type
 
-This guide handles diverse product types by adapting its behavior:
+This prompt handles diverse product types by adapting its behavior:
 
 ### For Web Applications
 - Focus on frontend framework, BaaS/backend, hosting, auth, analytics
@@ -1128,3 +1125,4 @@ Generate the following files:
 - `.env.local`: Actual environment variables (if credentials are available during Stage 0; otherwise instruct the operator to populate before Stage 3)
 - `.gitignore` additions: Ensure `.env.local` and any secret-containing files are gitignored
 - Initial project scaffold (OPTIONAL — may be deferred to Stage 3)
+````

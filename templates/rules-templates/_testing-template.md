@@ -5,11 +5,13 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 
 # Testing Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/testing.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[TEST_DIR]`, `[TEST_RUNNER]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/testing.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/testing.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/testing.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[TEST_DIR]`, `[TEST_RUNNER]`, `[BACKEND_FRAMEWORK]`, `[AXE_INTEGRATION]`, `[HOOK_MOCK_PATTERN]`, `[TEST_CONSTANTS_PATH]`, `[SEED_COMMAND]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/testing.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/testing.md` instead.
 
 ## Selectors
 
 <!-- TODO: Stage 3 — replace with actual selector examples for [TEST_RUNNER]. Source: tech-stack.md | Confidence: HIGH -->
+<!-- Example of final annotation format after Stage 3 renders: -->
+<!-- Source: Stage 3 | Evidence: CLAUDE.md Part 1 § E2E Tests | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 E2E Tests, prefer `getByRole` and `getByText` over CSS class selectors or test IDs — use `getByTestId` only when no accessible role or text is available. Never select by CSS class names — for complex components, add `aria-label` to make them queryable by role.
 
@@ -51,8 +53,8 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 <!-- TODO: Stage 3 — replace with actual component test patterns for [TEST_RUNNER]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Tests, test all five states (default, loading, empty, error, disabled) for every component.
-- Include axe-core accessibility checks (`[AXE_INTEGRATION]`) in component tests (WCAG AA level minimum; upgrade to AAA if PRD requires it). <!-- Stage 3: Select the appropriate axe integration based on tech-stack.md — Next.js+Jest → jest-axe, Vite+Vitest → @axe-core/react, Playwright E2E → @axe-core/playwright. Replace [AXE_INTEGRATION] with the selected package. -->
-- Mock backend hooks (`[HOOK_MOCK_PATTERN]`), not the API layer directly — this tests the component's behavior without coupling to API implementation details.
+- Include axe-core accessibility checks (`[AXE_INTEGRATION]`) in component tests (WCAG AA level minimum; upgrade to AAA if PRD requires it). <!-- Stage 3: Select the appropriate axe integration based on tech-stack.md — Next.js+Jest → jest-axe, Vite+Vitest → vitest-axe, Playwright E2E → @axe-core/playwright. Replace [AXE_INTEGRATION] with the selected package. If tech-stack.md does not specify a test framework, default to @axe-core/playwright for E2E and jest-axe for unit tests. -->
+- Mock backend hooks using the project's mock pattern (`[HOOK_MOCK_PATTERN]` — e.g., `jest.mock()`, `vi.mock()`, or a custom setup function), not the API layer directly — this tests the component's behavior without coupling to API implementation details.
 
 ## Credentials
 
@@ -68,6 +70,26 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 - Use seed data scripts or factory functions to generate test data — never use production data in tests.
 - Factories should produce minimal valid objects — override only the fields relevant to each test.
 - For E2E tests, use the project's seed commands (`[SEED_COMMAND]` — see CLAUDE.md Part 2 § Commands for actual command) to set up baseline data.
+
+## Responsive Testing
+
+<!-- TODO: Stage 3 — replace with actual viewport setup pattern for [TEST_RUNNER]. Source: tech-stack.md | Confidence: HIGH -->
+
+- E2E tests for critical user flows should test at multiple breakpoints: mobile, tablet, and desktop breakpoints as defined in the project's Tailwind/CSS configuration (see CLAUDE.md Part 2 or `tailwind.config.ts` for values) — match the breakpoints in `.claude/rules/frontend.md` § Responsive Design.
+- Set viewport size at the start of each responsive test or use parameterized tests for multiple breakpoints.
+- Use role selectors (which adapt to layout) rather than position-based assertions that break at different viewports.
+
+```typescript
+// TODO: Replace with actual viewport test pattern
+// test.describe('responsive', () => {
+//   for (const viewport of [{ width: 320, height: 667 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }]) {
+//     test(`works at ${viewport.width}px`, async ({ page }) => {
+//       await page.setViewportSize(viewport);
+//       // ... test assertions using role selectors
+//     });
+//   }
+// });
+```
 
 ## Test Count Preservation
 <!-- Source: Stage 3 | Evidence: CLAUDE.md Part 1 § Test Count Preservation | Confidence: HIGH -->

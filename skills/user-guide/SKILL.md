@@ -16,7 +16,7 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/user-guide-detailed-
 
 ## Prerequisites
 
-1. Read `./plancasting/_audits/production-smoke/report.md` (Stage 7V report). If 7V status is FAIL, stop: "Stage 7D requires a passing 7V. Production must be stable before generating user documentation." If the report does not exist, stop: "Stage 7V has not been run yet. Run Stage 7V first."
+1. Read `./plancasting/_audits/production-smoke/report.md` (Stage 7V report). If 7V status is FAIL, stop: "Stage 7D requires 7V PASS or CONDITIONAL PASS. Production must be stable before generating user documentation." If the report does not exist, stop: "Stage 7V has not been run yet. Run Stage 7V first."
 2. Check `plancasting/tech-stack.md` under the Documentation section. If it says "No -- not needed," stop: "Stage 7D skipped -- user opted out of user-facing documentation in Stage 0."
 3. Read `CLAUDE.md`, `plancasting/tech-stack.md` (product name, design direction, session language, documentation config).
 4. Check `plancasting/tech-stack.md` for the `Session Language` setting. Generate all content in the session language. If multi-language (session language differs from English), generate English first, then translate.
@@ -48,7 +48,7 @@ Target 15-30 pages per language (excluding API reference).
 
 Perform pre-generation cleanup if `./user-guide/` already exists (check `git status`/`git diff` for uncommitted changes first -- stop if found).
 
-1. Read 7V report -- confirm PASS.
+1. Read 7V report -- confirm PASS or CONDITIONAL PASS.
 2. Read Stage 5B report -- identify incomplete features for "Coming Soon" treatment.
 3. Read PRD -- extract all user flows (UF-*), screen specs (SC-*), user stories (US-*), feature map, product overview.
 4. Read Stage 6D help docs (`docs/help/`, if exists) -- extract adaptable content.

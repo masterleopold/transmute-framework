@@ -88,8 +88,8 @@ For each stage:
 | 6P-R | redesign | Running app + 6R report (or 6V report if 6R was skipped) (alternative to 6P) | `plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md` |
 | 7 | Manual deployment | 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (recommended) | Production environment |
 | 7V | smoke | Stage 7 complete | `plancasting/_audits/production-smoke/report.md` |
-| 7D | user-guide | 7V PASS | `user-guide/` directory |
-| 8 | feedback | 7V PASS (if 7D was run, must be PASS or WARN) | Updated specs + code |
+| 7D | user-guide | 7V PASS or CONDITIONAL PASS | `user-guide/` directory |
+| 8 | feedback | 7V PASS or CONDITIONAL PASS (if 7D was run, must be PASS or WARN) | Updated specs + code |
 | 9 | maintain | Post-launch | `plancasting/_maintenance/report-*.md` |
 
 ## Gate Logic
@@ -160,8 +160,9 @@ If 6P-R Phase 2 is rejected by the user: revert the `redesign/frontend-elevation
 - **E** (Enhancements) — improvements within existing design system
 - **D** (Design elevation) — polish that elevates the overall design quality
 
-### 7V Gate (Binary)
+### 7V Gate
 - PASS → proceed to 7D
+- CONDITIONAL PASS → proceed to 7D; document minor P1/P2 issues for post-launch fix via Stage 8
 - FAIL → hotfix + re-deploy or rollback
 - **Flaky = FAIL** in production (informational-only in 6V). Production must be deterministically stable.
 

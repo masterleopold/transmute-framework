@@ -1,17 +1,13 @@
-# User Guide Generation (Mintlify) -- Detailed Guide
+# Transmute — User Guide Generation (Mintlify)
 
 ## Stage 7D: External User Documentation Site
 
-Stage 7D runs AFTER Stage 7V achieves PASS (7V FAIL blocks 7D). It requires a live production URL for screenshots and link verification.
+Stage 7D runs AFTER Stage 7V achieves PASS or CONDITIONAL PASS (7V FAIL blocks 7D). It requires a live production URL for screenshots and link verification.
 
-**Skip Condition**: Read `./plancasting/tech-stack.md` § Documentation section. If it states user documentation is not needed, do NOT run this stage — proceed directly to Stage 8 (Feedback Loop) / 9 (Maintenance). The 7D gate does not apply when skipped.
+**Skip Condition**: Read `./plancasting/tech-stack.md` § Documentation section. If it states user documentation is not needed, do NOT run this stage — proceed directly to Stage 8 (Feedback Loop) / 9 (Maintenance). The 7D gate does not apply when skipped. If skipping, create a brief note at `./plancasting/_audits/user-guide/report.md` stating "Stage 7D skipped per tech-stack.md — user documentation not applicable." This allows downstream stages to distinguish "skipped" from "not yet run."
 
+````text
 You are a senior technical writer acting as the TEAM LEAD for a multi-agent user guide generation project using Claude Code Agent Teams. Your task is to generate a complete, deployable Mintlify documentation site containing user-facing guides organized by user journey — derived from the PRD screen specifications, user stories, user flows, and the live production application.
-
-
-## Role
-
-This stage generates a complete, deployable user-facing documentation site (Mintlify) organized by user journey. It produces external user guides, getting-started pages, FAQ, and troubleshooting content derived from the PRD and the live production application.
 
 ## Why This Stage Exists
 
@@ -26,14 +22,14 @@ Stage 7D runs AFTER Stage 7V because:
 
 **Stage Sequence**: ... → 7V (Production Smoke Verification) → **7D (this stage)** → 8 (Feedback Loop) / 9 (Maintenance)
 
-**Stack Adaptation**: This guide assumes Mintlify as the documentation platform. If `plancasting/tech-stack.md` specifies a different documentation platform (Docusaurus, GitBook, etc.), adapt the docs.json structure, MDX components, and CLI commands accordingly. The content generation rules (user journeys, screenshots, terminology) apply regardless of platform.
+**Stack Adaptation**: This prompt assumes Mintlify as the documentation platform. If `plancasting/tech-stack.md` specifies a different documentation platform (Docusaurus, GitBook, etc.), adapt the docs.json structure, MDX components, and CLI commands accordingly. The content generation rules (user journeys, screenshots, terminology) apply regardless of platform.
 
 ## Input
 
-**Prerequisite**: Stage 7V must be PASS. If 7V is FAIL, do NOT run this stage — fix production issues first.
+**Prerequisite**: Stage 7V must be PASS or CONDITIONAL PASS. If 7V is FAIL, do NOT run this stage — fix production issues first.
 
 - **Production URL**: The live application URL (from Stage 7 deployment)
-- **Stage 7V Report**: `./plancasting/_audits/production-smoke/report.md` — confirms production is stable (prerequisite gate) and informs troubleshooting content (common production issues, error states, integration failures). If 7V status is PASS → proceed. If 7V status is FAIL, STOP immediately and report: "Stage 7D requires a passing 7V. Production must be stable before generating user documentation." If the report file does not exist, STOP and report: "Stage 7V has not been run yet. Run Stage 7V first." (Note: Stage 7V is binary — PASS or FAIL only, no CONDITIONAL PASS.)
+- **Stage 7V Report**: `./plancasting/_audits/production-smoke/report.md` — confirms production is stable (prerequisite gate) and informs troubleshooting content (common production issues, error states, integration failures). If 7V status is PASS or CONDITIONAL PASS → proceed. If 7V status is FAIL, STOP immediately and report: "Stage 7D requires a passing 7V. Production must be stable before generating user documentation." If the report file does not exist, STOP and report: "Stage 7V has not been run yet. Run Stage 7V first." If 7V was CONDITIONAL PASS, reference the documented minor issues in the troubleshooting page.
 - **Stage 5B Report**: `./plancasting/_audits/implementation-completeness/report.md` — identifies incomplete features. Features marked incomplete must be documented as "Coming Soon" or omitted. If this file does not exist, assume all PRD features are fully implemented (Stage 5B was not run or all features passed).
 - **Stage 6V Report** (optional): `./plancasting/_audits/visual-verification/report.md` — if available, used as content source for the troubleshooting page (common UI issues, error states). Not required — if absent, derive troubleshooting content from PRD interaction patterns only.
 - **PRD**: `./plancasting/prd/` — especially:
@@ -953,6 +949,8 @@ Apply the following gate logic to determine the audit report's Gate Decision:
 | **WARN** | P0/P1 fully covered but: P2 coverage gaps, minor style inconsistencies, 1-2 jargon instances in non-critical pages, orphan pages (MDX files not in any navigation), minor `mint a11y` issues, or Mintlify CLI checks not tested (CLI unavailable). Deploy with known issues documented. |
 | **FAIL** | Any of: missing P0/P1 feature coverage, broken navigation (pages in nav but no file), invalid docs.json, ≥3 jargon instances, translation structure mismatch, broken screenshot references (image references pointing to non-existent files). Fix before deploying. |
 
+Note: 7D uses WARN instead of CONDITIONAL PASS because documentation gaps are less severe than code defects — WARN indicates "deployable with known documentation gaps."
+
 ## Documentation Completion Criteria
 
 7D is COMPLETE when:
@@ -1039,3 +1037,4 @@ For each guide page, follow this transformation pipeline:
 25. ALWAYS use PRODUCTION URL for authenticated page captures (screenshots and recordings). Dev servers have known race conditions with real-time auth providers (Convex, Firebase, Supabase) where the initial token fetch gets aborted during navigation, causing permanent "Session expired" error boundaries. Production builds do not have this issue.
 26. For animated recordings, ALWAYS trim the login/navigation portion from auth recordings during conversion (use `ffmpeg -ss <seconds>`). The video should start on the feature page with content visible — NOT on the login form.
 27. ALWAYS verify captured screenshots/recordings show actual content before embedding. Check for: loading spinners, "Session expired" screens, error boundaries, blank pages, cookie banners, dev badges. If any of these appear, retry with longer wait times, overlay hiding, or switch capture targets.
+````

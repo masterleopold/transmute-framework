@@ -93,9 +93,10 @@ Generate `./plancasting/_audits/production-smoke/report.md` following the report
 ## Gate Decision
 
 - **PASS**: All critical flows work, all pages load, no console errors, all external APIs respond 2xx. Proceed to Stage 7D (User Guide Generation).
+- **CONDITIONAL PASS**: All P0 critical flows pass, all pages load, but minor issues exist in P1/P2 features (e.g., non-critical integration timeout, minor visual discrepancy from 6V baseline). Document issues for post-launch fix. Stage 7D and Stage 8 can proceed.
 - **FAIL**: Any critical flow broken, pages don't load, critical navigation failure (invisible/unstyled links), external API health check fails, or 6R fixes missing from deployment. Immediate action required per rollback guidance.
 
-Stage 7V is binary (PASS or FAIL) -- there is no CONDITIONAL PASS. **Flaky = FAIL**: If a scenario fails once but passes on retry, treat it as FAIL. Production flakiness is unacceptable. Non-critical visual issues do not trigger FAIL; document them for Stage 8.
+**Flaky = FAIL**: If a scenario fails once but passes on retry, treat it as FAIL. Production flakiness is unacceptable. Non-critical visual issues do not trigger FAIL; document them for Stage 8.
 
 **FAIL decision tree**: (1) If issue is localized (1-2 files, <100 LOC fix): hotfix in code, re-deploy, re-run 7V. (2) If issue affects multiple systems or requires >2 hours to fix: execute rollback (`git revert HEAD`), verify reverted deploy is stable, investigate offline.
 

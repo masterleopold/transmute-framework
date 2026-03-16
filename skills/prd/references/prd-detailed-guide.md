@@ -1,11 +1,8 @@
-# PRD Generation -- Detailed Guide
-
-## Role
-
-This guide drives Stage 2 of the Transmute pipeline: generating a comprehensive, development-ready Product Requirement Document (PRD) from the existing BRD with full traceability.
+# Transmute — PRD Generation
 
 ## Stage 2: Product Requirement Document from BRD
 
+````text
 You are a senior product manager and technical product lead acting as the TEAM LEAD for a multi-agent PRD generation project. Your task is to generate a comprehensive, development-ready Product Requirement Document (PRD) from the existing BRD, with full traceability back to both the BRD and the original Business Plan.
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → **2 (this stage)** → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -663,3 +660,4 @@ Teammates terminate automatically upon task completion. Verify all output files 
 13. **Given-When-Then**: All acceptance criteria must follow this format strictly.
 14. **JSON Schemas**: All API request/response bodies must use explicit JSON structure with types, constraints, and examples.
 15. **Onboarding Consideration** (if applicable): If the product has a consumer-facing UI where users encounter the complete feature set from day one, document onboarding flows, progressive disclosure patterns, and guided tours that help users navigate without being overwhelmed. Skip this for APIs, admin tools, CLI utilities, or products with structured training programs.
+````

@@ -2,13 +2,40 @@
 
 ## Shared Reference for Stages 6V and 7V
 
-> **NOTE**: This is a shared reference guide read by the verify skill (Stage 6V, Phase 1) and the smoke skill (Stage 7V, Phase 1). It is not invoked directly — the parent skill loads it via `${CLAUDE_SKILL_ROOT}/references/`.
+> **WARNING**:
+> - **DO NOT PASTE THIS FILE'S CONTENTS INTO CLAUDE CODE AS A PROMPT.** This is a shared reference guide read DURING Stage 6V (Phase 1) and Stage 7V (Phase 0). See `prompt_visual_functional_verification.md` or `prompt_production_smoke_verification.md` for the actual prompts to paste.
+> - **DO NOT MODIFY THIS FILE** in project copies. It is project-agnostic and shared across all Transmute projects. Updates should only be made in the Transmute Framework Template repository.
+>
+> **Scenario Generation**: Stage 6V reads this file during Phase 1 (Lead Analysis); Stage 7V reads it during Phase 0 (Scenario Generation). The agent generates scenarios dynamically by reading the PRD, codebase, and this guide. Do NOT create scenarios manually. This file MUST be copied to `./plancasting/transmute-framework/` in the project directory before running 6V or 7V (see execution-guide.md § "Pre-6V Setup" for copy instructions).
+
+This file is a **reference guide** for agents running 6V/7V. Agents read it to understand scenario types and generation algorithms, then dynamically generate the actual scenario matrix from the PRD and codebase. This file itself is NOT modified during execution; the generated matrix is saved to the audits directory.
 
 This document defines how to dynamically generate comprehensive test scenarios from PRD specifications and codebase analysis. It is referenced by:
 - **Stage 6V** (Visual & Functional Verification) — generates FULL scenario matrix
 - **Stage 7V** (Production Smoke Verification) — generates SMOKE scenario matrix (P0/P1 only)
 
 Note: Stage 6R (Runtime Remediation) uses the 6V scenario matrix output (`./plancasting/_audits/visual-verification/feature-scenario-matrix.md`) to verify fixes. 6R does NOT re-generate the scenario matrix — it reuses the 6V matrix to re-test fixed issues.
+
+**Stage usage summary**:
+- **Stage 6V**: Reads this file during Phase 1 to generate the FULL scenario matrix (all 5 scenario types, P0-P3)
+- **Stage 7V**: Reads this file during Phase 0 to generate the SMOKE scenario matrix (FS + AS types only, P0-P1, max 15 scenarios)
+- **Stage 6R**: Does NOT read this file — it uses the 6V scenario matrix output at `./plancasting/_audits/visual-verification/feature-scenario-matrix.md` to verify fixes
+
+## Abbreviation Glossary
+
+| Abbreviation | Meaning | Source |
+|---|---|---|
+| FS-NNN | Feature Scenario | Generated from User Flows (this guide, Step 4) |
+| AS-NNN | Auth Context Scenario | Generated from middleware analysis (this guide, Step 5) |
+| ES-NNN | Entity State Scenario | Generated from schema analysis (this guide, Step 6) |
+| RS-NNN | Role Permission Scenario | Generated from auth helpers (this guide, Step 7) |
+| NS-NNN | Negative Scenario | Generated from acceptance criteria (this guide, Step 8) |
+| SS-NNN | Smoke Scenario | Re-numbered FS-NNN for Stage 7V (Production Smoke Verification) scope (see Generation Algorithm Step 9) |
+| SC-NNN | Screen Specification | From PRD `prd/08-screen-specifications.md` |
+| US-NNN | User Story | From PRD `prd/04-epics-and-user-stories.md` |
+| UF-NNN | User Flow | From PRD `prd/06-user-flows.md` |
+| FEAT-NNN | Feature | From PRD `prd/02-feature-map-and-prioritization.md` |
+| FR-NNN | Functional Requirement | From BRD `brd/07-functional-requirements.md` |
 
 ## Why Dynamic Scenarios Instead of Static Page Lists
 
@@ -24,19 +51,19 @@ Dynamic scenarios solve this by generating test **sequences** that mirror real u
 
 ### Type 1: Feature Scenarios (FS-NNN)
 Complete end-to-end workflows that test a feature from start to finish.
-- **Source**: User Flows (`plancasting/prd/06-user-flows.md`) + User Stories (`plancasting/prd/04-epics-and-user-stories.md`)
+- **Source**: User Flows (`prd/06-user-flows.md`) + User Stories (`prd/04-epics-and-user-stories.md`)
 - **Structure**: Multi-step sequence following a user flow's happy path
 - **Example**: "First-Time Signup → Onboarding → Dashboard" (UF-001)
 
 ### Type 2: Auth Context Scenarios (AS-NNN)
 Test the same routes/features from different authentication states.
-- **Source**: Information Architecture (`plancasting/prd/07-information-architecture.md`) + Middleware analysis
+- **Source**: Information Architecture (`prd/07-information-architecture.md`) + Middleware analysis
 - **Structure**: Matrix of routes × auth states (unauthenticated, each role)
 - **Example**: "Visit /dashboard as unauthenticated → expect redirect; as starter → expect dashboard; as admin → expect admin features visible"
 
 ### Type 3: Entity State Scenarios (ES-NNN)
 Test features that behave differently based on entity lifecycle state.
-- **Source**: Feature Map (`plancasting/prd/02-feature-map-and-prioritization.md`) + Schema analysis
+- **Source**: Feature Map (`prd/02-feature-map-and-prioritization.md`) + Schema analysis
 - **Structure**: Matrix of features × entity states
 - **Example**: "Project tabs at each status: draft (3 tabs enabled), configuring (4 tabs), casting (5 tabs), ..., deployed (9 tabs)"
 
@@ -52,6 +79,8 @@ Test error handling, validation, and edge cases.
 - **Structure**: Trigger → expected error behavior
 - **Example**: "Submit empty business plan → validation error shown; Upload 20MB file → file size error shown"
 
+**Note**: SS-NNN (Smoke Scenario) is not a separate type — it is a re-numbered FS-NNN used in Stage 7V's smoke scope. See Step 9 below.
+
 ## Generation Algorithm
 
 ### Step 1: Read All PRD Sources
@@ -60,15 +89,17 @@ Read these files and extract structured data:
 
 | File | Extract |
 |------|---------|
-| `plancasting/prd/02-feature-map-and-prioritization.md` | All FEAT-NNN with priority (P0-P3), dependencies, effort |
-| `plancasting/prd/04-epics-and-user-stories.md` | All US-NNN with acceptance criteria (Given/When/Then), persona, role requirements |
-| `plancasting/prd/06-user-flows.md` | All UF-NNN with entry/exit points, happy path steps, alternative paths, error cases |
-| `plancasting/prd/07-information-architecture.md` | All routes with auth requirements, navigation contexts, entity state prerequisites |
-| `plancasting/prd/08-screen-specifications.md` | All SC-NNN with component inventories, states, responsive behavior |
+| `prd/02-feature-map-and-prioritization.md` | All FEAT-NNN with priority (P0-P3), dependencies, effort |
+| `prd/04-epics-and-user-stories.md` | All US-NNN with acceptance criteria (Given/When/Then), persona, role requirements |
+| `prd/06-user-flows.md` | All UF-NNN with entry/exit points, happy path steps, alternative paths, error cases |
+| `prd/07-information-architecture.md` | All routes with auth requirements, navigation contexts, entity state prerequisites |
+| `prd/08-screen-specifications.md` | All SC-NNN with component inventories, states, responsive behavior |
 
 ### Step 2: Read Codebase Sources
 
 Supplement PRD data with actual implementation:
+
+> **Prerequisite**: Before following Step 2, read your project's `plancasting/tech-stack.md` for the directory structure and adapt the paths below to your actual framework paths.
 
 **Stack Adaptation**: The paths below use Next.js + Convex conventions. Replace with your project's equivalent paths per `plancasting/tech-stack.md` (e.g., `[backend-dir]/auth.*` instead of `convex/auth.ts`).
 
@@ -86,11 +117,15 @@ Supplement PRD data with actual implementation:
 ### Step 3: Build the Feature Graph
 
 Create a directed graph of features and their dependencies. Dependencies are extracted from:
-1. **Explicit dependency fields** in `plancasting/prd/02-feature-map-and-prioritization.md` (if present — look for "Depends on" or "Prerequisites" columns)
+1. **Explicit dependency fields** in `prd/02-feature-map-and-prioritization.md` (if present — look for "Depends on" or "Prerequisites" columns)
 2. **User story prerequisites**: If US-005 requires data from FEAT-002, then features behind US-005 depend on FEAT-002
-3. **Implicit dependencies**: If FEAT-010 (Deploy) requires FEAT-005 (Implementation) to have run, infer the edge
+3. **Implicit dependencies**: If FEAT-010 (Deploy) requires FEAT-005 (Implementation) to have run, infer the edge. **Inference algorithm**: (1) Read each feature's prerequisites in PRD 02-feature-map. (2) For each prerequisite, add an edge in the graph. (3) Read user stories — if a story for FEAT-A references data created by FEAT-B, add edge FEAT-B → FEAT-A (keyword detection: look for "created by", "requires", "depends on" in story text). (4) For features with lifecycle states, add edges based on state transitions (if FEAT-X produces state S and FEAT-Y is only valid in state S, add edge FEAT-X → FEAT-Y).
 
-The following is an illustrative example from a hypothetical project — your product's feature graph should be derived from the PRD feature map (`plancasting/prd/02-feature-map-and-prioritization.md`).
+**Cycle detection**: After building the graph, topologically sort all features. If a cycle is detected (e.g., FEAT-A → FEAT-B → FEAT-C → FEAT-A), report as ERROR and list the cycle. Do not proceed with scenario generation until the cycle is resolved — either by removing an incorrect edge or by flagging it for PRD correction. If the cycle cannot be resolved by the agent (requires PRD correction), break the cycle at the edge with the weakest evidence (inferred rather than explicit dependency), document the break in the scenario matrix with a WARNING, and proceed. Flag the PRD inconsistency in the 6V/7V report for operator review.
+
+**Transitive reduction** (recommended): If FEAT-A → FEAT-B → FEAT-C and also FEAT-A → FEAT-C, the direct FEAT-A → FEAT-C edge is redundant (implied by transitivity). Remove it to simplify the graph. This reduces complexity for scenario ordering without losing coverage, and prevents unnecessary blocking cascades during execution (an early failure blocks fewer downstream scenarios).
+
+The following is an illustrative example from a hypothetical project — your product's feature graph should be derived from the PRD feature map (`prd/02-feature-map-and-prioritization.md`).
 
 ```
 FEAT-001 (Auth, P0)
@@ -106,21 +141,23 @@ FEAT-009 (Review, P1) → FEAT-010 (Code Browser, P2) → FEAT-011 (Audits, P1)
 FEAT-012 (Deploy, P1) → FEAT-013 (Post-Launch, P2)
 ```
 
-This graph determines:
+The Feature Dependency Graph (constructed in Step 3) determines:
 - **Scenario ordering**: P0 features must be tested before P1 (they're prerequisites)
 - **Entity state setup**: To test FEAT-012 (Deploy), you need a project that has passed through FEAT-004→005→006→007→009→011
 - **Failure cascade**: If FEAT-001 (Auth) fails, ALL other scenarios are blocked
+
+**Dependency edge definition**: A→B (A enables B) means: (1) B cannot be tested until A is working (prerequisite), (2) B's user flow/feature depends on A's data or state, (3) A must be tested before B in execution order.
 
 ### Step 4: Generate Feature Scenarios (FS-NNN)
 
 For each User Flow (UF-NNN):
 
 1. **Map to features**: Which FEAT-NNN does this flow exercise? If a user flow references a FEAT-NNN not found in the feature map, include the scenario but flag the discrepancy in the matrix output as a WARN-level note.
-2. **Inherit priority**: Use the highest priority of the mapped features
+2. **Inherit priority**: Use the highest priority of the mapped features. If the feature is unmapped (FEAT-NNN not found in feature map), use the highest priority from referenced user stories as a fallback.
 3. **Extract happy path**: Convert the Mermaid flowchart steps into a linear test sequence
 4. **Identify auth context**: Does the flow start unauthenticated? Which role is needed?
 5. **Identify entity prerequisites**: What entity states must exist before the flow starts?
-6. **Map to screens**: Which SC-NNN screens are visited during the flow?
+6. **Map to screens**: For each step in the user flow, identify the screen specification (SC-NNN) from `prd/08-screen-specifications.md`. If a user flow step does not map to a screen spec (because the PRD does not specify UI for that step), note it as a gap: "UF-NNN step N maps to [business logic] but no SC-NNN available — infer screen structure from codebase analysis (Step 2)." Do NOT invent screen specs — only reference what exists in the PRD. If a screen spec (SC-NNN) exists in the PRD but is not referenced by any user flow, include it as a standalone page-load scenario to ensure full screen coverage.
 7. **Identify buttons/actions**: What buttons are clicked, what forms are filled at each step?
 8. **Define expected outcomes**: What should happen after each step? (page transition, data change, toast, redirect)
 
@@ -147,6 +184,10 @@ For each User Flow (UF-NNN):
 - FS-NNN-E1: Submit with invalid email → validation error shown
 - FS-NNN-E2: Submit with weak password → password strength error
 - FS-NNN-E3: Submit with existing email → duplicate account error
+
+**Negative Variants vs. Standalone Negative Scenarios**: Negative variants (E1–E3) are inline error-path tests within a parent FS scenario — they share the same prerequisite data and auth context. Standalone Negative Scenarios (NS-NNN from Step 8) are independent error tests not tied to a specific FS happy path. **Decision rule**: If the error case occurs during a Feature Scenario's happy path flow (e.g., "submit with invalid email during signup"), make it a variant (FS-NNN-EN). If it's a standalone error condition not tied to any FS flow (e.g., "manually crafted API request with invalid auth token"), make it a Negative Scenario (NS-NNN).
+
+**Counting for Step 9 trimming**: Each negative variant (FS-NNN-EN) counts as a separate scenario. Example: FS-001 + FS-001-E1 + FS-001-E2 = 3 scenarios toward the cap. Each standalone NS-NNN also counts as 1 scenario.
 ```
 
 ### Step 5: Generate Auth Context Scenarios (AS-NNN)
@@ -166,7 +207,7 @@ Build an auth matrix from middleware analysis + route list:
 ```
 
 For 6V: Test EVERY cell in the matrix.
-For 7V: Test only the diagonal + unauthenticated column.
+For 7V: Test one representative cell per route: the primary role expected to access that route (e.g., /dashboard with 'Starter' role, /admin with 'Admin' role). Also test the unauthenticated column (all routes as unauthenticated user — expect redirect to /login or error page).
 
 ### Step 6: Generate Entity State Scenarios (ES-NNN)
 
@@ -235,22 +276,43 @@ The following is an illustrative example — your product's form validations and
 
 **ID convention**: When Stage 7V filters Feature Scenarios for smoke testing, it re-numbers them as SS-NNN (Smoke Scenario) in the smoke scenario matrix. The original FS-NNN source ID is preserved in the 'Source' column for traceability.
 
+Example: If 6V generates FS-001, FS-003, FS-007, FS-012 for P0 features, 7V renumbers them as SS-001, SS-002, SS-003, SS-004 (sequentially) with `Source=FS-NNN` preserved in the matrix.
+
 **For 6V (Full)**:
 - Generate ALL scenario types for ALL features (P0-P3)
-- Total: typically 50-100+ scenarios. If the total scenario count exceeds 150, apply these trimming steps in order:
-  1. Remove P3 scenarios entirely
-  2. Remove P2 negative variants for non-critical features (target 100-120)
-  3. Remove P2 Entity State and Role Permission scenarios, keeping only Feature Scenarios for P2
-  4. Consolidate related Feature Scenarios that share the same feature into multi-step test scenarios
-  5. Split the test execution across multiple teammates rather than reducing coverage further
-  6. **Terminal condition**: If count still exceeds 150 after all steps, cap at 150 by keeping ONLY Feature Scenarios (P0+P1+P2) + Auth Context (P0+P1). Remove all Role Permission and Entity State scenarios entirely.
-- Estimated time: 30-60 minutes
+- Total scenario count typically ranges from 50 to the verification scenario cap (default: 150 for 6V split across teammates at ~2–3 min per scenario; 15 for 7V single agent at ~2 min per scenario). Default cap: 150 scenarios for 6V, 15 for 7V. To override, update the `Verification scenario cap` value in `plancasting/tech-stack.md` § Model Specifications table. If `plancasting/tech-stack.md` § Model Specifications defines a 'Verification scenario cap', use that value instead. **Limit justification**: The scenario cap ÷ 3–4 teammates yields a manageable per-teammate load, at ~2–3 min per scenario, fitting within a single pipeline model session. If count is within the verification scenario cap, proceed to execution without trimming. If count exceeds the verification scenario cap, apply these trimming steps in order (each step removes lower-value scenarios first) until count drops to within the cap. Stop applying further steps as soon as count drops to within the cap.
+  1. Remove P3 scenarios entirely (P3 = "nice-to-have" features; testing them is deferrable to post-launch)
+  2. Remove P2 negative variants for non-critical features (error paths are important but less critical than happy paths; keep P0/P1 negative scenarios)
+  3. Remove P2 Entity State and Role Permission scenarios, keeping only Feature Scenarios for P2 (ES/RS are detailed behavior tests; FS are end-to-end workflows with higher signal-to-noise ratio)
+  4. Consolidate related Feature Scenarios that share the same feature into multi-step test scenarios (reduces redundancy without reducing feature coverage)
+  5. **6V only** (does NOT reduce count — skip to step 6 for 7V): Split the test execution across additional teammates rather than reducing coverage further — parallelism before cutting tests. If teammate capacity is exhausted and count still exceeds the cap, proceed to step 6.
+     - **7V note**: 7V is single-agent and cannot split. If the count is already ≤15 after step 1 (remove P3), no further trimming is needed — proceed directly to execution. Otherwise, continue to step 6.
+  6. **Terminal condition** (use only if product scope is extremely large and timeline is constrained): If count still exceeds the verification scenario cap after all steps, cap at the limit by keeping ONLY Feature Scenarios (P0+P1+P2) + Auth Context (P0+P1) + Negative Scenarios for P0 features only. Remove all Role Permission and Entity State scenarios entirely. Document in the scenario matrix: "Coverage is intentionally limited due to scope — full E2E test suite recommended post-launch."
+
+Apply trimming steps sequentially — check count after each step. **STOP** applying steps as soon as count is within the cap. This ensures maximal coverage retention.
+
+**6V vs 7V trimming**: For 6V, PREFER splitting scenarios across more teammates (parallelism) over cutting scenarios. For 7V (single-agent), trimming is the only option — apply the steps above.
+
+- Estimated time: 30–60 minutes for ≤50 scenarios; 60–120 minutes for 50–150 scenarios (scenarios split across 3–4 teammates in parallel)
+
+**For 6V MODE: critical (P0+P1 Focus)**:
+- Generate Feature Scenarios for P0 and P1 features only (skip P2/P3)
+- Generate Auth Context Scenarios for P0 features only
+- Generate Entity State Scenarios for P0 features only
+- Skip Role Permission and Negative Scenarios entirely
+- Reduces matrix size for time-constrained verification runs while retaining coverage of all launch-critical functionality
+- Estimated time: 15-30 minutes
 
 **For 7V (Smoke — Quick Production Validation)**:
-- Generate Feature Scenarios for P0 + P1 features ONLY (happy path only, no negative variants)
-- Generate Auth Context Scenarios for unauthenticated + 1 authenticated role only. For Auth Context, test only the diagonal — meaning test each route once with the role that is the primary intended user of that route (e.g., admin dashboard with admin, user settings with regular user), rather than testing every route × every role combination.
+- Generate Feature Scenarios for P0 features (all scenarios) + P1 features (top 5 by user impact) + any P2 features in the critical path (a P2 feature is "in the critical path" if it is a transitive prerequisite of any P0/P1 feature in the Feature Dependency Graph — e.g., a P2 feature that blocks P0/P1 flows). If a feature has no existing Feature Scenario, create a minimal happy-path scenario. **User impact scoring**: Assign points to each P1 feature and select the top 5 by score:
+  - **Personas affected**: +1 per persona that has a user story referencing this feature (cap: 5 points)
+  - **Flow frequency**: +1 if the feature appears in ≥3 user flows (UF-NNN), +0 otherwise
+  - **Business criticality**: +2 if revenue-impacting (payments, billing, subscriptions), +0 otherwise
+  - Total: 0–8 points. Select the top 5 P1 features by score. Ties broken by earlier position in PRD feature map.
+  - Example: FEAT-005 (Billing): 3 personas + 4 flows + revenue = 3+1+2 = 6 points. FEAT-008 (Admin Panel): 1 persona + 1 flow + internal = 1+0+0 = 1 point.
+- Generate Auth Context Scenarios for unauthenticated + 1 authenticated role only. For Auth Context, test one representative cell per route: the primary role expected to access that route (e.g., admin dashboard with admin, user settings with regular user), rather than testing every route × every role combination. Also test the unauthenticated column (all routes as unauthenticated user — expect redirect to /login or error page).
 - Skip Entity State and Role Permission scenarios entirely (too detailed for smoke test).
-- Maximum 15 scenarios to fit within 20-40 minute window
+- **Hard cap: 15 scenarios** (not a recommendation — a limit). This ensures 7V completes within 30–45 minutes total (at ~2 min per scenario + scenario generation + infrastructure checks). If trimming produces >15 scenarios, apply the terminal condition (step 6 in "Prioritize and Filter" above) to reduce to 15. If the product scope is so large that trimming to 15 omits critical P1 functionality, escalate to the operator — they may split verification across two 7V runs or extend the session time budget.
 - **Selection criteria**: (1) P0 Feature Scenarios first (typically 5-8), (2) P1 Feature Scenarios if space permits (top 3-5 by user impact), (3) Auth Context: test /login, /dashboard, /settings for unauthenticated and 1 authenticated role. Do NOT include Negative Scenarios in smoke tests — they're too detailed for production validation.
 
 ### Step 10: Save the Scenario Matrix
@@ -262,7 +324,7 @@ Save the matrix to the appropriate path based on which stage is running:
 ```markdown
 # Feature Scenario Matrix
 - **Generated**: [date]
-- **Scope**: full / smoke
+- **Scope**: full / critical / smoke
 - **PRD Sources**: [list of files read]
 - **Code Sources**: [list of files scanned]
 
@@ -295,9 +357,27 @@ Save the matrix to the appropriate path based on which stage is running:
 [Full scenario definitions]
 ```
 
+## Test User Account Requirements (Required Before 6V)
+
+Ensure these test accounts exist with the following roles and plan tiers. These accounts are created during Stage 6F (Seed Data) or manually via the UI before running 6V. These are logical account identifiers — map them to actual test credentials (email/password pairs) stored in `.env.test` or equivalent, as configured during Stage 6F.
+
+**Prerequisite**: Test accounts must exist before 6V starts. If Stage 6F created them, verify with `bun run seed:verify`. If 6F was not run or was skipped, create accounts manually via the signup flow or admin panel before starting 6V.
+
+| Account Name | Plan Tier | Role | Purpose |
+|---|---|---|---|
+| TEST_USER_STARTER | Starter | member | Default for page-load checks (AS, ES) |
+| TEST_USER_PRO | Pro | member | Default for feature flow execution (FS, NS) |
+| TEST_USER_ENTERPRISE | Enterprise | member | Default for interaction/permission testing (RS) |
+| TEST_USER_ADMIN | Any | admin | Admin panel verification |
+| TEST_USER_MEMBER | Any | member (no ownership) | Non-owner permission testing |
+
+Plan tiers listed above are illustrative defaults. Map to your project's actual plan tiers as defined in `prd/02-feature-map-and-prioritization.md` or `brd/14-business-rules-and-logic.md`. For products without plan tiers (e.g., desktop apps, IoT, single-tier products), use role-based distinctions instead (admin, editor, viewer, etc.).
+
 ## Mapping Scenarios to Teammates (6V Only)
 
 When distributing scenarios to teammates:
+
+**Note**: These teammate names are defaults. If your session uses different names, map scenario categories to teammates by domain (e.g., auth scenarios to the teammate handling authentication), not by name.
 
 | Teammate | Scenario Types | Auth Context |
 |----------|---------------|--------------|
@@ -310,14 +390,41 @@ Note: This teammate mapping applies to Stage 6V only. Stage 7V is a single-agent
 
 Test user assignments are primary defaults. Teammates testing Auth Context (AS) or Role Permission (RS) scenarios must use multiple test accounts to cover the auth matrix. All teammates should have access to all test user credentials.
 
-**Key rule**: Feature Scenarios are the PRIMARY test unit. Page-level checks (from the old verification matrix) are SECONDARY — they fill gaps where no Feature Scenario covers a screen. Every screen SHOULD be covered by at least one Feature Scenario. If a screen has no scenario, add a standalone page-load check.
+**Scenario Ownership Rules**: (1) A scenario belongs to ONE teammate based on its PRIMARY test type. (2) If a Feature Scenario (FS) incidentally tests auth transitions, it still belongs to Teammate 2 (FS owner), not Teammate 1. (3) If a scenario PRIMARILY tests an entity state change, it belongs to Teammate 1 (ES owner). Resolve ambiguities by asking: "What is the failure mode we're most worried about?"
+
+**Key rule**: Feature Scenarios are the PRIMARY test unit. Standalone page-load checks (simple "does this URL render without errors" tests) are SECONDARY — they fill gaps where no Feature Scenario covers a screen. Every screen SHOULD be covered by at least one Feature Scenario. If a screen has no scenario, add a standalone page-load check as a fallback.
 
 ## Scenario Execution Rules
 
 1. **Run P0 scenarios first.** If a P0 scenario fails (e.g., Auth fails), mark ALL dependent scenarios as BLOCKED — don't waste time running them. More broadly, if ANY scenario fails, consult the Feature Dependency Graph to identify all transitively dependent scenarios and mark them as BLOCKED.
-   - **Exception for 7V (smoke scope)**: Mark only immediate dependents as BLOCKED — do not transitively cascade, as the smoke test has too few scenarios for deep cascade analysis.
+   - **Exception for 7V (smoke scope)**: For 7V, use the Feature Dependency Graph to identify immediate dependents only. If Auth (FS-001) fails, mark as BLOCKED only scenarios that explicitly list Auth as a direct prerequisite. Do NOT transitively cascade — 7V's goal is quick validation, not exhaustive dependency tracing (e.g., if Dashboard depends on User Profile which depends on Auth, and Auth fails, mark only User Profile as BLOCKED — Dashboard is not blocked because it has an independent failure mode worth testing).
 2. **Use the Feature Dependency Graph** to determine execution order. A scenario for FEAT-012 (Deploy) cannot run before FEAT-003 (Project Management) passes.
 3. **Share entity state across scenarios when possible.** If FS-003 creates a project and FS-005 needs a project, use the same project — don't recreate. But ensure scenarios that MODIFY entities use separate instances.
 4. **Record button clicks and page transitions.** Every button clicked, every form filled, every page navigated to should be logged. This data feeds the link integrity and button action reports.
 5. **Screenshot at each step, not just the final state.** Feature scenarios are multi-step — a failure at step 5 of 8 needs a screenshot at step 5.
 6. **Map results back to acceptance criteria.** When a Feature Scenario step corresponds to a US-NNN acceptance criterion, record PASS/FAIL against that criterion.
+7. **Execution log format** (per scenario step): `[Step N] [Page SC-NNN] | Action: [button/form] | Expected: [outcome] | Result: PASS/FAIL | Screenshot: [link]`
+
+## Handling Flaky Scenarios
+
+Re-run a failing scenario once. If it passes on re-run, mark as "Flaky — investigate timing" and include in the report's flaky tests section. If both runs fail, mark as failed. Do not retry more than once. **Stage distinction**: For 6V (dev environment), flaky scenarios are informational — flag for investigation but do NOT block the gate and are EXCLUDED from the pass/fail percentage calculation. They appear in a separate "Flaky Scenarios" section of the report. For 7V (production smoke), a flaky scenario is a FAIL — production instability must be resolved before re-running 7V. Don't exclude flaky scenarios from the matrix, but flag them for developer attention. Flaky scenarios often indicate:
+1. Missing waits/polling in the test (add `expect.poll()` or `expect.toPass()` for eventually-consistent backends)
+2. Race conditions in the app (add explicit wait states)
+3. External service latency (mock external services for consistent timing)
+
+## Scenario De-duplication Rules
+
+Two scenarios should be **consolidated** if: (1) They exercise the exact same steps in the same order, (2) They have the same success criteria, (3) They test the same roles/auth contexts.
+
+Separate scenarios are **justified** if: (1) They test different roles (e.g., owner vs member creating a project), (2) They test different entity states (e.g., project in draft vs in progress), (3) They test different error paths. When in doubt, keep separate scenarios and let the lead consolidate during optimization.
+
+## Scenario Matrix Audit Checklist (Before Passing to Teammates)
+
+Before distributing the matrix, the lead should verify:
+1. Every P0 feature has at least one Feature Scenario
+2. Every route in Information Architecture is covered by at least one Auth Context Scenario
+3. Entity State Scenarios cover all meaningful lifecycle states (e.g., draft, in_progress, done, error)
+4. Role Permission Scenarios cover all role combinations mentioned in user stories
+5. Total scenario count is within the allocated execution time budget (6V: 30-120 min depending on scenario count, 7V: 15-45 min)
+6. All scenario prerequisites (entity states, test accounts) can be set up with existing seed data or UI flows
+7. `_progress.md` was checked — features marked `⬜ Not Started`, `🔄 Needs Re-implementation`, `🔧 In Progress`, or `⏸ Blocked` are EXCLUDED from the scenario matrix (no scenarios generated for them). Only `✅ Done` features have scenarios generated. If `_progress.md` does not exist (e.g., running before Stage 5), derive the feature list from `plancasting/prd/02-feature-map-and-prioritization.md` instead. Note: 6V should only run after Stage 5B completes. If `_progress.md` does not exist, this likely indicates a pipeline sequence error — verify Stage 5 was run before proceeding.

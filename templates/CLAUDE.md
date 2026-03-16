@@ -26,11 +26,11 @@ All stages follow the **Transmute Full-Build Approach**: every feature in the Bu
 
 ### Safety-Critical Rules
 
-- **Never skip** 5B, 6V, 6P or 6P-R (one must always run), or 7V. (5B catches the #1 cause of Stage 6 failures — frontend stubs and duplication that slip through fatigued quality gates.)
+- **Never skip** 5B, 6V, or 7V. Always run exactly one of 6P or 6P-R. (5B catches the #1 cause of Stage 6 failures — frontend stubs and duplication that slip through fatigued quality gates.)
 - **6P / 6P-R mutual exclusivity**: Run exactly one, never both. To switch: commit 6P work, `git revert` the 6P commit, then run 6P-R in a new session.
 - **6R skip conditions**: Skip 6R only if 6V returns PASS (zero issues) or CONDITIONAL PASS with only 6V-C issues. If skipped, 6P/6P-R uses the 6V report as input.
-- **Stage 7 prerequisites**: 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (strongly recommended — without it, Stage 7 has no deployment documentation to reference).
-- **Stage 8 prerequisite**: Stage 7V must PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN.
+- **Stage 7 prerequisites**: 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (strongly recommended — without it, Stage 7 has no deployment documentation to reference). If 6D was skipped, refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running.
+- **Stage 8 prerequisite**: Stage 7V must achieve PASS or CONDITIONAL PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN.
 - **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json`, lock files, and source code. Run one, commit, then the other.
 - **Stage 9 prerequisite**: Stage 9 does not formally require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies.
 
@@ -213,7 +213,7 @@ Valid status values: `⬜ Not Started`, `🔧 In Progress`, `✅ Done`, `🔄 Ne
 
 **Valid state transitions**: `⬜` → `🔧` (Stage 5 starts feature) → `✅` (Stage 5 completes feature) → `🔄` (Stage 5B audit or operator sets after 5B FAIL) → `🔧` (Stage 5 re-run picks up feature) → `✅`. Also: `⬜`/`🔧` → `⏸` (blocked) → `🔧` (unblocked). When transitioning `🔧` → `⏸`, preserve sub-status columns (Backend/Frontend/Tests) as-is — they indicate which layers were completed before the blocker. When unblocked (`⏸` → `🔧`), Stage 5 resumes from the first incomplete layer.
 
-**Stage 5 resumption**: The Feature Orchestrator (Stage 5) reads this file at startup and resumes from the first `⬜ Not Started` or `🔄 Needs Re-implementation` feature, skipping all `✅ Done` and `⏸ Blocked` features. Features marked `🔧 In Progress` from a crashed session are inspected for sub-status (backend/frontend/tests completeness) and resumed from the first incomplete layer — see `prompt_feature_orchestrator.md` § "Session Recovery" and execution-guide.md § "Stage 5" for details. (`⏸ Blocked` features are treated like `✅ Done` for resumption purposes but retain their `⏸` status so the operator can unblock and re-run later.) This enables multi-session execution when the feature count exceeds the session limit.
+**Stage 5 resumption**: The Feature Orchestrator (Stage 5) reads this file at startup and performs a **positional scan** (top-to-bottom, not status-prioritized) to resume from the first `⬜ Not Started` or `🔄 Needs Re-implementation` feature, skipping all `✅ Done` and `⏸ Blocked` features. Features marked `🔧 In Progress` from a crashed session are inspected for sub-status (backend/frontend/tests completeness) and resumed from the first incomplete layer — see `prompt_feature_orchestrator.md` § "Session Recovery" and execution-guide.md § "Stage 5" for details. (`⏸ Blocked` features are treated like `✅ Done` for resumption purposes but retain their `⏸` status so the operator can unblock and re-run later.) This enables multi-session execution when the feature count exceeds the session limit.
 
 ### Path-Scoped Rules (`.claude/rules/`)
 

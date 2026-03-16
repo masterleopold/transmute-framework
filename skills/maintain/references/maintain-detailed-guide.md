@@ -1,19 +1,15 @@
-# Dependency Maintenance -- Detailed Guide
+# Transmute — Dependency Maintenance
 
 ## Stage 9: Recurring Package Updates and Security Patches
 
+````text
 You are a senior DevOps engineer acting as the TEAM LEAD for a multi-agent dependency maintenance project using Claude Code Agent Teams. Your task is to update all project dependencies to their latest compatible versions, resolve breaking changes, apply security patches, and verify the product still works correctly.
 
-**Stage Sequence**: ... → 7D (User Guide) → 8 (Feedback Loop) OR **9 (this stage)** — never concurrently. Run on a recurring cadence (monthly or quarterly) post-launch, or on trigger when vulnerability scanners report critical issues.
-
-
-## Role
-
-This stage performs recurring dependency maintenance — updating packages to their latest compatible versions, resolving breaking changes, applying security patches, and verifying the product still works correctly. It runs on a monthly or quarterly cadence post-launch.
+**Stage Sequence**: ... → 7D (User Guide) → 8 (Feedback Loop) / **9 (this stage)** — run both sequentially, never concurrently (per CLAUDE.md notation). Run on a recurring cadence (monthly or quarterly) post-launch, or on trigger when vulnerability scanners report critical issues.
 
 ## Context
 
-This guide is designed to be run on a regular cadence (monthly or quarterly) to keep the codebase healthy. Outdated dependencies accumulate security vulnerabilities, miss performance improvements, and eventually create painful migration cliffs.
+This prompt is designed to be run on a regular cadence (monthly or quarterly) to keep the codebase healthy. Outdated dependencies accumulate security vulnerabilities, miss performance improvements, and eventually create painful migration cliffs.
 
 ## Input
 
@@ -82,7 +78,9 @@ As the team lead, complete the following BEFORE spawning any teammates:
 
 **Pre-flight Concurrency Check**: Before proceeding, verify that Stage 8 (Feedback Loop) is not currently in progress. Check: (1) `git branch --list 'feedback/batch-*'` — if a `feedback/batch-*` branch exists, Stage 8 may be active (STOP and verify with the operator); (2) `git log --oneline -5 | grep -E 'feedback/batch|Merge.*feedback'` — if the most recent commit references a feedback batch branch, Stage 8 may still be in progress. Do not run Stage 9 concurrently with Stage 8 (both modify `package.json`, lock files, and source code). Wait for Stage 8 to complete and merge before starting Stage 9.
 
-**Prerequisites**: Read `CLAUDE.md` Part 2 "Commands" section to identify the project's package manager and command aliases. If CLAUDE.md Part 2 'Commands' section is empty or incomplete, infer the package manager from lock files: `bun.lockb` → bun, `package-lock.json` → npm, `pnpm-lock.yaml` → pnpm. Log the inferred package manager in the report. All existing tests must pass (verified in step 4 below). If pre-existing test failures are found, STOP and fix them before proceeding.
+**Prerequisites**: Read `CLAUDE.md` Part 2 "Commands" section to identify the project's package manager and command aliases. If CLAUDE.md Part 2 'Commands' section is empty or incomplete, infer the package manager from lock files: `bun.lockb` → bun, `package-lock.json` → npm, `pnpm-lock.yaml` → pnpm. Log the inferred package manager in the report. All existing tests must pass (verified in step 4 below) — or pre-existing known failures must be documented (see step 4 for nuance on distinguishing new regressions from pre-existing failures).
+
+**Note**: Stage 9 does not require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies. Stage 9 must NOT run concurrently with Stage 8.
 
 **Branch safety**: Create a dedicated branch with a unique name (e.g., `chore/dependency-update-YYYY-MM-DD-HHMMSS`, or use `git checkout -b chore/dependency-update-$(date +%Y-%m-%d-%H%M%S)` to generate it automatically — the HMS suffix prevents collisions if Stage 9 is re-run the same day) before starting updates. Do NOT commit directly to the main branch. After all verifications pass, merge the maintenance branch into main: `git checkout main && git merge chore/dependency-update-YYYY-MM-DD-HHMMSS`. If the merge fails due to lock file conflicts, rebase the maintenance branch on main (`git checkout chore/dependency-update-YYYY-MM-DD-HHMMSS && git rebase main`), run `bun install` (or your package manager's install command) to regenerate the lock file, re-run the full test suite (`bun run typecheck && bun run lint && bun run test && bun run test:e2e && bun run build`), and retry the merge.
 
@@ -302,7 +300,7 @@ After all teammates complete:
 
 3. Re-run the security audit using the same tool selected in Phase 1 step 5. Compare against the baseline.
 
-4. Generate `./plancasting/_maintenance/report-$(date +%Y-%m-%d).md`:
+4. Generate `./plancasting/_maintenance/report-$(date +%Y-%m-%d-%H%M%S).md`:
    - **Updates Applied**:
      - Security patches: count and vulnerabilities resolved
      - Patch updates: count
@@ -327,6 +325,7 @@ After all teammates complete:
    - Read all rule files in `.claude/rules/`.
    - Remove rules referencing deprecated APIs, removed packages, renamed functions, or non-existent file paths.
    - Remove stale candidates from `plancasting/_rules-candidates.md` (pending 2+ maintenance cycles without promotion). Also remove candidates older than 60 calendar days that have not been promoted, edited, or re-triggered (whichever staleness condition is met first — see `_rules-candidates.md` Staleness Policy).
+   - After removing or adding rules, update the "Path-Scoped Rules" table in CLAUDE.md Part 2 with current rule counts per file.
    - Log all changes in the maintenance report under a "Rules Hygiene" section.
 
 10. **Complete the Gate Decision** (see below) BEFORE merging. Do NOT merge until the Gate Decision confirms PASS or CONDITIONAL PASS. If FAIL, do NOT merge — fix issues on the maintenance branch first. If PASS or CONDITIONAL PASS, merge the maintenance branch into main: `git checkout main && git merge chore/dependency-update-YYYY-MM-DD-HHMMSS`. Use the actual branch name created in Phase 1. Or create a pull request if your workflow requires review.
@@ -398,3 +397,4 @@ During each Stage 9 run, review `.claude/rules/` for stale rules. See CLAUDE.md 
 9. After deploying dependency updates, run Stage 7V (Production Smoke Verification).
 10. Co-dependent packages must be updated together (e.g., `react` + `@types/react`, all `@radix-ui/*` packages).
 11. NEVER run Stage 9 and Stage 8 concurrently. Complete one and commit before starting the other. Both stages modify `package.json`, lock files, and potentially source code — concurrent runs create merge conflicts and inconsistent state.
+````

@@ -1,11 +1,8 @@
-# Performance Optimization -- Detailed Guide
-
-## Role
-
-This guide drives Stage 6C of the Transmute pipeline: auditing the complete product against PRD performance budgets, identifying bottlenecks, and implementing optimizations.
+# Transmute — Performance Optimization
 
 ## Stage 6C: Performance Audit and Optimization
 
+````text
 You are a senior performance engineer acting as the TEAM LEAD for a multi-agent performance optimization project using Claude Code Agent Teams. Your task is to audit the COMPLETE product against PRD performance budgets, identify bottlenecks, and implement optimizations.
 
 **Stage Sequence**: Stage 5B → (6A ‖ 6B ‖ **6C (this stage)**) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy). Note: 6A, 6B, and 6C run **in parallel** (each in a separate session). **Parallel safety**: Commit this stage's changes immediately upon completion (`git add -A && git commit`) before other parallel stages finish — shared config files can be overwritten silently. See CLAUDE.md § "Stage 6 ordering".
@@ -42,7 +39,7 @@ This stage runs AFTER Stage 5B (Implementation Completeness Audit). Before begin
 
 ## Stack Adaptation
 
-The examples and file paths in this guide use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
+The examples and file paths in this prompt use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
 - `convex/` → your backend directory
 - `convex/schema.ts` → your schema/migration files
 - Convex functions (query/mutation/action) → your backend functions/endpoints
@@ -52,7 +49,7 @@ The examples and file paths in this guide use Convex + Next.js as the reference 
 - `src/app/` → your frontend pages directory
 Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project's actual conventions.
 
-**Package Manager**: Use the package manager specified in `plancasting/tech-stack.md` (default: `bun`). Substitute `bun run` → `npm run` / `pnpm run` / `yarn` as needed throughout this guide. Also substitute `bunx` → `npx` for non-Bun projects.
+**Package Manager**: Use the package manager specified in `plancasting/tech-stack.md` (default: `bun`). Substitute `bun run` → `npm run` / `pnpm run` / `yarn` as needed throughout this prompt. Also substitute `bunx` → `npx` for non-Bun projects.
 
 ## Known Failure Patterns
 
@@ -326,3 +323,4 @@ After all teammates complete:
 8. Reference Stage 5B output to avoid optimizing incomplete features.
 9. INP replaces FID (deprecated). Use TBT as lab proxy for INP. See Measurement Standards section above for details.
 10. **Parallel execution**: This stage may run concurrently with 6A and 6B. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit.
+````

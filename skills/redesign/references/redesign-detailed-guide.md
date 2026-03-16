@@ -1,22 +1,19 @@
-# Frontend Design Elevation (Interactive Redesign) -- Detailed Guide
-
-## Role
-
-Stage 6P-R performs a FULL design elevation: collecting project context interactively, studying reference products, extracting Figma design tokens, making deliberate design decisions with the user, and implementing a cohesive visual overhaul. It is the comprehensive alternative to standard Stage 6P (visual polish).
+# Transmute — Frontend Design Elevation (Interactive Redesign)
 
 ## Stage 6P-R: Comprehensive Frontend Redesign with Interactive Design Discovery
 
+````text
 You are a senior frontend designer and engineer leading an interactive frontend redesign. Unlike the standard Stage 6P (visual polish — which fixes defects within an existing design system), this stage performs a FULL design elevation: collecting project context interactively, studying reference products, extracting Figma design tokens, making deliberate design decisions with the user, and implementing a cohesive visual overhaul.
 
 ## When to Use This vs. Standard 6P
 
 | Scenario | Use |
 |---|---|
-| App looks functional but needs contrast fixes, hover states, spacing consistency | Standard 6P (the `polish` skill) |
-| App looks like generic AI-generated SaaS and needs a distinctive visual identity | **This guide** (the `redesign` skill) |
-| Rebranding or major design direction change | **This guide** |
-| First-time design system establishment | **This guide** |
-| Post-launch design refresh based on user feedback | **This guide** |
+| App looks functional but needs contrast fixes, hover states, spacing consistency | Standard 6P (`prompt_visual_polish.md`) |
+| App looks like generic AI-generated SaaS and needs a distinctive visual identity | **This prompt** (`prompt_frontend_redesign.md`) |
+| Rebranding or major design direction change | **This prompt** |
+| First-time design system establishment | **This prompt** |
+| Post-launch design refresh based on user feedback | **This prompt** |
 
 ## Pipeline Position
 
@@ -102,7 +99,7 @@ This stage is idempotent — re-running detects existing work (via `progress.md`
    - **DOM inspection**: `browser_snapshot` — inspect accessibility tree and verify CSS classes applied correctly (use when a visual issue needs DOM-level verification, e.g., confirming a dark mode class is present)
    - **JS execution**: `browser_evaluate` — toggle dark mode, check computed styles, measure contrast ratios
 
-5. **`frontend-design` skill recommended**: Check if the skill file exists at `/mnt/skills/public/frontend-design/SKILL.md`. If available, use it for all design decisions. If not available (e.g., local CLI environment), use the anti-AI-slop patterns in this guide as the design authority.
+5. **`frontend-design` skill recommended**: Check if the skill file exists at `/mnt/skills/public/frontend-design/SKILL.md`. If available, use it for all design decisions. If not available (e.g., local CLI environment), use the anti-AI-slop patterns in this prompt as the design authority.
 
 6. **Output directories**:
    ```bash
@@ -154,7 +151,7 @@ This prompt is **framework-agnostic** and **design-library-agnostic**. The examp
 
 Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actual conventions.
 
-**Package Manager**: Replace all `bun run` commands in this guide with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `yarn`, `pnpm run`).
+**Package Manager**: Replace all `bun run` commands in this prompt with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run`, `yarn`, `pnpm run`).
 
 ---
 
@@ -1330,8 +1327,9 @@ Note: Screenshot directories (`./screenshots/`) are for local reference. Add to 
 5. **Next Steps** (output to operator):
    > ⚠️ **Critical**: After this stage completes, merge the redesign branch to main FIRST:
    > ```bash
-   > git checkout main && git merge redesign/frontend-elevation
+   > git checkout main && git merge <your-redesign-branch>
    > ```
+   > (default branch name: `redesign/frontend-elevation`)
    > THEN re-run Stage 7D (User Guide Generation) in a fresh session to recapture all screenshots and docs content with the new design. Update `docs.json` color tokens to match the new palette. Do NOT run Stage 7D before merging the branch. This is required even if 7D ran before 6P-R.
 
 ---
@@ -1406,3 +1404,4 @@ If this stage is interrupted mid-execution:
 27. **Adapt anti-slop ALWAYS patterns to the approved Design Style.** The ALWAYS table includes a "Best for Styles" column — skip patterns that conflict with the user's chosen style. The goal is distinctiveness, not a rigid checklist. A "compact page titles" pattern makes no sense for an Editorial design that deliberately uses dramatic typography.
 
 28. **Maximum 3 fix-and-review cycles.** (See Step 6.4 max iteration guard.)
+````

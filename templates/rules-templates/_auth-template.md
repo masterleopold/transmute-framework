@@ -3,11 +3,9 @@ description: Template for auth rules — middleware configuration, public route 
 globs: ["[AUTH_DIR]/**", "[MIDDLEWARE_PATH]"]
 ---
 
-<!-- Glob note: the first pattern matches the auth directory recursively, the second matches a single middleware file (e.g., middleware.ts). -->
-
 # Auth Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/auth.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[AUTH_HELPER]`, `[MIDDLEWARE_PATH]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/auth.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/auth.md` instead.
+> **This is a template.** Glob note: the first glob pattern matches the auth directory recursively, the second matches a single middleware file (e.g., `middleware.ts`). Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/auth.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[AUTH_HELPER]`, `[AUTH_DIR]`, `[MIDDLEWARE_PATH]`, `[PUBLIC_ROUTES_CONFIG]`, `[SESSION_PATTERN]`, `[TOKEN_STORAGE]`, `[PERMISSION_MODEL]`, `[ROLE_DEFINITIONS_PATH]`, `[ERROR_TYPE]` — must match the value in `.claude/rules/backend.md` § Error Handling), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Glob note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/auth.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/auth.md` instead.
 
 ## Public Routes
 
@@ -56,6 +54,7 @@ globs: ["[AUTH_DIR]/**", "[MIDDLEWARE_PATH]"]
 
 ```typescript
 // TODO: Replace with actual role check pattern
+// [ERROR_TYPE] must match the value in .claude/rules/backend.md § Error Handling
 // const member = await getMembership(ctx, { userId: identity.id, orgId });
 // if (member.role !== "admin") throw new [ERROR_TYPE]({ code: "FORBIDDEN" });
 ```

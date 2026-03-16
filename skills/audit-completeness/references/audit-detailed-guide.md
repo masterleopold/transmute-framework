@@ -1,10 +1,8 @@
-# Implementation Completeness Audit -- Detailed Guide
-
-## Role
-
-This guide drives Stage 5B of the Transmute pipeline: a fresh-context audit that systematically verifies every feature in the PRD has been FULLY implemented — not just scaffolded. It detects frontend stubs, duplication patterns, backend gaps, and integration issues left over from Stage 5, fixes Category A/B issues in-place, and escalates Category C issues back to Stage 5 for re-implementation.
+# Transmute — Implementation Completeness Audit
 
 ## Stage 5B: Stub Detection, Duplication Analysis & Remediation (Post-Implementation)
+
+````text
 You are a senior QA engineer acting as the TEAM LEAD for a multi-agent implementation completeness audit using Claude Code Agent Teams. Your mission is to systematically verify that EVERY feature in the PRD has been FULLY implemented — not just scaffolded — and to fix any gaps found.
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → **5B (this stage)** → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -97,6 +95,8 @@ If this stage is interrupted:
 4. Check `plancasting/_progress.md` for any features already marked as 🔄 — these were identified in a previous partial run.
 5. Determine the Run Number: If the existing report contains a completed gate decision (indicating a prior run completed), increment Run Number by 1 for this run. If the report exists but has no gate decision (prior run did not complete), keep the same Run Number. If no report exists, this is Run 1. Run 1 = initial audit. Run 2 = first re-run after fixes. Run 3 = second re-run. If Run Number reaches 4 (third re-run), skip Phase 2 auto-fixes — escalate all remaining A/B issues to Category C and document: 'Escalation — Run 4+: Repeated fix attempts indicate systemic issue. Recommend full Stage 5 re-run for affected features.' Common causes for reaching Run 4: (a) backend dependencies still missing (escalate to Stage 5 re-run), (b) teammate repeatedly making identical mistakes (escalate to lead for direct intervention). The operator must then decide: re-run Stage 5 for affected features (set `🔄` in `_progress.md`) or accept the issues and proceed to Stage 6.
 
+> **Dual escalation summary**: Two independent escalation mechanisms exist: (1) Global Run 4+ escalates ALL remaining issues to FAIL-ESCALATE. (2) Per-feature 3 consecutive FAIL-RETRY cycles escalate that specific feature. Either can trigger FAIL-ESCALATE independently.
+
 ## Stack Adaptation
 
 Before running any scan scripts, read `plancasting/tech-stack.md` to determine your actual directory structure. Replace all placeholder paths (`[backend-dir]`, `[frontend-dir]`, `[pages-dir]`, `[components-dir]`, `[hooks-dir]`) with your project's actual paths. The scripts below use Convex + Next.js App Router paths as examples.
@@ -111,7 +111,7 @@ Before running any scan scripts, read `plancasting/tech-stack.md` to determine y
 - `bun run` → your package manager command (e.g., `npm run`, `pnpm run`)
 Always read `CLAUDE.md` for your project's actual conventions.
 
-**Package Manager**: Commands in this guide use `bun run` / `bunx` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run` / `npx`, `pnpm run`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` / `bunx` as the default. Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm run` / `npx`, `pnpm run`, `yarn`).
 
 ## Agent Team Architecture
 
@@ -493,7 +493,7 @@ Your tasks:
 
 3. Run a FINAL stub scan across the entire project (set `FRONTEND_DIR` to your frontend root, e.g., `FRONTEND_DIR=src/`, and `BACKEND_DIR` to your actual backend directory path, e.g., `BACKEND_DIR=convex/`, before running):
    grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" "$FRONTEND_DIR" "$BACKEND_DIR" --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" | grep -v 'placeholder="\|Placeholder='
-   This MUST return zero results EXCEPT for features explicitly marked as "Future Scope" in `./plancasting/prd/03-release-plan.md`. Any stub pattern in features listed in `./plancasting/prd/02-feature-map-and-prioritization.md` (the current build scope) is a bug.
+   This MUST return zero results. All features in `./plancasting/prd/02-feature-map-and-prioritization.md` are in current build scope per the Transmute full-build approach. The only acceptable stubs are in utility or helper files that are not directly user-facing (e.g., placeholder analytics wrappers, optional integration hooks).
 
 4. Run an orphan component scan and report any remaining orphans.
    This scan may produce false positives for dynamically imported components (`React.lazy`, `next/dynamic`). Before deleting an apparent orphan, also check for `dynamic(() => import(` and `lazy(() => import(` patterns referencing the component.
@@ -569,7 +569,7 @@ After all teammates complete:
    - **PASS**: All Category A/B fixed, zero Category C issues, all tests pass, zero stubs remain, zero orphan components remain → proceed to Stage 6
    - **CONDITIONAL PASS**: Applies when ANY of these conditions is met (check in order, first match wins):
      (a) All A/B fixed, 1–3 Category C documented with clear descriptions and workarounds → proceed to Stage 6
-     (b) 1–3 A/B remain unfixed (each documented with workaround — code workaround, user-facing alternative, or accepted limitation with mitigation), zero Category C → proceed to Stage 6
+     (b) 1–3 A/B remain unfixed (each documented with either a code workaround, a user-facing alternative, OR an accepted limitation with explicit operator approval noted in the report), zero Category C → proceed to Stage 6
      (c) BOTH unfixed A/B AND Category C exist: CONDITIONAL PASS only if A/B ≤ 3 AND Category C ≤ 3 (each with documented workaround); otherwise → evaluate FAIL-RETRY/FAIL-ESCALATE conditions below (total unfixed ≥ 6 → FAIL-ESCALATE, not FAIL-RETRY)
      Proceed to Stage 6 with known gaps noted in the report
    - **FAIL-RETRY** (re-run 5B): ANY of: (a) 4+ Category A/B issues remain unfixed (without workarounds), (b) test failures from 5B fixes, (c) 4–5 Category C issues (exceeds the 3 max for CONDITIONAL PASS but below systemic failure threshold), (d) total unfixed (A/B + C) 4–5 (exceeds CONDITIONAL PASS mixed threshold). Before re-running, diagnose WHY the fix failed (missing backend dependency, incorrect hook API, type mismatch) — re-running without diagnosis will loop. Maximum 3 total 5B runs (Run 1 = initial, Run 2 = first re-run, Run 3 = second re-run). Run 4+ = escalation. If A/B issues persist after Run 3 (third attempt), escalate all remaining A/B issues to Category C. If this is Run 4+ (check the Run Number in the existing report), skip Phase 2 and escalate all remaining A/B issues to Category C in Phase 4.
@@ -603,7 +603,7 @@ After all teammates complete:
 
 ### Phase 5: Rule Extraction (Post-Gate)
 
-After the gate decision but before the final commit, extract implementation lessons as path-scoped rules. See CLAUDE.md § 'Path-Scoped Rules' for the full specification.
+After the gate decision but before the final commit, extract implementation lessons as path-scoped rules. See CLAUDE.md § 'Path-Scoped Rules' for the full specification. If `plancasting/_rules-candidates.md` does not exist, create it with the standard header from the template before appending candidates.
 
 1. **Scan audit findings for repeatable patterns**:
    - Review all Category A/B issues that were fixed. Group by root cause pattern (e.g., "missing soft-delete filter in 4 queries", "useState instead of useQuery in 3 components").
@@ -652,3 +652,4 @@ After the gate decision but before the final commit, extract implementation less
 10. This stage should fix, not redesign. Maintain the architectural decisions made in Stage 5.
 
 **5B Quality Standard**: 5B fixes should bring components from 'scaffold' to 'working' — happy path complete, loading/error states present, no obvious bugs. This is NOT production polish (Stage 6P handles that). The bar is: 'does this work as described in the PRD?'
+````

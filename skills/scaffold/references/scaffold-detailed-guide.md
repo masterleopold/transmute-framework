@@ -1,10 +1,8 @@
-# Development Scaffolding -- Detailed Guide
-
-## Role
-
-This guide drives Stage 3+4 of the Transmute pipeline: generating a complete, development-ready project scaffolding from the existing PRD with full traceability, then verifying CLAUDE.md Part 2 population. The scaffold covers the COMPLETE product — every feature, screen, API endpoint, and data entity — so that the Feature Implementation skill can fill in business logic systematically.
+# Transmute — Development Scaffolding
 
 ## Stage 3+4: Project Scaffold Generation and CLAUDE.md Verification
+
+````text
 You are a senior full-stack engineer and tech lead acting as the TEAM LEAD for a multi-agent code generation project. Your task is to generate a complete, development-ready project scaffolding from the existing PRD, with full traceability back to PRD specifications, BRD requirements, and the original Business Plan.
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → **3+4 (this stage)** → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -42,7 +40,7 @@ Before generating any code, verify that all required credentials exist and are v
 3. **Canonical env var names**: When generating code that reads `process.env.*`, ALWAYS reference the variable names exactly as they appear in `.env.local.example`. Never invent alternative names (e.g., `ANTHROPIC_API_KEY` when the canonical name is `TRANSMUTER_ANTHROPIC_API_KEY`).
 4. **Third-party service limits**: When configuring timeouts, batch sizes, or rate limits for external services (E2B, AI APIs, email providers), check the provider's documentation for tier-specific constraints. Never hardcode values that exceed the service tier's limits (e.g., E2B free tier max timeout is 1 hour).
 
-If any check fails, report the specific missing/placeholder credentials and STOP execution. Output the list of issues and instruct: "Fix these credential issues, populate `.env.local` with real values, and re-run Stage 3." Do NOT proceed with partial credentials. Recovery: the operator fixes `.env.local`, then starts a new Claude Code session and re-invokes the Stage 3 skill.
+If any check fails, report the specific missing/placeholder credentials and STOP execution. Output the list of issues and instruct: "Fix these credential issues, populate `.env.local` with real values, and re-run Stage 3." Do NOT proceed with partial credentials. Recovery: the operator fixes `.env.local`, then starts a new Claude Code session and re-pastes the Stage 3 prompt.
 
 **Tier clarification**: This stage validates 🔴 (pipeline infrastructure) credentials only. 🟡 product-service credentials are validated before Stage 5; 🟠 deployment credentials are validated before Stage 7. Do NOT fail the credential gate because 🟡 or 🟠 credentials are missing or placeholder — those are expected to be absent at this point.
 
@@ -83,7 +81,7 @@ These principles apply to your chosen backend. The examples below use Convex syn
 - **PRD**: Read all markdown files in `./plancasting/prd/` directory, including `_context.md` if it exists.
 - **BRD**: Read all markdown files in `./plancasting/brd/` directory for additional context.
 - **Business Plan**: Read all files (`.md` and `.pdf`) in `./plancasting/businessplan/` directory for domain context.
-- **Tech Stack**: Read `./plancasting/tech-stack.md` for the confirmed technology stack, credentials reference, and architecture decisions. This is the authoritative source for which technologies to use. If `plancasting/tech-stack.md` specifies a different stack than what is described in this guide's "Stack Context" section, follow `plancasting/tech-stack.md`.
+- **Tech Stack**: Read `./plancasting/tech-stack.md` for the confirmed technology stack, credentials reference, and architecture decisions. This is the authoritative source for which technologies to use. If `plancasting/tech-stack.md` specifies a different stack than what is described in this prompt's "Stack Context" section, follow `plancasting/tech-stack.md`.
 
 **Language**: Check `./plancasting/tech-stack.md` for the `Session Language` setting. All generated code, file names, and technical documents (`ARCHITECTURE.md`, `plancasting/_codegen-context.md`) remain in English. Code comments remain in English. `plancasting/_progress.md` feature names should match the PRD (which may be in the session language).
 
@@ -94,9 +92,9 @@ Generate the project scaffolding under `./[frontend-dir]/` (e.g., `./src/` for N
 ---
 ## Stack Adaptation
 
-The examples and file paths in this guide use Convex + Next.js as the reference architecture. **`plancasting/tech-stack.md` is the authoritative source** — if it specifies a different stack, adapt ALL references using this mapping:
+The examples and file paths in this prompt use Convex + Next.js as the reference architecture. **`plancasting/tech-stack.md` is the authoritative source** — if it specifies a different stack, adapt ALL references using this mapping:
 
-| This guide says | Generic meaning | Your project's equivalent (from `plancasting/tech-stack.md`) |
+| This prompt says | Generic meaning | Your project's equivalent (from `plancasting/tech-stack.md`) |
 |---|---|---|
 | `convex/` | `[backend-dir]/` | Your backend directory (e.g., `convex/`, `server/`, `api/`) |
 | `convex/schema.ts` | `[backend-dir]/schema.[ext]` | Your schema/migration files (e.g., `prisma/schema.prisma`) |
@@ -111,7 +109,7 @@ Always read `CLAUDE.md` for your project's conventions. Note: At Stage 3, `CLAUD
 
 **CLAUDE.md Part 2 population**: Stage 3 MUST populate CLAUDE.md Part 2 (Project-Specific Configuration) with actual project details derived from the scaffold: project name, technology stack table, architecture description, commands, backend rules, frontend rules, and key reference documents. Replace ALL `[PLACEHOLDER]` markers. Stage 4 (manual verification) confirms Part 2 was correctly populated — it does not do the population itself. If Stage 3 leaves Part 2 with unfilled placeholders, Stage 4 (manual verification) will catch them. The operator must then manually populate the missing fields using Stage 0 outputs and `plancasting/tech-stack.md` before proceeding to Stage 5.
 
-**Package Manager**: Commands in this guide use `bun` as the default (e.g., `bun install`, `bun run`). Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm install` / `npm run`, `pnpm install` / `pnpm run`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun` as the default (e.g., `bun install`, `bun run`). Replace with your project's package manager as specified in `CLAUDE.md` (e.g., `npm install` / `npm run`, `pnpm install` / `pnpm run`, `yarn`).
 
 **No-frontend products**: If `plancasting/tech-stack.md` indicates a CLI, API-only, or backend-only product with no frontend, skip Teammates 2 and 3. Teammate 4 should skip frontend-specific files (middleware, `useFeatureFlag` hook, `FeatureGate` component) and only generate backend feature flag logic and environment config. Adapt Teammate 5's test infrastructure to omit frontend-specific files (component tests, E2E UI tests). Generate API-level tests instead. The scaffold manifest (Phase 4) should omit the Components and Pages sections — include only Backend Functions and API Endpoints.
 
@@ -497,7 +495,7 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
 **`src/lib/` directory**
 - `utils.ts`, `constants.ts`, `validators.ts`, `types.ts` — all covering the COMPLETE product
 
-**Spawn prompt must emphasize**: READ `plancasting/tech-stack.md` "Design Direction" section FIRST — it contains the user's selected UI component library, aesthetic direction, design reference URLs, and Figma designs from Stage 0. These are your design brief. If reference URLs are listed, visit them to extract visual patterns. If a Figma URL is provided and Figma MCP tools are available, extract design tokens from the Figma file. If Figma URL is provided in tech-stack.md but your MCP tools cannot access it, DO NOT generate generic UI. The lead will provide pre-extracted design tokens in this guide. If no tokens are provided and no Figma access is available, STOP and message the lead: 'Figma MCP unavailable and no pre-extracted tokens provided. Cannot generate design-accurate UI.' Establish the design direction in `design-tokens.ts` and `tailwind.config.ts` BEFORE creating any components — these must reflect the user's choices, not generic defaults. **CRITICAL for Tailwind v4**: `globals.css` MUST include `@config "../../tailwind.config.ts";` right after `@import "tailwindcss";` — without this single line, the entire theme (colors, fonts, spacing, animations) is silently ignored and all components render unstyled. Components must be created for ALL features using the selected UI component library. The design system must be visually distinctive and cohesive — matching the aesthetic direction from `plancasting/tech-stack.md`. Avoid generic AI aesthetics where possible — choose fonts intentionally (if using Inter or system fonts, ensure they match the stated aesthetic direction), avoid clichéd color schemes (purple-on-white gradients), and avoid cookie-cutter layouts. Custom hooks must cover ALL domains. Cross-feature hooks are important. Every component must follow the established design direction with zero exceptions.
+**Spawn prompt must emphasize**: READ `plancasting/tech-stack.md` "Design Direction" section FIRST — it contains the user's selected UI component library, aesthetic direction, design reference URLs, and Figma designs from Stage 0. These are your design brief. If reference URLs are listed, visit them to extract visual patterns. If a Figma URL is provided and Figma MCP tools are available, extract design tokens from the Figma file. If Figma URL is provided in tech-stack.md but your MCP tools cannot access it, DO NOT generate generic UI. The lead will provide pre-extracted design tokens in this prompt. If no tokens are provided and no Figma access is available, STOP and message the lead: 'Figma MCP unavailable and no pre-extracted tokens provided. Cannot generate design-accurate UI.' Establish the design direction in `design-tokens.ts` and `tailwind.config.ts` BEFORE creating any components — these must reflect the user's choices, not generic defaults. **CRITICAL for Tailwind v4**: `globals.css` MUST include `@config "../../tailwind.config.ts";` right after `@import "tailwindcss";` — without this single line, the entire theme (colors, fonts, spacing, animations) is silently ignored and all components render unstyled. Components must be created for ALL features using the selected UI component library. The design system must be visually distinctive and cohesive — matching the aesthetic direction from `plancasting/tech-stack.md`. Avoid generic AI aesthetics where possible — choose fonts intentionally (if using Inter or system fonts, ensure they match the stated aesthetic direction), avoid clichéd color schemes (purple-on-white gradients), and avoid cookie-cutter layouts. Custom hooks must cover ALL domains. Cross-feature hooks are important. Every component must follow the established design direction with zero exceptions.
 
 ---
 
@@ -889,3 +887,4 @@ If this session was started to RESUME a previously interrupted scaffold generati
 12. **No Phase References**: Do not include any phase-related logic, comments, or gating. All features are active. The only conditional rendering is via operational/experiment/permission feature flags.
 13. **CLAUDE.md Protection**: If `CLAUDE.md` already exists, NEVER rewrite it from scratch. ONLY modify Part 2 (Project-Specific Configuration). Part 1 (Immutable Framework Rules) must be preserved exactly as-is, including the Design & Visual Identity section, Progress Tracking section, Traceability Rules, and all other framework rules.
 14. **Scaffold Manifest**: Every **component, hook, backend function, and page** file you generate must be listed in `plancasting/_scaffold-manifest.md`. Test files, configuration files, and CI/CD pipelines are excluded from the manifest. This manifest is the handoff contract between Stage 3 and Stage 5. If a component file is not in the manifest, Stage 5 will not know it exists and may rebuild the UI inline in the page — creating duplication. The manifest must include: (a) which page imports each component, (b) which hook each component consumes, (c) which backend functions each hook wraps.
+````

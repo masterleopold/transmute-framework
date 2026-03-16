@@ -1,11 +1,8 @@
-# Documentation Generation -- Detailed Guide
-
-## Role
-
-This guide drives Stage 6D of the Transmute pipeline: generating comprehensive internal documentation including user-facing help docs, API/backend reference, and a developer onboarding guide.
+# Transmute — Documentation Generation
 
 ## Stage 6D: Internal Documentation (Developer Guide, API Reference, Help Docs)
 
+````text
 You are a senior technical writer acting as the TEAM LEAD for a multi-agent documentation generation project using Claude Code Agent Teams. Your task is to generate comprehensive documentation for the COMPLETE product — user-facing help docs, API/backend docs, and a developer onboarding guide — derived from the codebase, PRD, and BRD.
 
 **Stage Sequence**: Stage 5B → 6A/6B/6C (parallel) → 6E (Code Refactoring) → 6F (Seed Data) → 6G (Error Resilience Hardening) → **6D (this stage)** → 6H (Pre-Launch) → 6V → 6R → 6P/6P-R → 7 (Deploy)
@@ -71,7 +68,7 @@ Note: `docs/` is internal developer documentation (Stage 6D output). `user-guide
 
 ## Stack Adaptation
 
-The examples and file paths in this guide use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
+The examples and file paths in this prompt use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
 - `convex/` → your backend directory
 - `convex/schema.ts` → your schema/migration files
 - Convex functions (query/mutation/action) → your backend functions/endpoints
@@ -340,3 +337,4 @@ If a documentation issue cannot be resolved without access to information that d
 3. Continue with remaining documentable content — do not block the entire stage on one gap
 
 **Documentation Gap vs. Unfixable Violation**: A documentation gap (marked inline with `> ⚠️ DOCUMENTATION GAP:`) is missing information that prevents complete docs (e.g., undocumented function behavior). An unfixable documentation violation (written to `plancasting/_audits/documentation/unfixable-violations.md`) is a critical error that could mislead developers (e.g., code examples that won't compile, documented APIs that don't exist). Both are reported in the final report.
+````

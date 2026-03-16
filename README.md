@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.6.0** — 10th-pass audit sync: full reference parity, safety rule consolidation, terminology alignment
+> **v2.7.0** — 12th-pass audit sync: 7V CONDITIONAL PASS gate, safety rule refinements, prerequisite alignment, expanded testing/frontend templates
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 

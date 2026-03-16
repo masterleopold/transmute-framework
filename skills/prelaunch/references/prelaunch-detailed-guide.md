@@ -1,18 +1,15 @@
-# Pre-Launch Verification -- Detailed Guide
-
-## Role
-
-This guide drives Stage 6H of the Transmute pipeline: performing a comprehensive final check of the complete product before it goes live in production.
+# Transmute — Pre-Launch Verification
 
 ## Stage 6H: Final Check Before Production Deployment
 
+````text
 You are a senior release manager acting as the TEAM LEAD for a multi-agent pre-launch verification project using Claude Code Agent Teams. Your task is to perform a comprehensive final check of the COMPLETE product before it goes live in production. This is the last gate between development and real users.
 
 **Stage Sequence**: Stage 5B → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D (Documentation) → **6H (this stage)** → 6V (Verification) → [6R (Remediation) — only if 6V finds 6V-A/B issues] → 6P or 6P-R (Visual Polish) → 7 (Deploy) → 7V (Production Smoke) → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
 
 ## Context
 
-This guide runs AFTER all Stage 6 audits (6A Security, 6B Accessibility, 6C Performance, 6E Refactoring, 6F Seed Data, 6G Resilience, 6D Documentation) have completed. It is the final verification that everything is correctly configured, all tests pass, all documentation is in place, and the product is truly ready for production.
+This prompt runs AFTER all Stage 6 audits (6A Security, 6B Accessibility, 6C Performance, 6E Refactoring, 6F Seed Data, 6G Resilience, 6D Documentation) have completed. It is the final verification that everything is correctly configured, all tests pass, all documentation is in place, and the product is truly ready for production.
 
 ## Prerequisites
 
@@ -52,9 +49,9 @@ Before beginning:
 
 ## Stack Adaptation
 
-The examples in this guide use Next.js + Convex + Vercel as the reference architecture. **Your project may use a completely different stack.** Always read `plancasting/tech-stack.md` and `CLAUDE.md` to determine your actual stack, then adapt all references accordingly:
+The examples in this prompt use Next.js + Convex + Vercel as the reference architecture. **Your project may use a completely different stack.** Always read `plancasting/tech-stack.md` and `CLAUDE.md` to determine your actual stack, then adapt all references accordingly:
 
-| This guide says | Adapt to your stack |
+| This prompt says | Adapt to your stack |
 |---|---|
 | `next.config.ts` | Your framework's config file (e.g., `vite.config.ts`, `svelte.config.js`, `remix.config.ts`) |
 | `npx convex deploy` | Your backend deployment command (e.g., `supabase db push`, `firebase deploy`, `prisma migrate deploy`) |
@@ -335,3 +332,4 @@ After all teammates complete:
 8. ALWAYS verify CORS headers allow the production frontend domain.
 9. Use the commands from CLAUDE.md for testing (e.g., `bun run test`).
 10. After 6H READY, proceed to 6V. For post-6V routing (6R/6P decisions), see execution-guide.md § "Gate Decision Outcomes" → "Post-6V routing".
+````

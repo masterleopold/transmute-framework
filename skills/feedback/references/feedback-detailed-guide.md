@@ -1,21 +1,17 @@
-# User Feedback Loop -- Detailed Guide
+# Transmute — User Feedback Loop
 
 ## Stage 8: Continuous Improvement from User Feedback
 
+````text
 You are a product manager and engineer acting as the TEAM LEAD for a feedback-driven improvement cycle using Claude Code Agent Teams. Your task is to analyze user feedback, trace it back to existing BRD/PRD specifications, propose specification changes, implement code changes, and keep all documentation in sync.
 
-**Stage Sequence**: ... → 7D (User Guide) → **8 (this stage)** OR 9 (Dependency Maintenance) — never concurrently. Run on a recurring cadence (weekly, biweekly, or monthly) post-launch.
+**Stage Sequence**: ... → 7D (User Guide) → **8 (this stage)** / 9 (Dependency Maintenance) — run both sequentially, never concurrently (per CLAUDE.md notation). Run on a recurring cadence (weekly, biweekly, or monthly) post-launch.
 
-**Prerequisites**: Stage 7V PASS (product deployed and running in production). If Stage 7D was run, verify it achieved PASS or WARN (check `./plancasting/_audits/user-guide/report.md` § `## Gate Decision`). 7D FAIL blocks Stage 8 until documentation issues are resolved. If 7D was skipped, this condition does not apply. Feedback input file `./feedback/input.md` must be prepared with the current feedback batch before starting this stage.
-
-
-## Role
-
-This stage processes user feedback on a recurring cadence, tracing it back to existing BRD/PRD specifications, proposing and implementing changes, and keeping all documentation in sync. It maintains the living-document chain: Feedback to Spec Update to Code Change to Test Update to Doc Update.
+**Prerequisites**: Stage 7V PASS or CONDITIONAL PASS (product deployed and running in production). If Stage 7D was run, verify it achieved PASS or WARN (check `./plancasting/_audits/user-guide/report.md` § `## Gate Decision`). 7D FAIL blocks Stage 8 until documentation issues are resolved. If 7D was skipped, this condition does not apply. Feedback input file `./feedback/input.md` must be prepared with the current feedback batch before starting this stage. See `execution-guide.md` § Stage 8 for skip conditions and recovery procedures.
 
 ## Critical Concept: Living Documents
 
-The BRD and PRD are NOT frozen artifacts. They are living documents that evolve with the product. This guide maintains the chain: Feedback → Spec Update → Code Change → Test Update → Doc Update, ensuring every layer stays consistent.
+The BRD and PRD are NOT frozen artifacts. They are living documents that evolve with the product. This prompt maintains the chain: Feedback → Spec Update → Code Change → Test Update → Doc Update, ensuring every layer stays consistent.
 
 ## Input
 
@@ -29,7 +25,7 @@ The BRD and PRD are NOT frozen artifacts. They are living documents that evolve 
 
 ## Preparing the Feedback Input
 
-Before running this guide, prepare the feedback directory and input file:
+Before running this prompt, prepare the feedback directory and input file:
 
 ```bash
 mkdir -p ./feedback
@@ -71,7 +67,7 @@ Then create `./feedback/input.md` with structured feedback. Example format:
 
 ## Stack Adaptation
 
-The examples in this guide use Convex + Next.js paths. Adapt to your stack:
+The examples in this prompt use Convex + Next.js paths. Adapt to your stack:
 - `convex/` → your backend directory (e.g., `src/functions/` for Firebase, `app/` for Rails, `server/` for Django)
 - `src/` → your frontend directory
 - `src/components/features/` → your component directory
@@ -109,7 +105,7 @@ If this stage is interrupted mid-execution:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. **Verify Stage 7V PASS**: Check that `./plancasting/_audits/production-smoke/report.md` exists and shows PASS. If the file does not exist or shows FAIL, STOP — Stage 7V must pass before processing feedback.
+1. **Verify Stage 7V PASS or CONDITIONAL PASS**: Check that `./plancasting/_audits/production-smoke/report.md` exists and shows PASS or CONDITIONAL PASS. If the file does not exist or shows FAIL, STOP — Stage 7V must achieve PASS or CONDITIONAL PASS before processing feedback.
 
 2. Verify `./feedback/input.md` exists. If it does not exist, STOP. Do not proceed further. Exit the session with: "Feedback processing deferred — no input. Create `./feedback/input.md` with feedback items before running Stage 8. Schedule Stage 8 after feedback batch is collected." The project remains in production. Stage 7V or Stage 9 can be run independently when needed. If it exists, read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and `./feedback/input.md`.
 
@@ -129,7 +125,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    | Bug | Product doesn't match existing spec | Fix code to match spec |
    | UX Issue | Product matches spec but spec is wrong | Update spec + fix code |
    | Missing Feature | Capability not in current spec | Add to spec + implement |
-   | Performance | Doesn't meet NFR targets | Optimize (follow Stage 6C patterns from the optimize skill) |
+   | Performance | Doesn't meet NFR targets | Optimize (follow Stage 6C patterns from `prompt_optimize_performance.md`) |
    | Enhancement | Existing feature needs improvement | Update spec + modify code |
    | Documentation (user-facing + developer) | User guide or developer docs unclear, missing, or incorrect | Update `user-guide/` MDX pages and `docs/` developer pages as applicable |
 
@@ -375,7 +371,7 @@ After all teammates complete:
 
 ## Gate Decision
 
-- **PASS**: All APPROVED feedback items resolved, tests pass, specs consistent, documentation updated. **Before redeployment**: If UI changes were made, MUST re-run Stage 6V using the verify skill (before the 6V re-run, verify the dev server port is available: `lsof -i :3000` — the 6V prompt starts the dev server internally; paste the prompt with `MODE: diff` on a new line) against the local dev server to catch visual regressions — do NOT deploy without this check. If the 6V re-run finds 6V-A/B issues, follow the standard 6V→6R→6P/6P-R chain before re-deploying. If the 6V re-run returns FAIL, the feedback changes must be fixed or reverted before re-deploying — do NOT deploy with a 6V FAIL. Then proceed to Stage 7 (Deploy) → Stage 7V (Production Smoke).
+- **PASS**: All APPROVED feedback items resolved, tests pass, specs consistent, documentation updated. Merge the feedback branch into main before proceeding to Stage 7 (Deploy). **Before redeployment**: If UI changes were made, MUST re-run Stage 6V using `prompt_visual_functional_verification.md` (before the 6V re-run, verify the dev server port is available: `lsof -i :3000` — the 6V prompt starts the dev server internally; paste the prompt with `MODE: diff | SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]` on the first line) against the local dev server to catch visual regressions — do NOT deploy without this check. `MODE: diff` tells 6V to compare against the previous baseline rather than generating a new full baseline; `SCOPE:` filters to only affected features. If the 6V re-run finds 6V-A/B issues, follow the standard 6V→6R→6P/6P-R chain before re-deploying. If the 6V re-run returns FAIL, the feedback changes must be fixed or reverted before re-deploying — do NOT deploy with a 6V FAIL. Then proceed to Stage 7 (Deploy) → Stage 7V (Production Smoke).
 - **CONDITIONAL PASS**: Some items deferred due to complexity but all attempted items resolved, tests pass. Document deferred items in `change-plan.md` with `Status: DEFERRED — Next batch [DATE]`. If any resolved items include UI changes, re-run Stage 6V (MODE: diff) before deploying, per the same procedure described in the PASS outcome. Merge the feedback branch into main before proceeding to Stage 7 (see Branch Safety above). Proceed to Stage 7 for resolved items. Schedule a follow-up Stage 8 session for deferred items. **Deferred item carryover**: Before each new Stage 8 run, read `./feedback/change-plan.md` from the previous run. Any items still marked `DEFERRED` that no longer have a `STAKEHOLDER_DECISION_REQUIRED` blocker are automatically re-introduced into the new batch's Phase 1 triage (the operator does NOT need to re-add them to `input.md` — the lead reads both `input.md` and prior `change-plan.md`). Items still marked `STAKEHOLDER_DECISION_REQUIRED` remain deferred until the operator resolves them.
 - **FAIL**: Test suite fails after changes, or spec inconsistency detected, or APPROVED items left unresolved. Review test failures with Teammate 2. For spec inconsistencies, re-run Teammate 1 to clarify. Do NOT proceed to Stage 7 until PASS or CONDITIONAL PASS.
 
@@ -389,7 +385,7 @@ After all teammates complete:
 
 ## Running This Prompt Repeatedly
 
-This guide is designed to be run on a regular cadence (weekly, biweekly, or monthly). Each run:
+This prompt is designed to be run on a regular cadence (weekly, biweekly, or monthly). Each run:
 1. Processes a new batch of feedback in `./feedback/input.md`.
 2. Updates the living BRD/PRD documents.
 3. Implements code changes.
@@ -413,9 +409,10 @@ Over time, `./feedback/archive/` builds a history of all feedback processed and 
 4. ALWAYS run the full test suite after code changes (use commands from CLAUDE.md).
 5. ALWAYS update i18n message files when changing user-facing text. Before committing, check `./plancasting/tech-stack.md` for the i18n configuration section. Locate the message file directory (e.g., `src/i18n/`, `locales/`, `translations/`) and update all affected message keys. If i18n is not configured, skip and document in your report.
 6. Split large batches into multiple runs. In each run, process at most the number of APPROVED items specified in tech-stack.md § Model Specifications "Feedback batch limit". Mark remaining items as 'DEFERRED — Next batch' in `change-plan.md`. Split by priority tier (all P0 items first, then P1, etc.) or by affected feature cluster.
-7. After implementing UI changes, MUST re-run Stage 6V before redeployment to verify visual correctness — this is a requirement, not a recommendation. Re-test ONLY the scenarios affected by the feedback changes (filter the 6V scenario matrix by the modified feature IDs), not the full matrix. Use the verify skill with this additional instruction on the first line: "SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]."
+7. After implementing UI changes, MUST re-run Stage 6V before redeployment to verify visual correctness — this is a requirement, not a recommendation. Re-test ONLY the scenarios affected by the feedback changes (filter the 6V scenario matrix by the modified feature IDs), not the full matrix. Use `prompt_visual_functional_verification.md` with this additional instruction on the first line: "SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]."
 8. After deploying feedback-driven changes, run Stage 7V (Production Smoke Verification) to verify production correctness.
 9. NEVER skip the traceability chain — every code change must trace to a spec change or an existing spec.
 10. If conflicting feedback items are found, resolve the conflict BEFORE implementing either side.
 11. If deploying feedback-driven changes causes production failures, revert the commit (using `git revert`, not `git reset --hard`) and re-run Stage 7V to verify the rollback. Investigate the failure before re-attempting.
 12. NEVER run Stage 8 and Stage 9 concurrently. Complete one and commit before starting the other. Both stages modify `package.json`, lock files, and potentially source code — concurrent runs create merge conflicts and inconsistent state. The `/` in the pipeline diagram means 'either/or': run Stage 8 first, commit all changes, then run Stage 9 (or vice versa). They share the codebase and could create merge conflicts if run simultaneously.
+````

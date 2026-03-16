@@ -1,13 +1,9 @@
-# Production Smoke Verification -- Detailed Guide
+# Transmute — Production Smoke Verification
 
 ## Stage 7V: Post-Deployment Live Verification
 
+````text
 You are a senior QA engineer performing post-deployment smoke verification of the PRODUCTION application as a single agent (no team coordination required). Your task is to verify that the deployed application works correctly on the production URL — confirming that deployment didn't introduce environment-specific failures.
-
-
-## Role
-
-This stage performs post-deployment smoke verification of the production application. It confirms that the deployed product works correctly on the production URL, catching environment-specific failures that do not exist in development.
 
 ## Why This Stage Exists
 
@@ -50,7 +46,7 @@ These patterns were identified from real deployments and are invisible to dev/te
 
 ## Stack Adaptation
 
-This guide is intentionally stack-agnostic — it verifies the deployed application via browser and standard HTTP tools. However, adapt these references to your stack:
+This prompt is intentionally stack-agnostic — it verifies the deployed application via browser and standard HTTP tools. However, adapt these references to your stack:
 - Infrastructure commands: use alternatives if `curl`/`nslookup`/`openssl` are unavailable (see fallbacks below)
 - Test runner: use your project's Playwright command (e.g., `bunx playwright test` vs `npx playwright test`)
 - Backend deployment: adapt rollback commands to your BaaS/backend (Convex, Supabase, Firebase, etc.)
@@ -62,7 +58,7 @@ Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actua
 
 - **Production URL**: The live application URL (e.g., `https://yourapp.com`). **Prerequisite**: Verify deployment (Stage 7) is complete — the production URL must be accessible before starting 7V. Check with `curl -sI <production-url> | head -1` (expect HTTP 200 or 301/302). If the URL is unreachable, STOP and verify deployment status.
 - **Scenario Generation Guide**: `./plancasting/transmute-framework/feature_scenario_generation.md` — MUST READ if it exists. If not found, read `prd/02-feature-map-and-prioritization.md` and `prd/06-user-flows.md` to generate smoke scenarios directly. **Generation mode: SMOKE** (P0/P1 features only, happy path Feature Scenarios + one authenticated/unauthenticated Auth Context check per route — no Entity State, Role Permission, or Negative Scenarios. Target: 15 scenarios max. See feature_scenario_generation.md § Step 9 "For 7V (Smoke)" for full filtering rules).
-  If `./plancasting/transmute-framework/feature_scenario_generation.md` does not exist locally, copy from the Transmute Framework Template directory (the directory where this guide file originated): `cp /path/to/Transmute\ Framework\ Template/plancasting/transmute-framework/feature_scenario_generation.md ./plancasting/transmute-framework/` (adjust the source path to your Transmute Framework Template location). See execution-guide.md § "Pre-6V Setup" for detailed instructions.
+  If `./plancasting/transmute-framework/feature_scenario_generation.md` does not exist locally, copy from the Transmute Framework Template directory (the directory where this prompt file originated): `cp /path/to/Transmute\ Framework\ Template/plancasting/transmute-framework/feature_scenario_generation.md ./plancasting/transmute-framework/` (adjust the source path to your Transmute Framework Template location). See execution-guide.md § "Pre-6V Setup" for detailed instructions.
 
   > **Fallback if feature_scenario_generation.md is unavailable after copy attempt**: Use PRD files directly — read `plancasting/prd/02-feature-map-and-prioritization.md`, `plancasting/prd/04-epics-and-user-stories.md`, and `plancasting/prd/06-user-flows.md` to derive minimal smoke scenarios. Do NOT stop execution; proceed with PRD-derived scenarios.
 - **6V Scenario Matrix** (if exists): `./plancasting/_audits/visual-verification/feature-scenario-matrix.md` — reuse and filter to P0/P1 instead of regenerating. If this file doesn't exist, generate smoke scenarios from scratch using the guide.
@@ -103,7 +99,7 @@ Stage 7V captures production smoke test screenshots to `./screenshots/production
 
 ## Session Recovery
 
-If the session disconnects mid-verification, start a new session and re-invoke this skill. The verification is idempotent — completed checks will be re-run but results will be consistent.
+If the session disconnects mid-verification, start a new session and re-paste this prompt. The verification is idempotent — completed checks will be re-run but results will be consistent.
 
 ## Verification Checklist
 
@@ -609,16 +605,17 @@ Generate `./plancasting/_audits/production-smoke/report.md`:
 
 ## Gate Decision
 - **PASS**: All critical flows work, all pages load, no console errors, all external APIs respond 2xx
+- **CONDITIONAL PASS**: All P0 critical flows pass, all pages load, but minor issues exist in P1/P2 features (e.g., non-critical integration timeout, minor visual discrepancy from 6V baseline). Document issues for post-launch fix. Stage 7D and Stage 8 can proceed.
 - **FAIL**: Any critical flow broken OR pages don't load OR critical navigation failure (invisible/unstyled links) OR external API health check fails — immediate action required (see Rollback Guidance)
 
-Note: Stage 7V is binary (PASS or FAIL) — there is no CONDITIONAL PASS. **FAIL triggers**: critical infrastructure broken, critical user flows broken, critical navigation invisible/unstyled, external API health checks fail, or 6R fixes missing from deployment. **Does NOT trigger FAIL**: non-critical visual issues (missing 6P enhancements, minor layout differences from dev), non-functional performance metrics below target. Non-critical issues are documented in the report but do NOT affect the gate decision — address them through Stage 8 (Feedback Loop).
+Note: Stage 7V was previously binary (PASS or FAIL). CONDITIONAL PASS was added to handle minor P1/P2 issues that do not block downstream stages. **FAIL triggers**: critical infrastructure broken, critical user flows broken, critical navigation invisible/unstyled, external API health checks fail, or 6R fixes missing from deployment. **Does NOT trigger FAIL**: non-critical visual issues (missing 6P enhancements, minor layout differences from dev), non-functional performance metrics below target. Non-critical issues are documented in the report but do NOT affect the gate decision — address them through Stage 8 (Feedback Loop).
 
-**Critical Production Failures**: If 7V result is FAIL (critical functionality broken in production), do NOT proceed to Stage 7D. Halt and escalate for hotfix + re-deploy or rollback. Only proceed to Stage 7D after 7V PASS. After hotfix is deployed, re-run Stage 7V in full to verify the fix. If 7V PASS, continue to Stage 7D. Do NOT proceed to 7D based on partial re-verification — 7V must produce a full PASS report.
+**Critical Production Failures**: If 7V result is FAIL (critical functionality broken in production), do NOT proceed to Stage 7D. Halt and escalate for hotfix + re-deploy or rollback. Only proceed to Stage 7D after 7V achieves PASS or CONDITIONAL PASS. After hotfix is deployed, re-run Stage 7V in full to verify the fix. If 7V PASS or CONDITIONAL PASS, continue to Stage 7D. Do NOT proceed to 7D based on partial re-verification — 7V must produce a full report.
 
 ## Next Steps
-- If PASS: proceed to Stage 7D (User Guide Generation) — if `plancasting/tech-stack.md` documentation section says "not needed," skip 7D and move to Stage 8 (Feedback Loop) / 9 (Maintenance)
+- If PASS or CONDITIONAL PASS: proceed to Stage 7D (User Guide Generation) — if `plancasting/tech-stack.md` documentation section says "not needed," skip 7D and move to Stage 8 (Feedback Loop) / 9 (Maintenance). If CONDITIONAL PASS, document minor issues for post-launch fix via Stage 8.
 - If FAIL due to deployment config (env vars, DNS, CORS): fix config, redeploy, re-run 7V
-- If FAIL due to code regression (something that passed in 6V but fails in production): rollback deployment (`git revert`, not `git reset --hard`), investigate the discrepancy, fix, redeploy, re-run 7V. Do NOT proceed to 7D until 7V PASS — documenting a broken product wastes effort
+- If FAIL due to code regression (something that passed in 6V but fails in production): rollback deployment (`git revert`, not `git reset --hard`), investigate the discrepancy, fix, redeploy, re-run 7V. Do NOT proceed to 7D until 7V achieves PASS or CONDITIONAL PASS — documenting a broken product wastes effort
 
 **FAIL decision tree**: (1) If issue is localized (1–2 files, <100 LOC fix): hotfix in code, re-deploy, re-run 7V. (2) If issue affects multiple systems or requires >2 hours to fix: execute rollback (`git revert HEAD`), verify reverted deploy is stable, investigate offline. Schedule follow-up implementation session.
 
@@ -706,3 +703,4 @@ If 7V detects a critical production failure:
 3. Output partial report with gate decision FAIL and escalation details.
 4. Recommend rollback or hotfix + re-deploy + re-run 7V.
 5. Do NOT proceed to Stage 7D.
+````

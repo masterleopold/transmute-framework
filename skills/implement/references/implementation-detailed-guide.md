@@ -1,12 +1,10 @@
-# Feature Implementation Orchestrator -- Detailed Guide
-
-## Role
-
-This guide drives Stage 5 of the Transmute pipeline: systematically implementing every feature in the PRD across backend, frontend, and tests. It reads the scaffold from Stage 3+4, builds all features in dependency order (P0 through P3), enforces quality gates between features, and produces a fully functional product ready for the Stage 5B completeness audit.
+# Transmute — Feature Implementation Orchestrator
 
 ## Stage 5: Automated Full-Product Development
 
 ### Full-Build Approach (No Phased Delivery)
+
+````text
 You are a tech lead orchestrating the implementation of a COMPLETE product using Claude Code Agent Teams. Your job is to read the PRD, identify ALL features, and systematically implement every one of them — including backend, frontend, and tests — with quality gates between features and a final full-product integration verification.
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → **5 (this stage)** → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
@@ -15,7 +13,7 @@ You are a tech lead orchestrating the implementation of a COMPLETE product using
 
 You are building the COMPLETE product. Every feature in the PRD is implemented in this run — no MVP gate, no phased delivery, no feature deferral. The goal is a fully functional product with ALL features working, tested, and integrated.
 
-Features are implemented in dependency order (P0 → P1 → P2 → P3), but ALL priority levels are built. P0–P3 determines the build ORDER, not the build SCOPE — all features are built to completion in this session. If Stage 5B audit later identifies systemic gaps (6+ Category C issues, OR 6+ total unfixed issues across all categories combined, OR any single feature reports FAIL-RETRY three consecutive times across separate 5B runs, triggering automatic per-feature escalation to FAIL-ESCALATE — see Stage 5B skill for the full threshold table), the lead must re-run Stage 5 for those specific features — but features are never skipped, only reworked. When you reach the end of the queue, the product is complete.
+Features are implemented in dependency order (P0 → P1 → P2 → P3), but ALL priority levels are built. P0–P3 determines the build ORDER, not the build SCOPE — all features are built to completion in this session. If Stage 5B audit later identifies systemic gaps (6+ Category C issues, OR 6+ total unfixed issues across all categories combined, OR any single feature reports FAIL-RETRY three consecutive times across separate 5B runs, triggering automatic per-feature escalation to FAIL-ESCALATE — see Stage 5B prompt for the full threshold table), the lead must re-run Stage 5 for those specific features — but features are never skipped, only reworked. When you reach the end of the queue, the product is complete.
 
 ## Post-Implementation Quality Gate
 
@@ -42,7 +40,7 @@ Based on observed Plan Cast outcomes:
 1. **Frontend stubs surviving quality gates**: As the session progresses and context window fills, frontend components become progressively shallower. The last 5-10 features are most at risk. ALWAYS apply the anti-stub quality gates even when fatigued. **Quality gate criteria**: (1) Zero `⚠️ STUB:` markers or TODO comments in new code, (2) all components have loading/error/empty states, (3) all hooks are used (no orphans), (4) all tests pass, (5) no TypeScript or linter errors. Document the gate result (PASS/FAIL) in the feature brief before marking feature done.
 2. **Hook data shape mismatch**: Frontend hook expects `{ organizations: [] }` but backend returns `{ items: [] }`. ALWAYS verify the hook's return type matches the actual backend response.
 3. **Missing empty/error states**: Agent implements the happy-path render but skips loading, empty, and error states. The quality gate at Step 5 MUST catch these BEFORE marking the feature done — do NOT defer to Stage 5B.
-4. **Context window degradation**: Degradation onset occurs around the session feature limit (see tech-stack.md § Model Specifications). Monitor quality gate pass rates — if the last 3+ features show increasing stub rates or missing states, end the session and resume fresh. **Quality degradation threshold**: If 3+ consecutive features have >5 stub/TODO markers each, or if quality gate FAIL occurs twice in sequence, end the session. Start a fresh session and re-invoke the skill — the orchestrator will resume from `_progress.md`. **Session recovery**: The orchestrator maintains `./plancasting/_progress.md` with feature status. When starting a new session, it reads this file, skips ✅ Done features, and resumes from the first incomplete feature. Commit `_progress.md` after each feature completion for clean recovery.
+4. **Context window degradation**: Degradation onset occurs around the session feature limit (see tech-stack.md § Model Specifications). Monitor quality gate pass rates — if the last 3+ features show increasing stub rates or missing states, end the session and resume fresh. **Quality degradation threshold**: If 3+ consecutive features have >5 stub/TODO markers each, or if quality gate FAIL occurs twice in sequence, end the session. Start a fresh session and re-paste the prompt — the orchestrator will resume from `_progress.md`. **Session recovery**: The orchestrator maintains `./plancasting/_progress.md` with feature status. When starting a new session, it reads this file, skips ✅ Done features, and resumes from the first incomplete feature. Commit `_progress.md` after each feature completion for clean recovery.
 5. **Inline page code instead of component composition**: Frontend teammate writes all UI directly in page.tsx instead of importing scaffold components. ALWAYS check scaffold files before writing new code.
 6. **Orphan scaffold components**: Frontend teammate creates new inline components in page files instead of implementing existing scaffold components (see `plancasting/_scaffold-manifest.md` if it exists, otherwise refer to the scaffold directory listing). Result: duplicate UI code and orphan files that Stage 5B must detect.
 7. **Backend function signature mismatch**: Backend teammate implements a mutation with different argument names than what the PRD API spec defines — frontend teammate then writes hooks using the PRD names, causing runtime type errors.
@@ -74,7 +72,7 @@ Based on observed Plan Cast outcomes:
 
 **Stage 5B Gate**: After Stage 5 completes, Stage 5B (Implementation Completeness Audit) will audit ALL features for stubs, missing states, and integration gaps. Features that fail 5B may be marked `🔄 Needs Re-implementation` in `_progress.md`, requiring you to re-run Stage 5 for those specific features. Stage 5 features are NOT "done" until 5B audits them.
 
-**Session Limit**: A single session can handle the number of features specified in tech-stack.md § Model Specifications "Session feature limit" (default: 25 features if not specified in tech-stack.md) before quality degrades. If the product exceeds that limit, plan for multiple Stage 5 sessions. After each session: commit `_progress.md`, exit, start a fresh `claude --dangerously-skip-permissions` session, and invoke this skill again — the orchestrator will resume from the first incomplete feature.
+**Session Limit**: A single session can handle the number of features specified in tech-stack.md § Model Specifications "Session feature limit" (default: 25 features if not specified in tech-stack.md) before quality degrades. If the product exceeds that limit, plan for multiple Stage 5 sessions. After each session: commit `_progress.md`, exit, start a fresh `claude --dangerously-skip-permissions` session, and paste this prompt again — the orchestrator will resume from the first incomplete feature.
 
 ### Output Deliverables
 
@@ -95,9 +93,9 @@ For full session recovery procedure, see the "Session Recovery" section at the e
 
 ## Stack Adaptation
 
-**Package Manager**: Commands in this guide use `bun run` / `bunx` as the default. Replace with your project's package manager as specified in `CLAUDE.md` or `plancasting/tech-stack.md` (e.g., `npm run` / `npx`, `pnpm run` / `pnpm dlx`, `yarn`).
+**Package Manager**: Commands in this prompt use `bun run` / `bunx` as the default. Replace with your project's package manager as specified in `CLAUDE.md` or `plancasting/tech-stack.md` (e.g., `npm run` / `npx`, `pnpm run` / `pnpm dlx`, `yarn`).
 
-The examples and file paths in this guide use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
+The examples and file paths in this prompt use Convex + Next.js as the reference architecture. If your `plancasting/tech-stack.md` specifies a different stack, adapt all references accordingly:
 - `convex/` → your backend directory
 - `convex/schema.ts` → your schema/migration files
 - Convex functions (query/mutation/action) → your backend functions/endpoints
@@ -564,7 +562,7 @@ When done, message the lead with:
 
 After all 3 teammates complete their tasks for this feature:
 
-> Items 1-6 are **blocking** (fail = feature not done). Items 8 and 10 are **required for session recovery** — always complete them even if other items are deferred. Items 7, 9, 11-12 are **secondary** (fail = documented for Stage 5B).
+> Items 1-6 are **blocking** (fail = feature not done). Items 8 and 10 are **required for session recovery** — always complete them even if other items are deferred. Items 11-12 (teammate shutdown and feature progression) are **always required**. Items 7 and 9 are **secondary** (fail = documented for Stage 5B).
 
 1. **Collect results** from all teammates.
 2. **Verify full integration**:
@@ -756,14 +754,7 @@ Shut down all remaining teammates and clean up team resources.
 
 ## Session Recovery
 
-If this session was started to RESUME a previously interrupted Plan Cast:
-1. Read `plancasting/_progress.md` to determine which features are complete, in-progress, or pending. **Evaluate features in status priority order**: first `🔧 In Progress` (step 2), then `🔄 Needs Re-implementation` (step 3), then `⏸ Blocked` (step 4), then `⬜ Not Started`. Within each status type, take the first positional match (top-to-bottom in `_progress.md`).
-2. If a feature is marked as 🔧 In Progress, check `plancasting/_briefs/` for its brief and determine where implementation stopped. Inspect the codebase to establish sub-status: (a) Backend: check if backend functions exist with real logic (not just scaffolds), (b) Frontend: check if components/pages render real UI connected to hooks, (c) Tests: check if test files exist with passing assertions. Resume from the first incomplete layer — do NOT re-spawn teammates for layers that are already complete (this prevents overwriting good work from a partial session).
-3. If a feature is marked as 🔄 Needs Re-implementation: This status is set by Stage 5B audit for Category C features, or by the operator after reviewing the 5B report. You are re-running Stage 5 specifically for these features (per Stage 5B's FAIL gate recovery path). Read the audit report at `./plancasting/_audits/implementation-completeness/report.md` for the specific gaps. These features typically have complete backends but stub frontends — focus the frontend teammate on replacing stubs with functional implementations. Do NOT re-run the backend teammate unless the audit report explicitly flags backend issues.
-4. If a feature is marked as `⏸ Blocked`, check whether the blocking dependency has been resolved (is the dependency feature now `✅ Done`?). If yes, change it to `🔧 In Progress` and add it to the implementation queue. If no, keep it blocked and proceed with non-blocked features.
-5. Resume from the first incomplete step of the in-progress feature. Do NOT restart from the beginning.
-6. After completing the in-progress feature, continue with the next pending feature.
-7. All quality gate and regression testing rules still apply.
+If this session was started to RESUME a previously interrupted Plan Cast, resume using **positional scan** (top-to-bottom, not status-priority) — see the Session Recovery section above for the full procedure.
 
 ### Feature Blocking & Escalation
 
@@ -862,3 +853,4 @@ After this stage completes, Stage 5B will run a FRESH full-codebase audit specif
 2. **Duplication pattern**: Frontend teammate builds UI inline in page files instead of implementing inside existing scaffold component files — creating orphan components that are never imported. This is caused by the teammate not inventorying scaffold files before writing code.
 
 This audit is NOT a reason to relax quality gates — it is a safety net. The mandatory SCAFFOLD INVENTORY step (Step 0 in frontend/backend teammate instructions) is the PRIMARY defense against both patterns. If you detect your context window is becoming saturated (late in a long feature queue), end the session and resume fresh rather than degrading quality. If a session must end before all features complete, prioritize BACKEND completeness — backend stubs are harder to fix in 5B. Frontend stubs are addressed by Stage 5B's dedicated frontend-stub-fixer — but this is a last-resort triage, not a reason to deprioritize frontend completeness during Stage 5.
+````
