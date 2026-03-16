@@ -1,12 +1,12 @@
 # Transmute Framework
 
-A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 24-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
+A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
 You write the plan. Transmute casts it into reality.
 
 ## What is Plan Casting?
 
-Plan Casting is the philosophy behind Transmute: **build everything in the business plan**. No MVP, no phased delivery, no feature cutting. Features are implemented in priority order (P0 → P3), but all are built. AI agent teams work autonomously through 24 stages — from tech stack selection to production deployment and user documentation.
+Plan Casting is the philosophy behind Transmute: **build everything in the business plan**. No MVP, no phased delivery, no feature cutting. Features are implemented in priority order (P0 → P3), but all are built. AI agent teams work autonomously through 25 stages — from tech stack selection to production deployment and user documentation.
 
 ## Installation
 
@@ -52,8 +52,8 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold
 → Implementation → Completeness Audit → QA & Hardening → Pre-Launch
        [5]                [5B]              [6A-6G]         [6H]
 
-→ Live Verification → Remediation → Visual Polish → Deploy
-        [6V]              [6R]          [6P]          [7]
+→ Live Verification → Remediation → Visual Polish or Redesign → Deploy
+        [6V]              [6R]              [6P / 6P-R]          [7]
 
 → Production Smoke → User Guide → Feedback / Maintenance
         [7V]            [7D]         [8] / [9]
@@ -80,6 +80,7 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold
 | **6V** | Visual & Functional Verify  | UI matches specs, interactions work correctly                              |
 | **6R** | Runtime Remediation         | Fixes 6V failures (skipped if 6V passes clean)                             |
 | **6P** | Visual Polish               | Final UI refinements                                                       |
+| **6P-R** | Frontend Design Elevation | Interactive full design overhaul (alternative to 6P)                       |
 | **7**  | Deployment                  | *Manual* — deploy backend first, then frontend                             |
 | **7V** | Production Smoke Tests      | End-to-end live deployment verification                                    |
 | **7D** | User Guide Generation       | End-user documentation                                                     |
@@ -122,6 +123,7 @@ Each stage is also a standalone skill. Claude Code autocomplete shows them as sh
 | `/verify`            | 6V    | Visual & functional verification |
 | `/remediate`         | 6R    | Runtime remediation              |
 | `/polish`            | 6P    | Visual polish                    |
+| `/redesign`          | 6P-R  | Frontend design elevation        |
 | `/smoke`             | 7V    | Production smoke tests           |
 | `/user-guide`        | 7D    | User guide generation            |
 | `/feedback`          | 8     | Feedback loop                    |
@@ -135,7 +137,7 @@ Stages **4** and **7** are manual and cannot be invoked via commands.
 2. **Stage 0 is interactive** — you choose your tech stack (framework, database, auth, hosting, etc.)
 3. **Stages 1–3 generate specs** — BRD, PRD (18 sections), and project scaffold
 4. **Stage 5 builds the product** — per-feature agent teams (backend, frontend, test, reviewer) implement everything
-5. **Stages 6A–6P audit and harden** — security, accessibility, performance, refactoring, resilience, documentation, visual verification
+5. **Stages 6A–6P/6P-R audit and harden** — security, accessibility, performance, refactoring, resilience, documentation, visual verification
 6. **Stage 7 is manual deployment** — you deploy, then the plugin runs smoke tests
 7. **Stages 8–9 are ongoing** — process user feedback and maintain dependencies
 
@@ -188,7 +190,7 @@ transmute-framework/
 │   ├── feature-frontend.md      # Frontend implementation
 │   ├── feature-tests.md         # Test writing
 │   └── feature-reviewer.md      # Code review gate
-├── skills/                      # 22 stage skills
+├── skills/                      # 23 stage skills
 │   ├── tech-stack/              # Stage 0
 │   ├── brd/                     # Stage 1
 │   ├── prd/                     # Stage 2

@@ -39,6 +39,7 @@ Examine `$1`:
 | `verify` or `verification` | verify | 6V |
 | `remediate` or `remediation` | remediate | 6R |
 | `polish` | polish | 6P |
+| `redesign` or `frontend-redesign` or `design-elevation` | redesign | 6P-R |
 | `smoke` | smoke | 7V |
 | `user-guide` | user-guide | 7D |
 | `feedback` | feedback | 8 |
@@ -82,8 +83,10 @@ Individual stages (also invocable directly as /transmute:<stage>):
   implement (5), audit-completeness (5B), audit-security (6A),
   audit-a11y (6B), optimize (6C), docs (6D), refactor (6E),
   seed-data (6F), harden (6G), prelaunch (6H), verify (6V),
-  remediate (6R), polish (6P), smoke (7V), user-guide (7D),
-  feedback (8), maintain (9)
+  remediate (6R), polish (6P), redesign (6P-R), smoke (7V),
+  user-guide (7D), feedback (8), maintain (9)
+
+Note: redesign (6P-R) is an alternative to polish (6P) — run one, not both
 
 Manual stages (not invocable):
   Stage 4 — CLAUDE.md verification (check Part 2 populated after scaffold)
@@ -92,6 +95,7 @@ Manual stages (not invocable):
 Examples:
   /transmute:cast brd          Generate Business Requirement Document
   /transmute:cast implement    Run feature implementation orchestrator
+  /transmute:cast redesign     Run frontend design elevation
   /transmute:cast resume       Continue from where you left off
   /transmute:brd               Run BRD stage directly
 ```

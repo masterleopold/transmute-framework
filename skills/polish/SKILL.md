@@ -12,26 +12,37 @@ version: 1.0.0
 
 # Stage 6P: Visual Polish & UI Refinement
 
+## Why This Stage Exists
+
+After Stage 5 implementation and Stage 6 quality passes, the product is functionally complete but often looks "functional rather than polished." Components work correctly but lack the visual refinement that distinguishes a production product from a prototype — inconsistent spacing, missing hover states, contrast issues, and generic typography. This stage fixes those issues within the existing design system.
+
 Analyze the RUNNING application's visual quality, identify UI issues (visibility, layout, typography, spacing, motion, responsiveness), and automatically refine the frontend to production-grade aesthetic quality. Lead a multi-agent visual polish project using Claude Code Agent Teams.
+
+**Relationship to `frontend-design` skill**: If available, the `frontend-design` skill provides aesthetic guidance and design direction. Polish uses it for enhancement decisions but never replaces the project's existing design system.
 
 Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/polish-detailed-guide.md` for full refinement categories, teammate prompts, design system integration, and report templates.
 
 ## Prerequisites
 
-1. **`frontend-design` plugin** (recommended, has fallback): Check if `/mnt/skills/public/frontend-design/SKILL.md` exists. If not, use project's existing design patterns instead.
+1. **Mutual exclusion with 6P-R**: If `./plancasting/_audits/visual-polish/design-plan.md` exists, STOP — Stage 6P-R (redesign) has already run. 6P and 6P-R are mutually exclusive. Do not proceed. If the user wants 6P instead, they must first revert the 6P-R branch (`git branch -D redesign/frontend-elevation`) and delete the design-plan.md file.
 
-2. **Stage 6R must PASS or CONDITIONAL PASS** (if 6R was required):
-   - If 6R report exists: check Gate Decision. FAIL -> STOP, return to 6R.
-   - If 6R report does NOT exist: check 6V report:
-     - 6V PASS -> proceed (6R correctly skipped)
-     - 6V FAIL -> STOP: run 6R first
-     - 6V CONDITIONAL PASS with only Category C -> proceed (6R correctly skipped)
-     - 6V CONDITIONAL PASS with Category A/B -> STOP: run 6R first
-   - If NEITHER report exists: verify with operator.
+2. **`frontend-design` plugin** (recommended, has fallback): Check if `/mnt/skills/public/frontend-design/SKILL.md` exists. If not, use project's existing design patterns instead.
 
-3. **Dev server**: This stage needs the live application. The lead starts it in Phase 1.
+3. **Stage 6R must PASS or CONDITIONAL PASS** (if 6R was required). Use this 4-case verification matrix:
 
-4. Create output directories:
+   | 6R Report | 6V Report | Action |
+   |---|---|---|
+   | Exists + PASS/CONDITIONAL PASS | Any | Proceed |
+   | Exists + FAIL | Any | STOP — return to 6R |
+   | Does not exist | PASS | Proceed (6R correctly skipped) |
+   | Does not exist | CONDITIONAL PASS (C only) | Proceed (6R correctly skipped — 6R cannot fix Category C) |
+   | Does not exist | CONDITIONAL PASS (A/B) | STOP — run 6R first |
+   | Does not exist | FAIL | STOP — run 6R first |
+   | Does not exist | Does not exist | Verify with operator |
+
+4. **Dev server**: This stage needs the live application. The lead starts it in Phase 1.
+
+5. Create output directories:
    ```bash
    mkdir -p ./plancasting/_audits/visual-polish
    mkdir -p ./screenshots/visual-polish/before
@@ -133,12 +144,13 @@ Re-verify ALL modified screens at 1440px, 768px, 375px plus dark mode. Flag regr
 
 - **PASS**: All Category O fixed, Category E applied, no regressions -- ready for Deploy
 - **CONDITIONAL PASS**: All critical fixed + Category D brief for optional elevation -- ready for Deploy
-- **FAIL**: Regressions remain or validation fails -- investigate before Deploy
+- **FAIL**: Regressions remain or validation fails -- investigate before Deploy. Consider switching to 6P-R for full design elevation if 6P is insufficient.
 
 ## Next Steps
 
 - PASS or CONDITIONAL PASS: proceed to Stage 7 (Deploy) -> 7V (Production Smoke) -> 7D (User Guide)
 - FAIL: investigate regressions, fix, revalidate. Do NOT deploy until 6P PASS or CONDITIONAL PASS.
+- If visual quality needs a full overhaul rather than polish, run Stage 6P-R instead (revert any 6P changes first with `git revert`).
 
 ## Critical Rules
 

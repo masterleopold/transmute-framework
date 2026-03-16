@@ -23,6 +23,7 @@
 | 6V | Visual & Functional Verification | ⬜ Not Started | — | — | After 6H |
 | 6R | Runtime Remediation | ⬜ Not Started | — | — | Only if 6V has failures |
 | 6P | Visual Polish | ⬜ Not Started | — | — | After 6R or 6V PASS |
+| 6P-R | Frontend Design Elevation | ⬜ Not Started | — | — | Alternative to 6P — run one, not both |
 | 7 | Deployment | ⬜ Not Started | — | — | Manual — deploy backend then frontend |
 | 7V | Production Smoke | ⬜ Not Started | — | — | After deployment |
 | 7D | User Guide | ⬜ Not Started | — | — | After 7V PASS |
@@ -43,5 +44,6 @@
 | 6H Pre-Launch | — | — | — |
 | 6V Visual Verification | — | — | — |
 | 6R Remediation | — | — | — |
-| 6P Visual Polish | — | — | — |
+| 6P Visual Polish | — | — | Run 6P OR 6P-R, not both |
+| 6P-R Frontend Design Elevation | — | — | Alternative to 6P — run one, not both |
 | 7V Production Smoke | — | — | — |

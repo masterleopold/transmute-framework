@@ -36,6 +36,7 @@ Source examples use Convex + Next.js. Adapt all paths and patterns to your actua
 4. **Non-idempotent seeds**: Implement upsert logic or require `seed:reset` before re-seeding.
 5. **Auth credential gaps**: Consider the full auth flow when creating persona users.
 6. **Missing soft-deleted records**: Include some records with `deletedAt` set to verify query filtering.
+7. **Orphaned references**: Child records referencing deleted parents — include integrity verification.
 
 ## Phase 1: Lead Analysis and Planning
 
@@ -48,9 +49,12 @@ Complete BEFORE spawning teammates:
    - **Dev tier**: 5-20 records per table for rapid iteration.
    - **Test tier**: 50-200 records per table for thorough testing including pagination.
    - **Demo tier**: Curated scenarios with realistic names and relationships.
+   - **Stress tier**: 500-1,000 records per major table for performance testing.
+   - **Empty-state tier**: Users with NO associated data for empty state UI verification.
    - Persona-based data sets for each PRD persona.
    - Edge case data: empty states, max-length strings, special characters, Unicode, boundary values.
    - Dependency map: which tables must be seeded first.
+   - **Mutation function emphasis**: ALL data insertion must use backend mutation functions, not direct database inserts. This ensures validators, auth checks, and business rules are respected.
 5. Create `./seed/README.md` with the seed data plan.
 
 ## Phase 2: Spawn Seed Data Teammates

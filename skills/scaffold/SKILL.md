@@ -27,7 +27,10 @@ Before proceeding, verify ALL of these conditions. Stop with a clear error messa
 2. Verify `./plancasting/brd/` directory exists and contains markdown files. If missing: STOP — "Stage 3 requires completed BRD. Run Stage 1 first."
 3. Verify `./plancasting/tech-stack.md` exists. If missing: STOP — "Stage 3 requires plancasting/tech-stack.md. Run Stage 0 first."
 4. Verify spec validation passed: check `plancasting/_audits/spec-validation/report.md` for PASS or CONDITIONAL PASS. If FAIL or missing: STOP — "Stage 3 requires spec validation. Run Stage 2B first."
-5. Verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|^[A-Z_]+=\s*$' .env.local` must return no matches.
+5. Verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return no matches.
+6. Validate credential tiers from `plancasting/tech-stack.md`:
+   - 🔴 Pipeline infrastructure credentials must be present
+   - 🟡 Product service credentials should be present (WARN if missing — can be added before Stage 5)
 
 ## Known Failure Patterns
 
@@ -75,7 +78,7 @@ Spawn all teammates simultaneously. Each has a distinct domain. See the detailed
 - Page components with data loading for every screen in PRD
 - Layouts, loading states, error boundaries, 404 states
 - Root layout with providers, metadata, font/theme config
-- Favicon and app icons from product logo in plancasting/tech-stack.md
+- Logo, favicon, and app icons from product logo in plancasting/tech-stack.md (generate favicon, apple-touch-icon, and OG image from logo if available)
 - Backend client provider component
 
 **Teammate 3: "ui-components"**

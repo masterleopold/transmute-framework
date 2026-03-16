@@ -14,7 +14,7 @@ Stage 6V verifies the app against the dev server, and Stage 6R auto-fixes mechan
 
 This is a LIGHTER pass than 6V — it focuses on "does the deployed app work?" not "does it match every spec detail?"
 
-**Stage Sequence**: ... → 6V (Verification) → 6R (Runtime Remediation) → 6P (Visual Polish) → 7 (Deploy) → **7V (this stage)** → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
+**Stage Sequence**: ... → 6V (Verification) → 6R (Runtime Remediation) → 6P or 6P-R (Visual Polish or Redesign) → 7 (Deploy) → **7V (this stage)** → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
 
 ## Known Failure Patterns
 
@@ -181,19 +181,19 @@ Read the 6R report "Auto-Fixed (Category A)" and "Semi-Auto-Fixed (Category B)" 
 
 If ANY 6R fix is NOT present in production, flag as **CRITICAL**. Check deployed commit hash vs. 6R report commit hash.
 
-### 6. Stage 6P Visual Polish Verification (if 6P report exists)
+### 6. Stage 6P/6P-R Visual Polish Verification (if visual polish report exists)
 
 Quick visual spot-check (3-5 minutes max):
-1. Read the 6P report's applied changes tables
+1. Read the visual polish report's applied changes tables
 2. Pick the TOP 3 most impactful changes
-3. For each: navigate, screenshot, compare with 6P "after" screenshot
+3. For each: navigate, screenshot, compare with "after" screenshots
 
 | Check | Pass Criteria |
 |---|---|
 | Contrast fixes visible | Text has the corrected color |
 | Hover transitions working | Smooth color/shadow transition occurs |
-| Typography hierarchy intact | Heading sizes/weights match 6P report |
-| Dark mode enhancements | Dark mode fixes from 6P are present |
+| Typography hierarchy intact | Heading sizes/weights match report |
+| Dark mode enhancements | Dark mode fixes from 6P/6P-R are present |
 
 Missing visual polish = **MEDIUM** severity (functional app, visual regression only).
 
@@ -324,8 +324,8 @@ Generate `./plancasting/_audits/production-smoke/report.md`:
 - Missing in production: [n] — [list]
 - Deployment commit matches 6R: YES / NO
 
-## 6P Visual Polish Verification (if applicable)
-- Total 6P changes: [n]
+## 6P/6P-R Visual Polish Verification (if applicable)
+- Total visual polish changes: [n]
 - Spot-checked: [n]
 - Present in production: [n]
 - Missing in production: [n] — [list]

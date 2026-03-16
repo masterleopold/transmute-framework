@@ -34,16 +34,16 @@ This stage runs with a FRESH context window, focused SOLELY on finding and fixin
 ## Known Failure Patterns
 
 ### Frontend Stubs (PRIMARY — ~80% of issues)
-1. Scaffold component bodies (single `<div>` with feature name)
-2. Unconnected hooks (useState with mock data instead of real hook)
-3. Missing form handlers (onSubmit only calls preventDefault)
-4. Placeholder navigation (href="#" or empty onClick)
-5. Missing state handling (no loading, error, empty states)
-6. Orphan components (files never imported by any page)
-7. Inline page stubs (heading + `<p>` tag instead of composed components)
-8. Missing i18n keys
-9. Stub modals/dialogs
-10. Missing responsive behavior
+1. Scaffold component bodies (single `<div>` with feature name, e.g., `<div>Task Management</div>`)
+2. Unconnected hooks (useState with mock data instead of real hook, e.g., `const [items] = useState([])`)
+3. Missing form handlers (onSubmit only calls preventDefault, e.g., `onSubmit={(e) => e.preventDefault()}`)
+4. Placeholder navigation (href="#" or empty onClick, e.g., `<a href="#">View Details</a>`)
+5. Missing state handling (no loading, error, empty states — component only renders the happy path)
+6. Orphan components (files never imported by any page — detected by import analysis)
+7. Inline page stubs (heading + `<p>` tag instead of composed components, e.g., `<h1>Settings</h1><p>Coming soon</p>`)
+8. Missing i18n keys (hardcoded English strings instead of translation keys)
+9. Stub modals/dialogs (empty modal body or placeholder content)
+10. Missing responsive behavior (no mobile breakpoint handling)
 
 ### Backend Stubs (SECONDARY — ~15%)
 1. Action stubs logging "not implemented"
@@ -93,13 +93,17 @@ Before running any scans, read `plancasting/tech-stack.md` to determine actual d
 
 5. **Classify findings into three categories**:
 
+   **Size-based category system**:
+
    **Category A — Quick Fix** (< 30 lines per file): Stub text replacement, missing handlers, missing states, simple orphan cleanup, missing i18n keys, dead links, missing responsive classes.
 
    **Category B — Medium Fix** (30-100 lines per file): Components needing real UI, hooks needing real data connections, forms needing submission logic, modals needing content, duplication fixes, bloated page decomposition.
 
-   **Category C — Large Gap** (escalate for Stage 5 re-run if 4+ issues): New hooks/backend functions that should exist, single files needing 100+ lines, entirely unbuilt frontend features, features where both backend AND frontend are stubs. Mark in `plancasting/_progress.md` as Needs Re-implementation.
+   **Category C — Large Gap** (≥ 100 lines per file, escalate): New hooks/backend functions that should exist, single files needing 100+ lines, entirely unbuilt frontend features, features where both backend AND frontend are stubs. Mark in `plancasting/_progress.md` as Needs Re-implementation.
 
    **Multi-file rule**: Classify by LARGEST single-file change. Independent issues in same feature classified separately.
+
+   **Scope boundaries — what 5B does NOT audit**: Design quality (that's 6P/6P-R), security (6A), performance (6C). 5B focuses strictly on implementation completeness.
 
 6. **Generate audit report** at `./plancasting/_audits/implementation-completeness/report.md`
 
@@ -165,8 +169,8 @@ After all teammates complete:
 3. **Gate Decision**:
    - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs remain -> Stage 6
    - **CONDITIONAL PASS**: Zero A/B remaining, 1-3 Cat C documented -> Stage 6 with known gaps
-   - **FAIL (re-run 5B)**: 1+ A/B unfixed OR test failures from 5B fixes
-   - **FAIL (re-run Stage 5)**: 4+ Cat C OR systemic implementation failure
+   - **FAIL-RETRY**: 1+ A/B unfixed OR test failures from 5B fixes -> re-run 5B
+   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues, OR 3 consecutive FAIL-RETRY reports -> re-run Stage 5 for affected features
 
 ### Phase 5: Shutdown
 

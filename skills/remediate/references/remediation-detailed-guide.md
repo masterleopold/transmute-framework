@@ -14,7 +14,7 @@ Stage 6V finds runtime issues but explicitly does NOT fix them. Without a dedica
 
 This is slow and error-prone. Stage 6R automates the mechanical fixes (typically 60-80% of all 6V failures) and feeds the remaining issues to the human as a structured TODO.
 
-**Stage Sequence**: ... -> 6H (Pre-Launch) -> 6V (Verification) -> **6R (this stage)** -> 6P (Visual Polish) -> 7 (Deploy) -> 7V (Production Smoke) -> 7D (User Guide) -> 8 (Feedback) -> 9 (Maintenance)
+**Stage Sequence**: ... -> 6H (Pre-Launch) -> 6V (Verification) -> **6R (this stage)** -> 6P or 6P-R (Visual Polish or Redesign) -> 7 (Deploy) -> 7V (Production Smoke) -> 7D (User Guide) -> 8 (Feedback) -> 9 (Maintenance)
 
 ## Fixability Taxonomy
 
@@ -169,7 +169,7 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
 - **FAIL**: Critical issues remain that block deployment
 
 ## Next Steps
-- If PASS: proceed to Stage 6P (Visual Polish) -> Deploy -> 7V -> 7D
+- If PASS: proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
 - If CONDITIONAL PASS: human reviews remaining issues
 - If FAIL: human resolves Category C critical issues, then re-run 6V -> 6R
 ```

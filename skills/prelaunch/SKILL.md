@@ -148,9 +148,9 @@ Generate `./plancasting/_launch/readiness-report.md`:
 
 **Next Steps after 6H**:
 - If READY, proceed to Stage 6V (Visual and Functional Verification).
-- Post-6V: PASS -> skip 6R, proceed to 6P. CONDITIONAL PASS (Cat A/B) -> 6R. CONDITIONAL PASS (Cat C only) -> skip 6R, proceed to 6P. FAIL -> fix manually, re-run 6V.
-- Post-6R: PASS/CONDITIONAL PASS -> 6P. FAIL -> resolve, re-run 6V -> 6R.
-- Post-6P: PASS -> Stage 7 (Deploy) -> 7V (Production Smoke) -> 7D (User Guide).
+- Post-6V: PASS -> skip 6R, proceed to 6P or 6P-R. CONDITIONAL PASS (Cat A/B) -> 6R. CONDITIONAL PASS (Cat C only) -> skip 6R, proceed to 6P or 6P-R. FAIL -> fix manually, re-run 6V.
+- Post-6R: PASS/CONDITIONAL PASS -> 6P or 6P-R. FAIL -> resolve, re-run 6V -> 6R.
+- Post-6P/6P-R: PASS -> Stage 7 (Deploy) -> 7V (Production Smoke) -> 7D (User Guide).
 - Do NOT skip Stage 6V or Stage 7V.
 
 ## Critical Rules

@@ -123,6 +123,20 @@ Monitor progress. Enforce sequential dependency. Help research breaking changes.
 8. **Environment variable changes**: Auth/payment SDK updates may rename env vars.
 9. **Playwright browser binary mismatch**: Run `bunx playwright install` after updating Playwright.
 
+## `.claude/rules/` Staleness Review
+
+During each maintenance run, review all path-scoped rules for staleness:
+- Remove rules referencing deprecated APIs or outdated patterns
+- Update rules referencing changed file paths or renamed functions
+- Remove rules for resolved issues that no longer apply
+
+## Monorepo Adaptation
+
+If the project uses workspaces (npm/yarn/pnpm workspaces, Turborepo, Nx):
+- Update shared packages first (workspace root), then dependent packages
+- Respect workspace ordering — shared libraries before consuming apps
+- Run workspace-level tests after each tier, not just package-level
+
 ## Lock File Strategy
 
 - NEVER delete the lock file to resolve conflicts.

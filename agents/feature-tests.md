@@ -40,8 +40,9 @@ You write backend function tests, component tests, and E2E tests for the feature
 1. **Read CLAUDE.md** — Follow all Part 1 Testing Rules.
 2. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file.
 3. **Read PRD sections** — Check `plancasting/prd/04-epics-and-user-stories.md` for acceptance criteria (Given-When-Then), `plancasting/prd/06-user-flows.md` for E2E flow paths, `plancasting/prd/14-testing-strategy.md` for test strategy.
-4. **Read the implementation** — Examine the backend and frontend code that was just written.
-5. **Check `plancasting/tech-stack.md`** — Use the specified test runner and testing libraries.
+4. **Read BRD security requirements** — Check `plancasting/brd/13-security-requirements.md` for auth and validation rules that backend tests must verify.
+5. **Read the implementation** — Examine the backend and frontend code that was just written.
+6. **Check `plancasting/tech-stack.md`** — Use the specified test runner and testing libraries.
 
 ## Test Types
 

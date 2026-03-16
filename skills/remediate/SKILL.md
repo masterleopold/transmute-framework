@@ -21,9 +21,9 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/remediation-detailed
 1. **Stage 6V must have produced a report**: `./plancasting/_audits/visual-verification/report.md` must exist. If not, run Stage 6V first.
 
 2. **6V gate decision check**:
-   - **6V PASS**: Skip 6R entirely -- proceed to 6P. No failures to remediate.
+   - **6V PASS**: Skip 6R entirely -- proceed to 6P or 6P-R. No failures to remediate.
    - **6V CONDITIONAL PASS with Category A/B issues**: Proceed with 6R.
-   - **6V CONDITIONAL PASS with ONLY Category C issues**: Skip 6R -- proceed to 6P. 6R cannot fix Category C.
+   - **6V CONDITIONAL PASS with ONLY Category C issues**: Skip 6R -- proceed to 6P or 6P-R. 6R cannot fix Category C.
    - **6V FAIL**: STOP -- fix critical issues manually first, then re-run 6V.
 
 3. Create output directory:
@@ -54,7 +54,7 @@ Complete BEFORE spawning teammates:
 1. **Check loop counter** (prevents infinite remediation loops):
    - Read `./plancasting/_audits/runtime-remediation/loop-count.txt`. If absent, this is loop 1 -- create with `1`.
    - If it exists, increment by 1 and overwrite.
-   - **Maximum 3 attempts**: If counter would become 4+, STOP immediately. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` and halt. Do NOT proceed to 6P.
+   - **Maximum 3 attempts**: If counter would become 4+, STOP immediately. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` and halt. Do NOT proceed to 6P or 6P-R.
 
 2. **Read project context**: `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/_audits/visual-verification/report.md`
 
@@ -122,7 +122,7 @@ Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes appl
 
 1. Request shutdown for all teammates.
 2. Verify all modifications saved and committed.
-3. Leave the dev server running if Stage 6P will run immediately.
+3. Leave the dev server running if Stage 6P or 6P-R will run immediately.
 
 ## Gate Decision
 
@@ -132,7 +132,7 @@ Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes appl
 
 ## Next Steps
 
-- PASS: proceed to Stage 6P (Visual Polish) -> Deploy -> 7V -> 7D
+- PASS: proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
 - CONDITIONAL PASS: human reviews remaining issues, decides to deploy or fix first
 - FAIL: human resolves Category C critical issues, then re-run 6V -> 6R
 

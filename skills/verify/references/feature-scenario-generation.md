@@ -2,7 +2,7 @@
 
 ## Shared Reference for Stages 6V and 7V
 
-> **WARNING**: **DO NOT PASTE THIS FILE INTO CLAUDE CODE.** This is a shared reference guide read DURING Stage 6V (Phase 1) and Stage 7V (Phase 1). See `prompt_visual_functional_verification.md` or `prompt_production_smoke_verification.md` for the actual prompts to paste.
+> **NOTE**: This is a shared reference guide read by the verify skill (Stage 6V, Phase 1) and the smoke skill (Stage 7V, Phase 1). It is not invoked directly — the parent skill loads it via `${CLAUDE_SKILL_ROOT}/references/`.
 
 This document defines how to dynamically generate comprehensive test scenarios from PRD specifications and codebase analysis. It is referenced by:
 - **Stage 6V** (Visual & Functional Verification) — generates FULL scenario matrix

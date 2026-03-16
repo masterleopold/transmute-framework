@@ -128,16 +128,16 @@ Interactive behavior and keyboard navigation. Tasks: form/modal/dropdown/tab tes
 
 ## Next Steps
 
-- PASS: skip 6R -> proceed to Stage 6P (Visual Polish) -> Deploy -> 7V -> 7D
+- PASS: skip 6R -> proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
 - CONDITIONAL PASS with Category A/B issues: proceed to Stage 6R (Runtime Remediation)
-- CONDITIONAL PASS with ONLY Category C issues: skip 6R -> proceed to Stage 6P
+- CONDITIONAL PASS with ONLY Category C issues: skip 6R -> proceed to Stage 6P or 6P-R
 - FAIL: fix critical issues manually, then re-run Stage 6V
 
 ## Phase 5: Shutdown
 
 1. Request shutdown for all teammates
 2. Verify all files saved and committed
-3. Leave the dev server running for 6R or 6P
+3. Leave the dev server running for 6R or 6P/6P-R
 
 ## Critical Rules
 

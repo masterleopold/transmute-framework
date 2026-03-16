@@ -9,7 +9,7 @@ transmute-framework/
 ├── .claude-plugin/plugin.json   # Plugin manifest
 ├── commands/cast.md             # Pipeline controller (/transmute:cast)
 ├── agents/                      # 7 agent definitions (pipeline orchestrator + feature teams)
-├── skills/                      # 22 stage skills (one per pipeline stage)
+├── skills/                      # 23 stage skills (one per pipeline stage)
 │   └── <stage-name>/
 │       ├── SKILL.md             # Skill definition with frontmatter + instructions
 │       └── references/          # Optional detailed guides loaded via ${CLAUDE_SKILL_ROOT}

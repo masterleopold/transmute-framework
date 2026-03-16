@@ -40,7 +40,7 @@ You implement backend functions, database schemas, API endpoints, and server-sid
 1. **Read CLAUDE.md** — Follow all Part 1 immutable rules and Part 2 project-specific rules.
 2. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file with the feature specification.
 3. **Read PRD sections** — Check `plancasting/prd/04-epics-and-user-stories.md` for acceptance criteria, `plancasting/prd/12-api-specifications.md` for API specs, `plancasting/prd/11-data-model.md` for schema.
-4. **Read BRD sections** — Check `plancasting/brd/07-functional-requirements.md` and `plancasting/brd/14-business-rules-and-logic.md` for business rules.
+4. **Read BRD sections** — Check `plancasting/brd/07-functional-requirements.md` and `plancasting/brd/14-business-rules-and-logic.md` for business rules. Check `plancasting/brd/13-security-requirements.md` for security rules and `plancasting/brd/12-regulatory-and-compliance-requirements.md` for compliance rules the backend must enforce.
 5. **Check scaffold files** — Read `plancasting/_scaffold-manifest.md`. EXTEND existing scaffold files. NEVER create duplicates.
 6. **Check `plancasting/tech-stack.md`** — Adapt to the project's actual tech stack.
 

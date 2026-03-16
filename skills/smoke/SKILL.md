@@ -33,7 +33,7 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/smoke-detailed-guide
 - **6V Scenario Matrix** (if exists): `./plancasting/_audits/visual-verification/feature-scenario-matrix.md`
 - **6V Report**: `./plancasting/_audits/visual-verification/report.md`
 - **6R Report** (if exists): `./plancasting/_audits/runtime-remediation/report.md`
-- **6P Report** (if exists): `./plancasting/_audits/visual-polish/report.md`
+- **6P/6P-R Report** (if exists): `./plancasting/_audits/visual-polish/report.md`
 - **PRD files**: `./plancasting/prd/02-feature-map-and-prioritization.md`, `04-epics-and-user-stories.md`, `06-user-flows.md`, `07-information-architecture.md`, `08-screen-specifications.md`
 - **Tech Stack**: `./plancasting/tech-stack.md`
 - **E2E Config**: `./playwright.config.ts`, `./e2e/constants.ts`
@@ -66,7 +66,7 @@ Before any verification, generate a targeted test plan. Save to `./plancasting/_
 
 5. **6R Fix Verification** (if 6R report exists): Re-test each auto-fixed issue on production. If any fix is missing, flag as CRITICAL and check deployed commit hash.
 
-6. **6P Visual Polish Verification** (if 6P report exists): Spot-check top 3 most impactful visual changes survived production build. Flag missing changes as MEDIUM severity.
+6. **6P/6P-R Visual Polish Verification** (if visual polish report exists): Spot-check top 3 most impactful visual changes survived production build. Flag missing changes as MEDIUM severity.
 
 7. **Navigation Smoke Test** (~5 min max): Test desktop sidebar, footer, mobile nav, sub-navigation tabs. Check CSS styling intact at both viewports. Flag invisible/unstyled links as CRITICAL.
 
@@ -82,7 +82,7 @@ Before any verification, generate a targeted test plan. Save to `./plancasting/_
 
 ## Output
 
-Generate `./plancasting/_audits/production-smoke/report.md` following the report template in the detailed guide. The report includes: summary, infrastructure results, page load results, public route access, protected route redirect, 6R/6P verification, navigation smoke test, scenario results, visual comparison, performance, third-party integrations, gate decision, next steps, issues found, and screenshot references.
+Generate `./plancasting/_audits/production-smoke/report.md` following the report template in the detailed guide. The report includes: summary, infrastructure results, page load results, public route access, protected route redirect, 6R/6P/6P-R verification, navigation smoke test, scenario results, visual comparison, performance, third-party integrations, gate decision, next steps, issues found, and screenshot references.
 
 ## Gate Decision
 
@@ -106,5 +106,5 @@ Stage 7V is binary (PASS or FAIL) -- there is no CONDITIONAL PASS. Non-critical 
 11. ALWAYS verify 6R fixes BEFORE detailed feature/navigation checks if 6R report exists.
 12. ALWAYS test navigation at BOTH desktop and mobile viewports.
 13. ALWAYS check deployed commit hash against 6R remediation commit hash if 6R report exists.
-14. Spot-check 6P visual polish changes if 6P report exists.
+14. Spot-check 6P/6P-R visual polish changes if visual polish report exists.
 15. NEVER modify application code, production configuration, or database records during this stage (except test account creation/cleanup).

@@ -119,7 +119,7 @@ Spawn 3 teammates SEQUENTIALLY (spec -> code -> test/docs). Each teammate skips 
 
 **Teammate 2 -- "code-implementer"** (BLOCKED by Teammate 1): Implement code changes against updated specs. Fix bugs to match spec. Modify UI/backend for UX issues and enhancements. Implement missing features. Add traceability comments (`// FEEDBACK FIX: [feedback-id]`). The `FEEDBACK FIX` comment supplements (does not replace) the standard `@traces` header.
 
-**Teammate 3 -- "test-and-docs-updater"** (BLOCKED by Teammate 2): Update existing tests to match new specs. Add new tests for each new feature/behavior. Update developer docs (`./docs/`). Update user guide (`./user-guide/`) if it exists -- journey pages, FAQ, troubleshooting, changelog. Validate docs.json navigation. Run full verification suite: typecheck, lint, test, test:e2e, build.
+**Teammate 3 -- "test-and-docs-updater"** (BLOCKED by Teammate 2): Update existing tests to match new specs. Add new tests for each new feature/behavior. Update developer docs (`./docs/`). Update user guide only if `./user-guide/` directory exists -- journey pages, FAQ, troubleshooting, changelog, validate docs.json navigation. If no user guide exists, focus on `./docs/` and `./e2e/` instead. Run full verification suite: typecheck, lint, test, test:e2e, build.
 
 ### Phase 3: Coordination During Execution
 

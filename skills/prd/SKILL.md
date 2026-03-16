@@ -55,9 +55,9 @@ If BRD gaps are found during PRD generation, use this decision tree:
 Do NOT modify BRD files. Document issues in `./plancasting/prd/_brd-issues.md`. If no issues found, do NOT create this file.
 
 **BRD Issue Classification**:
-- BLOCKING: Empty/corrupted BRD files → STOP
-- CRITICAL-BUT-RECOVERABLE: BRD gap but can continue with best interpretation → Continue, document, flag
-- NON-BLOCKING: Incomplete but workable with assumptions → Continue
+- **BLOCKING**: Empty/corrupted BRD files → STOP
+- **CRITICAL-BUT-RECOVERABLE**: BRD gap but can continue with best interpretation → Continue, document, flag
+- **NON-BLOCKING**: Incomplete but workable with assumptions → Continue
 
 ### Step 3: Build Feature Decomposition Map
 

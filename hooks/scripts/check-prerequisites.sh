@@ -62,7 +62,7 @@ case "$SKILL_NAME" in
     fi
     # Check for credential placeholders
     if [[ -f ".env.local" ]]; then
-      if grep -qE 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|^[A-Z_]+=\s*$' .env.local 2>/dev/null; then
+      if grep -qE 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local 2>/dev/null; then
         echo "BLOCK: Stage 3 requires all credentials in .env.local to be real values. Fix placeholders first."
         exit 1
       fi
@@ -151,6 +151,14 @@ case "$SKILL_NAME" in
     # Stage 6P: Requires 6V report (6R may have been skipped)
     if [[ ! -f "./plancasting/_audits/visual-verification/report.md" ]]; then
       echo "BLOCK: Stage 6P (Visual Polish) requires visual verification report. Run '/transmute:cast verify' first."
+      exit 1
+    fi
+    ;;
+
+  redesign)
+    # Stage 6P-R: Same prerequisites as 6P — requires 6V report (6R may have been skipped)
+    if [[ ! -f "./plancasting/_audits/visual-verification/report.md" ]]; then
+      echo "BLOCK: Stage 6P-R (Frontend Design Elevation) requires visual verification report. Run '/transmute:cast verify' first."
       exit 1
     fi
     ;;

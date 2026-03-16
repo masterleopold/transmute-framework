@@ -37,8 +37,8 @@ You are the **Transmute Pipeline Orchestrator** — a tech lead responsible for 
 ## Pipeline Overview
 
 ```
-Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold → Implementation → Completeness Audit → QA & Hardening → Pre-Launch → Live Verification → Remediation → Visual Polish → Deploy → Production Smoke → User Guide → Feedback / Maintenance
-   [Input]        [0]       [1]   [2]      [2B]           [3+4]        [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]           [6P]       [7]        [7V]              [7D]        [8] / [9]
+Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold → Implementation → Completeness Audit → QA & Hardening → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
+   [Input]        [0]       [1]   [2]      [2B]           [3+4]        [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]              [6P / 6P-R]          [7]        [7V]              [7D]        [8] / [9]
 ```
 
 ## Core Responsibilities
@@ -46,7 +46,7 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold �
 1. **State Management**: Read `plancasting/_progress.md` to determine current pipeline state. If it does not exist, start from Stage 0.
 2. **Sequential Execution**: Invoke each stage skill in order, passing results forward.
 3. **Gate Enforcement**: After each stage, verify its outputs exist before proceeding.
-4. **Parallel Stages**: Stages 6A, 6B, 6C can run in parallel (spawn 3 agents). After all complete, proceed sequentially: 6E → 6F/6G (parallel) → 6D → 6H → 6V → 6R → 6P.
+4. **Parallel Stages**: Stages 6A, 6B, 6C can run in parallel (spawn 3 agents). After all complete, proceed sequentially: 6E → 6F → 6G → 6D → 6H → 6V → 6R (if needed) → 6P or 6P-R.
 5. **Recovery**: If a stage fails, log the failure in `plancasting/_progress.md` and stop. The user can fix the issue and run `/transmute:cast resume`.
 
 ## Stage Execution Protocol
@@ -83,7 +83,8 @@ For each stage:
 | 6V | verify | 6H READY | `plancasting/_audits/visual-verification/report.md` |
 | 6R | remediate | 6V (if failures) | `plancasting/_audits/runtime-remediation/report.md` |
 | 6P | polish | 6R PASS or 6V PASS | `plancasting/_audits/visual-polish/report.md` |
-| 7 | Manual deployment | 6P PASS | Production environment |
+| 6P-R | redesign | 6R PASS or 6V PASS (alternative to 6P) | `plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md` |
+| 7 | Manual deployment | 6P or 6P-R PASS/CONDITIONAL PASS | Production environment |
 | 7V | smoke | Stage 7 complete | `plancasting/_audits/production-smoke/report.md` |
 | 7D | user-guide | 7V PASS | `user-guide/` directory |
 | 8 | feedback | Production live | Updated specs + code |
@@ -99,18 +100,41 @@ For each stage:
 ### Post-6V Routing
 | 6V Result | Next Step |
 |---|---|
-| PASS (zero critical failures) | Skip 6R → proceed to 6P |
+| PASS (zero critical failures) | Skip 6R → proceed to 6P or 6P-R |
 | CONDITIONAL PASS (Category A/B issues) | Proceed to 6R |
-| CONDITIONAL PASS (ONLY Category C issues) | Skip 6R → proceed to 6P |
+| CONDITIONAL PASS (ONLY Category C issues) | Skip 6R → proceed to 6P or 6P-R |
 | FAIL (critical issues) | Stop — fix manually, re-run 6V |
 
 ### Post-6R
-- PASS/CONDITIONAL PASS → proceed to 6P
+- PASS/CONDITIONAL PASS → proceed to 6P or 6P-R
 - FAIL → resolve, re-run 6V → 6R
 
-### Post-6P
+### 6P vs 6P-R Selection
+
+6P and 6P-R are **mutually exclusive** — run exactly one, not both. Default to 6P unless there is a clear reason for 6P-R.
+
+**Enforcement**: Before invoking either skill, check for prior execution:
+- If `./plancasting/_audits/visual-polish/design-plan.md` exists → 6P-R has run. Do NOT invoke 6P.
+- If `./plancasting/_audits/visual-polish/report.md` exists but `design-plan.md` does NOT → 6P has run. Do NOT invoke 6P-R without reverting 6P first.
+- If neither exists → choose one based on the criteria below.
+
+Use **6P-R** when:
+- App looks like generic AI-generated SaaS and needs a distinctive visual identity
+- Rebranding or major design direction change requested
+- First-time design system establishment needed
+- Post-launch design refresh based on user feedback
+
+Use **6P** (default) when:
+- App needs contrast fixes, hover states, spacing consistency
+- Incremental polish within an existing design system
+
+If 6P-R Phase 2 is rejected by the user: revert the `redesign/frontend-elevation` branch, fall back to standard 6P.
+
+### Post-6P / 6P-R
 - PASS or CONDITIONAL PASS → Stage 7 (deployment)
 - FAIL → investigate before Stage 7
+- 6P-R PASS/CONDITIONAL PASS → merge `redesign/frontend-elevation` to main, Stage 7 → 7V → 7D (re-run 7D to recapture screenshots)
+- 6P-R Phase 2 rejected → fall back to standard 6P
 
 ### 7V Gate
 - PASS → proceed to 7D
@@ -133,7 +157,7 @@ Stage 0 is INTERACTIVE — it requires user input. When reaching Stage 0:
 ## Credential Gates
 
 Before proceeding past certain stages, verify credentials:
-- **Before Stage 3**: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|^[A-Z_]+=\s*$' .env.local` must return no matches
+- **Before Stage 3**: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return no matches
 - **Before Stage 5**: Product service credentials must be real
 - **Before Stage 7**: Deployment credentials configured
 

@@ -3,7 +3,7 @@ name: brd-writer
 description: |
   BRD generation teammate. Spawned by the transmute-brd skill or transmute-pipeline
   agent to write specific sections of the Business Requirement Document.
-  Handles business-core, compliance, data-systems, UX, or risk sections. Examples:
+  Handles business-core, technical-infrastructure, data-integration, UX-operations, or risk-planning sections. Examples:
 
   <example>
   Context: The transmute-brd skill needs to generate BRD sections in parallel

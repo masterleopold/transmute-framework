@@ -10,7 +10,7 @@ All prior stages (5B, 6A-6H) are static code analysis -- they read source files 
 
 Production-specific deployment issues (env vars, CDN, CSP) are covered separately in Stage 7V (Production Smoke Verification). After deploying to production, ALWAYS run Stage 7V to catch environment-specific failures that don't exist in dev.
 
-**Stage Sequence**: Stage 5B -> 6A (Security) -> 6B (Accessibility) -> 6C (Performance) -> 6E (Refactor) -> 6F (Seed Data) -> 6G (Resilience) -> 6D (Documentation) -> 6H (Pre-Launch) -> **6V (this stage)** -> 6R (Runtime Remediation, only if 6V finds failures) -> 6P (Visual Polish) -> Deploy -> 7V (Production Smoke) -> 7D (User Guide)
+**Stage Sequence**: Stage 5B -> 6A (Security) -> 6B (Accessibility) -> 6C (Performance) -> 6E (Refactor) -> 6F (Seed Data) -> 6G (Resilience) -> 6D (Documentation) -> 6H (Pre-Launch) -> **6V (this stage)** -> 6R (Runtime Remediation, only if 6V finds failures) -> 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V (Production Smoke) -> 7D (User Guide)
 
 ## Known Failure Patterns
 
@@ -268,9 +268,9 @@ d. Compile Navigation Checklist with every unique href/route
 - Category C (human judgment): [n]
 
 ## Next Steps
-- If PASS: skip 6R -> proceed to Stage 6P (Visual Polish)
+- If PASS: skip 6R -> proceed to Stage 6P or 6P-R (Visual Polish or Redesign)
 - If CONDITIONAL PASS with Category A/B issues: proceed to Stage 6R
-- If CONDITIONAL PASS with ONLY Category C issues: skip 6R -> proceed to Stage 6P
+- If CONDITIONAL PASS with ONLY Category C issues: skip 6R -> proceed to Stage 6P or 6P-R
 - If FAIL: fix critical issues manually, then re-run Stage 6V
 
 ## Recommendations

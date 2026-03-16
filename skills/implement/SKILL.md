@@ -30,7 +30,7 @@ Before proceeding, verify ALL of these conditions:
 3. Verify `./plancasting/tech-stack.md` exists. If missing: STOP — "Stage 5 requires plancasting/tech-stack.md."
 4. Verify `./CLAUDE.md` exists and Part 2 is populated (no `[PLACEHOLDER]` markers). If not: STOP — "Stage 5 requires Stage 4 CLAUDE.md setup."
 5. Verify `./plancasting/_scaffold-manifest.md` exists. If missing: WARN — "Scaffold manifest not found. Proceed with manual directory scanning."
-6. Verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|^[A-Z_]+=\s*$' .env.local` must return no matches.
+6. Verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return no matches.
 7. Stop any running dev server before starting.
 
 ## Stack Adaptation
@@ -42,9 +42,9 @@ Replace all `npm run` commands with your project's package manager from `CLAUDE.
 1. Read `./CLAUDE.md` — internalize all conventions.
 2. Read `./plancasting/tech-stack.md` — understand the stack. Check `Session Language` for output language.
 3. Read `./plancasting/prd/02-feature-map-and-prioritization.md` — build the feature queue.
-4. Read `./plancasting/_progress.md` — check for resumed sessions.
+4. Read `./plancasting/_progress.md` — check for resumed sessions. If features have `🔄` status, this is a 5B re-run — filter queue to only those features and read the audit report for specific gaps.
 5. Read `./plancasting/_scaffold-manifest.md` — understand the scaffold structure.
-6. Read `./plancasting/_codegen-context.md` — understand naming conventions and patterns.
+6. Read `./plancasting/_codegen-context.md` — understand naming conventions and patterns. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
 
 ## Feature Queue Construction
 
@@ -67,7 +67,10 @@ Generate a Feature Implementation Brief at `./plancasting/_briefs/<feature-id>.m
 - Related BRD sections (business rules, security requirements)
 - Backend scope: functions to create/modify, schema changes, external API integrations
 - Frontend scope: components to create/modify, hooks needed, pages to update
-- Cross-feature integration points
+- Cross-feature integration points and integration level:
+  - **Data-only**: Feature reads/writes shared data (e.g., dashboard reads task counts)
+  - **UI reference**: Feature links to or displays summaries from another feature
+  - **Workflow**: Features form a connected multi-step user flow
 - Acceptance criteria extracted from user stories
 - Testing requirements
 
