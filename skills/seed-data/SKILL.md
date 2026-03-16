@@ -11,6 +11,8 @@ version: 1.0.0
 
 # Stage 6F: Realistic Test Data for All Environments
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/seed-data-detailed-guide.md` for the complete generation procedures, teammate spawn prompts, data profile patterns, and report templates.
+
 Lead a multi-agent seed data generation project. Generate comprehensive, realistic seed data covering all entities in the data model, supporting all user flows, and enabling meaningful testing and demonstrations of the COMPLETE product.
 
 **Stage Sequence** (recommended ordering): Stage 5B → 6A/6B/6C (parallel) → 6E (Code Refactoring) → **6F (this stage)** → 6G (Resilience Hardening) → 6D (Documentation) → 6H (Pre-Launch) → 6V → 6R → 6P/6P-R → 7 (Deploy)

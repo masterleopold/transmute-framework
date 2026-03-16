@@ -14,25 +14,25 @@
 ### Pipeline Overview
 
 ```
-Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold → Implementation → Completeness Audit → QA & Hardening → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
-   [Input]        [0]       [1]   [2]      [2B]           [3+4]        [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]              [6P / 6P-R]          [7]        [7V]              [7D]        [8] / [9]
+Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold + Verify → Implementation → Completeness Audit → Quality Assurance → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
+   [Input]        [0]       [1]   [2]      [2B]              [3+4]             [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]              [6P / 6P-R]          [7]        [7V]              [7D]        [8] / [9]
 ```
 
-> **Notation**: `+` = sequential in one session; `/` = sequential, never simultaneous (alternatives: run exactly one; sequential: run both, one at a time). `[6A–6G]` is simplified — see Stage 6 ordering below.
+> **Notation**: `+` = sequential in one session. `/` between alternatives (6P / 6P-R) = run exactly one, never both. `/` between sequential stages (8 / 9) = run both, but one at a time, never concurrently. `[6A–6G]` is simplified (includes security, accessibility, performance, refactoring, seed data, resilience, and documentation sub-stages) — see Stage 6 ordering below for the mandatory execution order.
 
 All stages follow the **Transmute Full-Build Approach**: every feature in the Business Plan is built (P0 → P3 priority order). No MVP, no phased delivery. Priority levels defined in `plancasting/prd/02-feature-map-and-prioritization.md`.
 
-**Stage 6 ordering**: Parallel: 6A + 6B + 6C (commit each before proceeding). Sequential: 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P or 6P-R → 7 → 7V → 7D. **Parallel safety**: When running 6A+6B+6C in parallel, shared config files can be overwritten silently — commit each stage's changes immediately, or run 6A first (most config changes), commit, then 6B+6C in parallel.
+**Stage 6 ordering** (mandatory — not merely recommended): First, parallel: 6A + 6B + 6C (commit each before proceeding). Then sequential: 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P or 6P-R. Then proceed to Stage 7 → 7V → 7D (see execution-guide.md). Note: 6D (Documentation) runs AFTER 6G (Resilience) despite its lower letter — all code-modifying stages must complete before documentation. 6H is a static pre-deployment gate that runs BEFORE 6V (live verification). **Parallel safety**: When running 6A+6B+6C in parallel, shared config files can be overwritten silently — commit each stage's changes immediately, or run 6A first (most config changes), commit, then 6B+6C in parallel.
 
 ### Safety-Critical Rules
 
-- **Never skip** 6V, 6P/6P-R, or 7V.
+- **Never skip** 5B, 6V, 6P or 6P-R (one must always run), or 7V. (5B catches the #1 cause of Stage 6 failures — frontend stubs and duplication that slip through fatigued quality gates.)
 - **6P / 6P-R mutual exclusivity**: Run exactly one, never both. To switch: commit 6P work, `git revert` the 6P commit, then run 6P-R in a new session.
 - **6R skip conditions**: Skip 6R only if 6V returns PASS (zero issues) or CONDITIONAL PASS with only 6V-C issues. If skipped, 6P/6P-R uses the 6V report as input.
-- **Stage 7 prerequisites**: 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (recommended).
-- **Always run 5B after Stage 5** — never skip. Catches frontend stubs and duplication that slip through fatigued quality gates. Prevents the #1 cause of Stage 6 failures.
+- **Stage 7 prerequisites**: 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (strongly recommended — without it, Stage 7 has no deployment documentation to reference).
 - **Stage 8 prerequisite**: Stage 7V must PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN.
-- **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json` and lock files. Run one, commit, then the other.
+- **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json`, lock files, and source code. Run one, commit, then the other.
+- **Stage 9 prerequisite**: Stage 9 does not formally require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies.
 
 ### Cross-References
 
@@ -43,7 +43,7 @@ All stages follow the **Transmute Full-Build Approach**: every feature in the Bu
 | CLI workflow, per-stage setup | execution-guide.md § per-stage sections |
 | Per-stage warnings (0–9) | execution-guide.md § per-stage sections |
 | Gate definitions, thresholds, routing | execution-guide.md § "Gate Decision Outcomes (Universal)" |
-| Recovery procedures | execution-guide.md § per-stage sections (e.g., "5B.5 If FAIL", "7.1.2 Deployment Failure Recovery") and § "Troubleshooting" |
+| Recovery procedures | execution-guide.md § per-stage sections (e.g., "5B.5 If FAIL: Recovery Actions", "7.1.2 Deployment Failure Recovery") and § "Troubleshooting" |
 | Stage skip conditions | execution-guide.md § "Stage Skip Logic" |
 | Tips, troubleshooting, project structure | execution-guide.md § "Tips for Successful Plan Casting", "Safety Rules", "Troubleshooting" |
 
@@ -235,7 +235,7 @@ Claude Code natively reads `.claude/rules/` files and applies matching rules bas
 - **Confidence**: HIGH (auto-promoted to `.claude/rules/`), MEDIUM/LOW (staged to `plancasting/_rules-candidates.md` for operator review)
 - HIGH confidence threshold: 2+ distinct features (separate FEAT-IDs from `plancasting/prd/02-feature-map-and-prioritization.md`) affected with a clear, repeatable pattern. Two occurrences within the same feature count as 1 feature.
 
-**Candidate staging**: Rules that don't meet the HIGH confidence threshold are staged in `plancasting/_rules-candidates.md` for operator review. Operator can promote (move to `.claude/rules/`), edit, or discard candidates.
+**Candidate staging**: Rules that don't meet the HIGH confidence threshold are staged in `plancasting/_rules-candidates.md` for operator review. Operator can promote (move to `.claude/rules/`), edit, or discard candidates. Maximum 30 candidates at any time — if exceeded, discard the oldest LOW-confidence candidates first.
 
 **Limits**:
 - Maximum **15 rules per file** — split into a new file if exceeded
@@ -304,7 +304,6 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `style`
 
 ## Part 2: Project-Specific Configuration
 
-<!-- Stage 3 fills [PLACEHOLDER]s with actual values. Stage 4 verifies. Extend only, do not delete. -->
 <!-- ⚠️ TEMPLATE: Bracketed values below ([PROJECT_NAME], [N], [e.g., ...]) are placeholders.
      Stage 3 populates them with actual project values. Stage 4 verifies no placeholders remain.
      If reading this in a project and placeholders are still present, run Stage 4 verification. -->
@@ -336,6 +335,8 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `style`
 | Payments | [e.g., Stripe] | Billing |
 | E2E Testing | [e.g., Playwright] | End-to-end testing |
 | Hosting | [e.g., Vercel / Cloudflare] | Deployment |
+
+Rows for AI, Payments, and other integrations are optional — include only categories relevant to your product.
 
 ### Architecture
 
@@ -371,7 +372,7 @@ bun run typecheck        # TypeScript type checking
 bun run build            # Production build
 bun run deploy           # Full deployment
 
-# Seed Data (after Stage 6F)
+# Seed Data (after Stage 6F — omit if 6F was not run)
 bun run seed:dev         # Minimal data for development
 bun run seed:test        # Moderate data for testing
 bun run seed:demo        # Curated data for demonstrations

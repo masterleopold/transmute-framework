@@ -11,6 +11,8 @@ version: 1.0.0
 
 # Documentation Generation — Stage 6D
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/docs-detailed-guide.md` for the complete documentation procedures, teammate spawn prompts, writing style guidelines, and report templates.
+
 Lead a multi-agent documentation generation project. Generate comprehensive documentation for the complete product: user-facing help docs, API/backend reference, and a developer onboarding guide, all derived from the codebase, PRD, and BRD.
 
 **Stage Sequence** (recommended ordering): Stage 5B → 6A/6B/6C (parallel) → 6E (Code Refactoring) → 6F (Seed Data) → 6G (Resilience Hardening) → **6D (this stage)** → 6H (Pre-Launch) → 6V → 6R → 6P/6P-R → 7 (Deploy)

@@ -12,6 +12,8 @@ version: 1.0.0
 
 # Stage 6H: Final Check Before Production Deployment
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/prelaunch-detailed-guide.md` for the complete verification procedures, checklist templates, and report format.
+
 Lead a multi-agent pre-launch verification project. Perform a comprehensive final check of the COMPLETE product before it goes live. This is the last gate between development and real users.
 
 **Stage Sequence** (recommended ordering): Stage 5B → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D (Documentation) → **6H (this stage)** → 6V (Verification) → [6R] → 6P or 6P-R → 7 (Deploy) → 7V → 7D

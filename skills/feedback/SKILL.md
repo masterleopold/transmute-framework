@@ -12,6 +12,8 @@ version: 1.1.0
 
 # User Feedback Loop — Stage 8
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/feedback-detailed-guide.md` for the complete feedback processing procedures, teammate spawn prompts, triage patterns, and report templates.
+
 ## Critical Concept: Living Documents
 
 The BRD and PRD are NOT frozen artifacts. They are living documents that evolve with the product. This skill maintains the chain: Feedback -> Spec Update -> Code Change -> Test Update -> Doc Update, ensuring every layer stays consistent.

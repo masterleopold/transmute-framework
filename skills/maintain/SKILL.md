@@ -12,6 +12,8 @@ version: 1.1.0
 
 # Dependency Maintenance — Stage 9
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/maintain-detailed-guide.md` for the complete maintenance procedures, teammate spawn prompts, update strategies, and report templates.
+
 ## Context
 
 Designed to be run on a regular cadence (monthly or quarterly) to keep the codebase healthy. Outdated dependencies accumulate security vulnerabilities, miss performance improvements, and eventually create painful migration cliffs.

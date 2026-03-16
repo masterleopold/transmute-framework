@@ -12,6 +12,8 @@ version: 1.0.0
 
 # Accessibility Audit — Stage 6B
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/a11y-detailed-guide.md` for the complete audit procedures, teammate spawn prompts, WCAG checklist patterns, and report templates.
+
 Lead a multi-agent accessibility audit of the complete frontend codebase against BRD/PRD WCAG requirements. Identify violations and fix them.
 
 **Stage Sequence** (recommended ordering): Stage 5B → (6A ‖ **6B (this stage)** ‖ 6C) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy). Note: 6A, 6B, and 6C run **in parallel** (each in a separate session). If running in parallel, commit 6A changes as soon as 6A completes to avoid config file conflicts — see CLAUDE.md § "Stage 6 ordering".

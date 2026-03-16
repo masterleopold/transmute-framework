@@ -11,6 +11,8 @@ version: 1.0.0
 
 # Transmute — Specification Validation (Stage 2B)
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/validate-specs-detailed-guide.md` for the complete validation procedures, teammate spawn prompts, and report templates.
+
 ## Prerequisites
 
 Before starting, verify:

@@ -5,7 +5,7 @@ globs: ["[BACKEND_DIR]/**"]
 
 # Backend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/backend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[ERROR_TYPE]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/backend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/backend.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/backend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[ERROR_TYPE]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Glob note: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/backend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/backend.md` instead.
 
 ## Validation
 
@@ -66,5 +66,5 @@ globs: ["[BACKEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual env var access pattern. Source: tech-stack.md | Confidence: HIGH -->
 
-- Reference env var names exactly as defined in `.env.local.example` — never invent alternative names (see Stage 3 Known Failure Pattern #9).
+- Reference env var names exactly as defined in `.env.local.example` — never invent alternative names (e.g., using `DATABASE_URL` when `.env.local.example` defines `CONVEX_URL` causes silent empty-string reads at runtime).
 - Never log, return, or expose env var values in API responses or error messages — use non-revealing checks (e.g., `!!process.env.KEY`) for validation.

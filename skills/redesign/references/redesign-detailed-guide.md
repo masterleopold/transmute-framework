@@ -1,18 +1,31 @@
+# Frontend Design Elevation (Interactive Redesign) -- Detailed Guide
+
+## Role
+
+Stage 6P-R performs a FULL design elevation: collecting project context interactively, studying reference products, extracting Figma design tokens, making deliberate design decisions with the user, and implementing a cohesive visual overhaul. It is the comprehensive alternative to standard Stage 6P (visual polish).
+
+## Stage 6P-R: Comprehensive Frontend Redesign with Interactive Design Discovery
+
 You are a senior frontend designer and engineer leading an interactive frontend redesign. Unlike the standard Stage 6P (visual polish — which fixes defects within an existing design system), this stage performs a FULL design elevation: collecting project context interactively, studying reference products, extracting Figma design tokens, making deliberate design decisions with the user, and implementing a cohesive visual overhaul.
 
 ## When to Use This vs. Standard 6P
 
 | Scenario | Use |
 |---|---|
-| App looks functional but needs contrast fixes, hover states, spacing consistency | Standard 6P (polish skill) |
-| App looks like generic AI-generated SaaS and needs a distinctive visual identity | **This skill** (redesign) |
-| Rebranding or major design direction change | **This skill** |
-| First-time design system establishment | **This skill** |
-| Post-launch design refresh based on user feedback | **This skill** |
+| App looks functional but needs contrast fixes, hover states, spacing consistency | Standard 6P (the `polish` skill) |
+| App looks like generic AI-generated SaaS and needs a distinctive visual identity | **This guide** (the `redesign` skill) |
+| Rebranding or major design direction change | **This guide** |
+| First-time design system establishment | **This guide** |
+| Post-launch design refresh based on user feedback | **This guide** |
 
 ## Pipeline Position
 
-**Stage 6P-R** occupies the same pipeline slot as 6P (after all Stage 6 quality passes, before Stage 7 deployment). It is an ALTERNATIVE to standard 6P, not an addition. Run one or the other, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first (`git revert` the 6P commit). See CLAUDE.md § 'Key rules' for details.
+**Stage 6P-R** occupies the same pipeline slot as 6P (after all Stage 6 quality passes, before Stage 7 deployment). It is an ALTERNATIVE to standard 6P, not an addition. Run one or the other, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first (`git revert` the 6P commit). See execution-guide.md § "6P vs 6P-R" for details.
+
+**Switching from 6P**: If 6P was previously run, it must be reverted before starting 6P-R:
+1. Verify 6P changes were committed: `git log --oneline -3`
+2. Revert the 6P commit: `git revert <6P-commit-hash>` (NOT `git reset --hard`)
+3. Start a new session and run 6P-R
 
 **Stage Sequence**: ... → 6V (Verification) → [6R (Runtime Remediation) — only if 6V found 6V-A/B issues] → **6P-R (this stage)** → 7 (Deploy) → 7V (Production Smoke) → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
 
@@ -78,7 +91,9 @@ This stage is idempotent — re-running detects existing work (via `progress.md`
    - If only `./plancasting/_audits/visual-verification/report.md` exists: must show PASS or CONDITIONAL PASS with only 6V-C issues (6R correctly skipped — 6R cannot fix human-judgment issues). If 6V shows CONDITIONAL PASS with 6V-A/6V-B issues, STOP — run 6R first.
    - If neither exists: verify with operator that prior stages were intentionally skipped
 
-3. **Browser automation tools available**: This stage requires Playwright MCP tools. Adapt tool names if using a different browser automation solution.
+3. **Dev server port available**: Before running this stage, verify the dev server port is available (`lsof -i :3000` — if busy, `kill -9 <PID>`). This prompt starts the dev server internally.
+
+4. **Browser automation tools available**: This stage requires Playwright MCP tools. Adapt tool names if using a different browser automation solution.
    - **Navigation**: `browser_navigate` — visit URLs
    - **Viewport**: `browser_resize` — set breakpoint widths (1440, 768, 375)
    - **Capture**: `browser_take_screenshot` — visual verification
@@ -87,9 +102,9 @@ This stage is idempotent — re-running detects existing work (via `progress.md`
    - **DOM inspection**: `browser_snapshot` — inspect accessibility tree and verify CSS classes applied correctly (use when a visual issue needs DOM-level verification, e.g., confirming a dark mode class is present)
    - **JS execution**: `browser_evaluate` — toggle dark mode, check computed styles, measure contrast ratios
 
-4. **`frontend-design` skill recommended**: Check if the skill file exists at `/mnt/skills/public/frontend-design/SKILL.md`. If available, use it for all design decisions. If not available (e.g., local CLI environment), use the anti-AI-slop patterns in this guide as the design authority.
+5. **`frontend-design` skill recommended**: Check if the skill file exists at `/mnt/skills/public/frontend-design/SKILL.md`. If available, use it for all design decisions. If not available (e.g., local CLI environment), use the anti-AI-slop patterns in this guide as the design authority.
 
-5. **Output directories**:
+6. **Output directories**:
    ```bash
    mkdir -p ./plancasting/_audits/visual-polish
    mkdir -p ./screenshots/visual-polish/before
@@ -151,7 +166,7 @@ Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actua
 # Check if branch exists from a previous failed 6P-R run
 if git branch --list redesign/frontend-elevation | grep -q .; then
   echo "Branch 'redesign/frontend-elevation' already exists from a previous run."
-  echo "Options: (a) delete it: git branch -D redesign/frontend-elevation"
+  echo "Options: (a) delete it: git branch -d redesign/frontend-elevation  # use -D only if -d refuses (unmerged)"
   echo "         (b) resume on it: git checkout redesign/frontend-elevation"
   # Ask the operator which option to take before proceeding — do NOT proceed until they choose
   exit 1
@@ -671,7 +686,7 @@ Re-save the updated plan to `design-plan.md` and re-present for approval. Repeat
 
 **Phase 2 Outcomes**: (a) APPROVED — proceed to Phase 3. (b) REVISE — make specific changes to `design-plan.md` and request re-review (max 2 revision rounds; after 2 revisions, inform the user: "Design plan has been revised twice. To make further changes, save the current plan and start a new 6P-R session." Proceed only with APPROVED or REJECT). (c) REJECT — abandon this 6P-R session: `git checkout main`, and either retry 6P-R with different direction or switch to standard 6P.
 
-**If the user rejects the design plan**: (1) Save rejected plan as `design-plan-rejected.md` for reference. (2) Abandon the feature branch (`git checkout main`). (3) Either retry 6P-R in a new session with different design decisions, or switch to standard Stage 6P for incremental polish.
+**If the user rejects the design plan**: (1) Rename (not copy) `design-plan.md` to `design-plan-rejected.md` so that Stage 6P's detection check does not trigger a false positive: `mv ./plancasting/_audits/visual-polish/design-plan.md ./plancasting/_audits/visual-polish/design-plan-rejected.md` (2) Abandon the feature branch (`git checkout main`). (3) Clean up the abandoned branch: `git branch -d redesign/frontend-elevation` (use `-D` only if `-d` refuses due to unmerged commits — safe in this case because no work has been merged to main). (4) Either retry 6P-R in a new session with different design decisions, or switch to standard Stage 6P for incremental polish.
 
 **DO NOT proceed to Phase 3 until the user explicitly approves.**
 
@@ -1136,6 +1151,7 @@ Run full validation suite:
 bun run typecheck    # Must pass
 bun run lint         # Must pass
 bun run test         # Must pass (or match pre-redesign baseline)
+bun run test:e2e     # Must pass — visual changes can break E2E test selectors
 ```
 
 If any validation fails:
@@ -1184,7 +1200,7 @@ If the project has a documentation site (Mintlify, Docusaurus, etc.):
 
 ## Phase 8: Final Report
 
-Generate `./plancasting/_audits/visual-polish/report.md`:
+Generate `./plancasting/_audits/visual-polish/redesign-report.md` (note: uses `redesign-report.md`, NOT `report.md`, to preserve any prior 6P report for audit trail):
 
 ```markdown
 # Stage 6P-R Frontend Redesign Report
@@ -1299,7 +1315,7 @@ Note: Screenshot directories (`./screenshots/`) are for local reference. Add to 
    ```
    For Transmute Framework projects:
    ```bash
-   git add src/ plancasting/_audits/visual-polish/ plancasting/tech-stack.md && git commit -m "style(design): Stage 6P-R frontend redesign — [design style] with [font pair]"
+   git add src/ plancasting/_audits/visual-polish/redesign-report.md plancasting/_audits/visual-polish/redesign-*.md plancasting/tech-stack.md && git commit -m "style(design): Stage 6P-R frontend redesign — [design style] with [font pair]"
    ```
 
 2. **Save the redesign commit hash**:
@@ -1341,7 +1357,7 @@ If this stage is interrupted mid-execution:
 
 3. **ALWAYS get explicit user approval on the design plan** (Phase 2) before implementing anything. The user's design preferences override any default recommendations.
 
-4. **ALWAYS use the `frontend-design` skill** (if available) for aesthetic decisions. It prevents generic AI-generated aesthetics.
+4. **ALWAYS use the `frontend-design` skill** (if available) for aesthetic decisions. It prevents generic AI-generated aesthetics. **The lead invokes the skill ONCE** (in Phase 5 (Anti-AI-Slop Refinement) or equivalent) and shares the output. Teammates read the shared output — they do NOT invoke the skill themselves. This ensures design consistency across all phases.
 
 5. **ALWAYS take before/after screenshots.** Every change must be visually documented and verified.
 

@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.5.0** — 7th-pass audit sync: gate edge cases, parallel safety, B-category fixability, agent hardening
+> **v2.6.0** — 10th-pass audit sync: full reference parity, safety rule consolidation, terminology alignment
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -48,11 +48,11 @@ claude --plugin-dir /path/to/transmute-framework
 ## Pipeline
 
 ```
-Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold
-   [Input]        [0]       [1]   [2]      [2B]           [3+4]
+Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold + Verify
+   [Input]        [0]       [1]   [2]      [2B]              [3+4]
 
-→ Implementation → Completeness Audit → QA & Hardening → Pre-Launch
-       [5]                [5B]              [6A-6G]         [6H]
+→ Implementation → Completeness Audit → Quality Assurance → Pre-Launch
+       [5]                [5B]              [6A–6G]         [6H]
 
 → Live Verification → Remediation → Visual Polish or Redesign → Deploy
         [6V]              [6R]              [6P / 6P-R]          [7]
@@ -249,6 +249,29 @@ transmute-framework/
 - A business plan (markdown or PDF files)
 
 ## Changelog
+
+### v2.6.0
+
+**10th-Pass Audit Sync: Full Reference Parity, Safety Rule Consolidation, Terminology Alignment**
+
+**Templates** (synced from canonical Transmute Framework Template — 8th through 10th pass audits)
+- **CLAUDE.md**: 5B restored to "Never skip" list (was split into standalone rule); Stage 6 ordering parenthetical restored as "(mandatory — not merely recommended)"; notation explanation expanded with detailed `/` symbol semantics; 6D prerequisite restored to "strongly recommended" with documentation reasoning; Stages 8+9 conflict list restored "and source code"; candidate staging 30-limit guidance restored
+- **execution-guide.md**: "Recommended Stage 6 ordering" → "Stage 6 ordering" (mandatory); restored 6D/6H inline ordering notes; restored 6H detailed goal (static vs runtime gate distinction); restored 6P-R max-cycle exhaustion exception; 5B restored to unskippable stages; restored "lock files" in 8+9 conflict list; Stage 7 6D prerequisite restored to "strongly recommended"
+- **rules-templates/_api-contracts-template.md**: Restored 4-step instruction with explicit HTML comment removal guidance
+- **rules-templates/_backend-template.md**: Restored concrete env var example (DATABASE_URL vs CONVEX_URL) replacing external reference
+- **rules-templates/_data-model-template.md**: Added conditional OMIT instruction for schemaless backends (Convex, Firebase)
+- **rules-templates/_frontend-template.md**: Restored "unavailable in any icon library" qualifier for inline SVG exception
+
+**Skills** (full reference parity — Option A sync)
+- **All 23 skills**: Reference files now contain complete template prompt content (full parity with canonical framework template)
+- **10 new reference files created**: validate-specs, audit-security, audit-a11y, optimize, seed-data, harden, docs, prelaunch, feedback, maintain — these skills previously had no detailed reference guides
+- **13 existing reference files expanded**: tech-stack (+780 lines), verify (+727 lines), implement (+468 lines), scaffold (+443 lines), user-guide (+424 lines), remediate (+415 lines), prd (+391 lines), polish (+341 lines), smoke (+247 lines), refactor (+205 lines), brd (+140 lines), audit-completeness (+136 lines), redesign (+14 lines) — all now include complete teammate spawn prompts, output templates, and gate logic
+
+**Agents**
+- **transmute-pipeline.md**: "QA & Hardening" → "Quality Assurance" (terminology alignment with template); restored "and source code" in Stages 8+9 concurrency warning
+
+**Terminology**
+- Stage 6A–6G label: "QA & Hardening" → "Quality Assurance" across pipeline agent, README, and all references
 
 ### v2.5.0
 

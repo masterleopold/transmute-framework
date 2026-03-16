@@ -11,6 +11,8 @@ version: 1.0.0
 
 # Stage 6G: Error Handling, Network Failures, and Edge Cases
 
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/harden-detailed-guide.md` for the complete hardening procedures, teammate spawn prompts, error pattern catalogs, and report templates.
+
 Lead a multi-agent error resilience hardening project. Systematically review the COMPLETE product for error handling gaps, network failure scenarios, race conditions, and edge cases that individual feature implementations may have missed.
 
 **Stage Sequence** (recommended ordering): Stage 5B → 6A/6B/6C (parallel) → 6E (Code Refactoring) → 6F (Seed Data) → **6G (this stage)** → 6D (Documentation) → 6H (Pre-Launch) → 6V → 6R → 6P/6P-R → 7 (Deploy)

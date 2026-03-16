@@ -7,7 +7,7 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 
 # Data Model Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: OMIT ... -->`, `<!-- Stage 3: Fill ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
 
 ## Indexes
 
@@ -36,6 +36,7 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 
 ## Schema Changes
 
+<!-- Stage 3: OMIT this entire section if the backend has no migration system (e.g., Convex, Firebase). Only include for migration-based backends (e.g., Prisma, Drizzle, Supabase). -->
 <!-- TODO: Stage 3 — replace with actual migration pattern. Source: tech-stack.md | Confidence: HIGH -->
 
 - Document all schema changes in `[MIGRATION_LOG_PATH]` or equivalent — never modify production schemas without a migration plan.

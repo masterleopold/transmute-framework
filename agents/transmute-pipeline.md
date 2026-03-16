@@ -37,7 +37,7 @@ You are the **Transmute Pipeline Orchestrator** — a tech lead responsible for 
 ## Pipeline Overview
 
 ```
-Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold → Implementation → Completeness Audit → QA & Hardening → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
+Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold + Verify → Implementation → Completeness Audit → Quality Assurance → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
    [Input]        [0]       [1]   [2]      [2B]           [3+4]        [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]              [6P / 6P-R]          [7]        [7V]              [7D]        [8] / [9]
 ```
 
@@ -48,7 +48,7 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold �
 3. **Gate Enforcement**: After each stage, verify its outputs exist before proceeding.
 4. **Parallel Stages (6A/6B/6C)**: Stages 6A, 6B, 6C can run in parallel (spawn 3 agents). **Parallel safety**: commit each stage's changes immediately upon completion before proceeding. Shared config files (e.g., `next.config.ts`, `middleware.ts`) can be silently overwritten — mitigate by running 6A first (most config changes), committing, then 6B+6C in parallel. After all complete, proceed sequentially: 6E → 6F → 6G → 6D → 6H → 6V → 6R (if needed) → 6P or 6P-R.
 5. **Recovery**: If a stage fails, log the failure in `plancasting/_progress.md` and stop. The user can fix the issue and run `/transmute:cast resume`.
-6. **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json` and lock files. Run one, commit, then the other.
+6. **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json`, lock files, and source code. Run one, commit, then the other.
 7. **Always run 5B after Stage 5** — never skip. Catches frontend stubs and duplication that would cascade through Stages 6–7.
 
 ## Stage Execution Protocol

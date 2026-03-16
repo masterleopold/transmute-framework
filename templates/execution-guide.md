@@ -15,20 +15,20 @@ This guide covers the end-to-end Transmute pipeline, consisting of stages 0 thro
 > **Canonical source**: This section and the table below are the canonical stage reference. CLAUDE.md § "Pipeline Execution Guide" provides a compact summary; execution-guide.md is authoritative for definitions and recovery procedures.
 
 ~~~
-Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold → Implementation → Completeness Audit → QA & Hardening → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
+Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold → Implementation → Completeness Audit → Quality Assurance → Pre-Launch → Live Verification → Remediation → Visual Polish or Redesign → Deploy → Production Smoke → User Guide → Feedback / Maintenance
    [Input]        [0]       [1]   [2]      [2B]           [3+4]        [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]              [6P / 6P-R]          [7]        [7V]              [7D]        [8] / [9]
 ~~~
 
-> **Notation**: The `+` symbol means sequential stages sharing a single Claude Code session (3+4 = paste Stage 3 prompt, let it complete scaffold + populate CLAUDE.md Part 2, then verify Part 2 before exiting — all in one session). The `/` symbol means "never concurrent" — for alternatives (6P / 6P-R), run exactly one; for sequential stages (8 / 9), run both but one at a time.
+> **Notation**: The `+` symbol means sequential stages sharing a single Claude Code session (3+4 = paste Stage 3 prompt, let it complete scaffold + populate CLAUDE.md Part 2, then verify Part 2 before exiting — all in one session). `/` between alternatives (6P / 6P-R) = run exactly one, never both. `/` between sequential stages (8 / 9) = run both, but one at a time, never concurrently.
 
-> **Note**: The ASCII flow is simplified. Stage 3 (Scaffold Generation) and Stage 4 (CLAUDE.md Verification) run sequentially. Stage 6 includes sub-stages: 6A (Security), 6B (Accessibility), 6C (Performance), 6D (Documentation), 6E (Code Refactoring), 6F (Seed Data), 6G (Error Resilience Hardening), 6H (Pre-Launch), 6V (Verification), 6R (Remediation), 6P (Visual Polish) or 6P-R (Frontend Design Elevation — use instead of 6P when a full design overhaul is needed). See "Recommended Stage 6 ordering" below for the full sequence including 6H–6P. See table below for per-stage details.
+> **Note**: The ASCII flow is simplified. Stage 3 (Scaffold Generation) and Stage 4 (CLAUDE.md Verification) run sequentially. Stage 6 includes sub-stages listed here in **execution order** (not alphabetical): 6A (Security) + 6B (Accessibility) + 6C (Performance) run in parallel, then sequentially: 6E (Code Refactoring) → 6F (Seed Data) → 6G (Error Resilience Hardening) → 6D (Documentation) → 6H (Pre-Launch gate) → 6V (Live Verification) → 6R (Remediation) → 6P (Visual Polish) or 6P-R (Frontend Design Elevation — use instead of 6P when a full design overhaul is needed). Note: 6D runs after 6G despite its lower letter because all code-modifying stages must complete before documentation. See "Stage 6 ordering" below for detailed dependencies. See table below for per-stage details.
 
 | Stage | Input | Output | Prompt File | Estimated Duration |
 |---|---|---|---|---|
 | 0. Tech Stack Discovery | Business Plan + user input | `./plancasting/tech-stack.md`, `.env.local`, `.env.local.example`, initial project scaffold (optional) | `prompt_tech_stack_discovery.md` | 15–30 min (interactive) |
 | 1. BRD Generation | Business Plan + tech-stack.md | `./plancasting/brd/` | `prompt_generate_brd.md` | 30–60 min |
 | 2. PRD Generation | BRD + Business Plan + tech-stack.md | `./plancasting/prd/` | `prompt_generate_prd.md` | 45–90 min |
-| 2B. Spec Validation | BRD + PRD + Business Plan + tech-stack.md | `./plancasting/_audits/spec-validation/report.md` (primary), `traceability-by-coverage.md` (complete analysis from Teammate 1), `traceability-draft.md` (lead skeleton), `gaps-by-coverage.md`, `consistency-report.md`, `quality-report.md` | `prompt_validate_specs.md` | 30–60 min |
+| 2B. Spec Validation | BRD + PRD + Business Plan + tech-stack.md | `./plancasting/_audits/spec-validation/report.md` (primary), `traceability-by-coverage.md` (complete analysis from Teammate 1), `traceability-draft.md` (interim artifact — superseded by traceability-by-coverage.md), `gaps-by-coverage.md`, `consistency-report.md`, `quality-report.md` | `prompt_validate_specs.md` | 30–60 min |
 | 3. Scaffold Generation | PRD + BRD + tech-stack.md (Stage 2B must PASS or CONDITIONAL PASS) | Project code skeleton, `plancasting/_codegen-context.md`, `_scaffold-manifest.md`, `_progress.md`, `ARCHITECTURE.md` (derived from PRD system architecture), `.claude/rules/*.md` (starter rules), `plancasting/_rules-candidates.md` (empty) | `prompt_generate_scaffolding.md` | 60–120 min |
 | 4. CLAUDE.md Verification | — | `./CLAUDE.md` | N/A (verify Part 2 was populated by Stage 3; customize if needed) | 5 min |
 | 5. Feature Implementation | Scaffold + PRD + BRD | Complete working product, `plancasting/_briefs/`, `plancasting/_implementation-report.md` | `prompt_feature_orchestrator.md` | ~30–60 min per feature (e.g., 10 features ≈ 5–10 hrs; 35 features ≈ 2–4 days) |
@@ -45,7 +45,7 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold �
 | 6R. Runtime Remediation | 6V report + codebase | `./plancasting/_audits/runtime-remediation/report.md`, updated `.claude/rules/` (if fix patterns found) | `prompt_runtime_remediation.md` | 15–45 min |
 | 6P. Visual Polish & UI Refinement | Running app + 6R report (or 6V report if 6R was skipped) | `./plancasting/_audits/visual-polish/report.md` | `prompt_visual_polish.md` | 20–40 min |
 | 6P-R. Frontend Design Elevation *(alternative to 6P)* | Same as 6P (Stage 6V must have completed; if 6V found 6V-A/B issues, 6R must be PASS or CONDITIONAL PASS; if 6V found only 6V-C, 6R is skipped) | `./plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md`, `screenshots/visual-polish/` | `prompt_frontend_redesign.md` | 2–4 hrs (interactive) |
-| 7. Deployment | Verified codebase (6H READY + 6V complete + 6R PASS/CONDITIONAL PASS if run + 6P or 6P-R PASS or CONDITIONAL PASS + 6D complete recommended) | Production environment | (manual / CI/CD) | 15–30 min |
+| 7. Deployment | Verified codebase (6H READY + 6V complete + 6R PASS/CONDITIONAL PASS if run + 6P or 6P-R PASS or CONDITIONAL PASS + 6D complete strongly recommended) | Production environment | (manual / CI/CD) | 15–30 min |
 | 7V. Production Smoke Verification | Production URL | `./plancasting/_audits/production-smoke/report.md` | `prompt_production_smoke_verification.md` | 25–45 min |
 | 7D. User Guide Generation | PRD/BRD + production URL + 7V report | `./user-guide/`, `./plancasting/_audits/user-guide/report.md` | `prompt_generate_user_guide.md` | 30–60 min |
 | 8. Feedback Loop | User feedback | Updated specs + code | `prompt_feedback_loop.md` | Per batch |
@@ -69,7 +69,8 @@ Before starting, ensure the following are in place.
 
 **Business Plan**: Your Business Plan markdown files must be placed at `./plancasting/businessplan/`. This directory is read-only input for all stages. The Business Plan can be a single file or multiple files — the prompts will read all `.md` and `.pdf` files in the directory.
 
-<!-- Credential tier NAMES and TIMING (🔴🟡🟠🔵) are the canonical definitions in this file.
+<!-- Credential tier NAMES and TIMING (🔴🟡🟠🔵) are used by Stage 0 to categorize product-specific credentials in tech-stack.md.
+     Tier definitions: red = before Stage 3, yellow = before Stage 5, orange = before Stage 7, blue = optional.
      CLAUDE.md § "Pipeline Execution Guide" cross-references this section. -->
 
 **Pipeline Infrastructure Credentials**: These are required by the Transmute pipeline itself (not the product being built — E2B provides sandbox execution for autonomous code generation during Stage 5). Have these ready before starting:
@@ -385,13 +386,17 @@ Check:
 
 ### 2B.4 Human Review Checkpoint
 
-If the validation report shows remaining blockers, resolve them before proceeding to Stage 3: edit the BRD/PRD files directly, or start a Claude Code session and ask it to fix the specific issues cited in the report. If the issues are fundamental (wrong product understanding), re-run Stages 1 and 2. Non-critical issues can be addressed during development.
+If the validation report shows remaining blockers, resolve them before proceeding to Stage 3: edit the BRD/PRD files directly, or start a Claude Code session and ask it to fix the specific issues cited in the report. If the issues are fundamental (wrong product understanding), re-run Stages 1 and 2. Non-critical issues can be addressed during development. If 2B returned CONDITIONAL PASS due to assumption volume, verify you completed the assumption review described in Stage 1.5.
 
 ---
 
 ## Stage 3: Development Scaffold Generation
 
 **Goal**: Generate the complete project codebase skeleton — all schemas, all backend functions, all pages, all components, all hooks, all tests — for the entire product.
+
+### 3.0 Prerequisite Gate (MANDATORY)
+
+Verify Stage 2B has passed before generating scaffolding. Check `./plancasting/_audits/spec-validation/report.md` — its `## Gate Decision` must show PASS or CONDITIONAL PASS. If the file does not exist, STOP: "Stage 2B report not found — run Stage 2B before Stage 3." If the gate shows FAIL, STOP: "Stage 2B FAIL — resolve spec validation issues before scaffolding."
 
 ### 3.1 Credential Validation Gate (MANDATORY)
 
@@ -893,15 +898,15 @@ To re-run for specific features:
 
 **Escalation back to 5B**: If any Stage 6 audit discovers that a feature is fundamentally unimplemented (not a stage-specific issue but a missing implementation that 5B should have caught), escalate to a Stage 5B re-run before continuing Stage 6. Set the affected feature to `🔄 Needs Re-implementation` in `_progress.md`, re-run Stage 5 for that feature, then re-run 5B.
 
-**Stage 6 sub-stages**: 6A (Security Audit), 6B (Accessibility Audit), 6C (Performance Optimization), 6D (Documentation Generation), 6E (Code Refactoring), 6F (Seed Data Generation), 6G (Error Resilience Hardening), 6H (Pre-Launch Verification), 6V (Visual & Functional Verification), 6R (Runtime Remediation), 6P (Visual Polish), 6P-R (Frontend Design Elevation — alternative to 6P).
+**Stage 6 sub-stages** (listed in execution order, not alphabetical): 6A (Security Audit) + 6B (Accessibility Audit) + 6C (Performance Optimization) [parallel], then 6E (Code Refactoring) → 6F (Seed Data Generation) → 6G (Error Resilience Hardening) → 6D (Documentation Generation) → 6H (Pre-Launch Verification) → 6V (Visual & Functional Verification) → 6R (Runtime Remediation) → 6P (Visual Polish) or 6P-R (Frontend Design Elevation — alternative to 6P).
 
-After the Implementation Completeness Audit passes (Stage 5B), run these audits before deploying to production. Stages 6A, 6B, and 6C can run in parallel, but later stages have dependencies — see "Recommended Stage 6 ordering" below for the full sequence.
+After the Implementation Completeness Audit passes (Stage 5B), run these audits before deploying to production. Stages 6A, 6B, and 6C can run in parallel, but later stages have dependencies — see "Stage 6 ordering" below for the full sequence.
 
 **Unfixable Violation Protocols**: All Stage 6 sub-stages (6A-6G) include protocols for documenting issues that cannot be fixed without architectural changes. Each stage may create an `unfixable-violations.md` file in its respective audit directory (e.g., `plancasting/_audits/security/unfixable-violations.md`) documenting the violation, evidence, and recommended approach. Stage 6H consolidates all unfixable violation files and evaluates each as a potential launch blocker — an unfixable violation is launch-blocking ONLY if it prevents core business functionality.
 
 **Recovery note**: For Stages 6A-6P: If a stage disconnects mid-execution, the partial changes are safe to keep. Start a new session and re-run the same prompt — the agent will detect existing work and complete any remaining items. These stages are idempotent.
 
-**Recommended Stage 6 ordering**:
+**Stage 6 ordering** (mandatory default — dependencies between stages require this sequence. See individual stage notes for documented alternatives (e.g., 6D early-draft option)):
 
 **Parallel group** (open 3 terminal windows, start an independent `claude --dangerously-skip-permissions` session in each):
 - 6A Security + 6B Accessibility + 6C Performance — file conflicts are rare because these audits target different code aspects: auth/validation, ARIA attributes, and bundle/query optimization respectively.
@@ -974,7 +979,7 @@ Paste the contents of **`prompt_generate_documentation.md`**.
 
 **Gate**: PASS / CONDITIONAL PASS / FAIL — see `prompt_generate_documentation.md` § Gate Decision for criteria.
 
-**Ordering note**: Optimal after 6G (all code changes finalized) per the recommended ordering above. **Alternative** (for large projects): run after 5B PASS for an early draft — but if 6E, 6F, or 6G modify code, you MUST re-run 6D after 6G completes to refresh documentation. Single-run after 6G is the recommended default.
+**Ordering note**: The standard path is after 6G (all code changes finalized) per the Stage 6 ordering above — this is the mandatory default. **Early-draft alternative** (for projects with 20+ features where documentation parallelism is needed): run after 5B PASS to generate a draft, but you MUST re-run 6D after 6G completes to refresh documentation if 6E, 6F, or 6G modified code. The re-run is mandatory, not optional. Single-run after 6G is the recommended default for most projects.
 
 **Human Review**: Review the developer documentation for accuracy. Technical API docs are usually accurate but developer onboarding content benefits from a human pass.
 
@@ -990,7 +995,9 @@ Paste the contents of **`prompt_refactor_code.md`**.
 
 **Output**: `./plancasting/_audits/refactoring/report.md` with before/after metrics, changes applied, and remaining technical debt.
 
-**Ordering note**: Run after 6A–6C (per the recommended ordering above) since those audits introduce code changes that benefit from refactoring. **Stage 6E must COMPLETE before Stage 6G starts** — do NOT run in parallel. Error handling pattern changes in 6E (refactored error helpers, new exception types) affect what 6G can harden.
+**Ordering note**: Run after 6A–6C (per the Stage 6 ordering above) since those audits introduce code changes that benefit from refactoring. **Stage 6E must COMPLETE before Stage 6G starts** — do NOT run in parallel. Error handling pattern changes in 6E (refactored error helpers, new exception types) affect what 6G can harden.
+
+**Gate**: PASS / CONDITIONAL PASS / FAIL — see `prompt_refactor_code.md` § Gate Decision for criteria.
 
 **Human Review**: Verify the refactoring report shows zero test regressions. Spot-check key user flows to confirm no behavioral changes.
 
@@ -1038,7 +1045,7 @@ Paste the contents of **`prompt_harden_resilience.md`**.
 
 ### 6H. Pre-Launch Verification
 
-**Goal**: Final comprehensive check before production deployment. This is the last static analysis gate before live application verification.
+**Goal**: Final comprehensive check before production deployment. This is the last **static** analysis gate — it confirms the project is deployable in principle (credentials, config, builds, test suites). Stage 6V then tests **runtime** behavior against a running application. 6H must complete before 6V starts.
 
 ~~~bash
 claude --dangerously-skip-permissions
@@ -1159,7 +1166,7 @@ Paste the contents of **`prompt_visual_polish.md`**.
 
 **Goal**: Comprehensive visual redesign — not polish, but a full design overhaul. Use when the app needs a new visual identity, not just spacing/contrast fixes. This is an interactive stage: the operator participates in Phase 0 (context collection), Phase 1 (6-8 design decisions), and Phase 2 (Design Plan Confirmation — requires approval), then implementation (Phase 3+) runs autonomously.
 
-**Prerequisite**: Same as 6P — Stage 6V must have completed; if 6V found 6V-A/B issues, 6R must be PASS or CONDITIONAL PASS before running 6P-R. If 6V found only 6V-C issues (human judgment), 6R is skipped — proceed directly to 6P-R.
+**Prerequisite**: Same as 6P — Stage 6V must have completed; if 6V found 6V-A/B issues, 6R must be PASS or CONDITIONAL PASS before running 6P-R. If 6V found only 6V-C issues (human judgment), 6R is skipped — proceed directly to 6P-R. **Exception**: If 6R FAIL persists after the maximum 2 outer 6V→6R cycles, remaining issues are documented as known limitations and 6P-R may proceed (see 6P prerequisite for the max-cycle exhaustion rule).
 
 ~~~bash
 claude --dangerously-skip-permissions
@@ -1182,7 +1189,7 @@ Paste the contents of **`prompt_frontend_redesign.md`**.
 
 **Gate decision**: PASS / CONDITIONAL PASS / FAIL (same gate structure as 6P, but uses Critical/Major/Minor severity categories instead of 6P's O/E/D), plus a Phase 2 rejection path unique to 6P-R.
 - PASS/CONDITIONAL PASS → Merge to main, Stage 7 → 7V → 7D (re-run).
-- FAIL → Abandon the redesign branch (`git checkout main`) and either retry 6P-R in a new session or fall back to standard 6P.
+- FAIL → Abandon the redesign branch (`git checkout main`) and either retry 6P-R in a new session or fall back to standard 6P. Delete the abandoned branch if not needed (`git branch -D redesign/frontend-elevation`).
 - **Phase 2 rejected** (operator declines the design plan) → `git checkout main` to abandon the branch. Either retry 6P-R with different design direction, or switch to 6P for lighter-touch polish. The Phase 2 rejection is NOT a failure — it is a design direction disagreement that the operator resolves by restarting or switching approaches.
 
 ---
@@ -1194,7 +1201,7 @@ After all pre-deploy gates pass (listed in execution order):
 - **6V**: Complete (never skip — see Safety Rules)
 - **6R**: PASS or CONDITIONAL PASS (if 6R was run; skipped if 6V returned PASS or CONDITIONAL PASS with only 6V-C issues)
 - **6P or 6P-R**: PASS or CONDITIONAL PASS (one of 6P/6P-R always runs — even if 6V passes with zero issues, visual polish is applied before deploy)
-- **6D** (recommended): Complete — Stage 7 references `./docs/developer/deployment.md` generated by 6D. If 6D was skipped: refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running
+- **6D** (strongly recommended): Complete — Stage 7 references `./docs/developer/deployment.md` generated by 6D. Without it, Stage 7 has no project-specific deployment documentation to reference. If 6D was skipped: refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running
 
 Stage 7D (User Guide) is optional — skip if `plancasting/tech-stack.md` Documentation section indicates user documentation is not needed. If skipped, proceed directly to Stage 8 (the 7D gate does not apply).
 
@@ -1356,6 +1363,8 @@ Refer to the PRD's operational readiness specifications:
 - `./plancasting/prd/16-operational-readiness.md` — Monitoring, alerting, incident response
 - `./plancasting/prd/15-non-functional-specifications.md` — SLIs, SLOs, error budgets
 
+Monitoring and error tracking should be configured during Stage 6H (Pre-Launch Verification) and verified during Stage 7V.
+
 ---
 
 ## Stage 8: User Feedback → Specification Reflection Loop
@@ -1435,7 +1444,9 @@ Paste the contents of **`prompt_maintain_dependencies.md`**.
 - **Quarterly**: For most actively maintained products.
 - **On trigger**: When a dependency audit reports a critical vulnerability.
 
-**Important**: Do NOT run Stages 8 and 9 concurrently — both modify `package.json` and source code, causing merge conflicts. Run one, commit, then run the other.
+**Prerequisite**: Production deployment (Stage 7) complete is recommended but not mandatory — Stage 9 can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies. Stage 9 must NOT run concurrently with Stage 8.
+
+**Important**: Do NOT run Stages 8 and 9 concurrently — both modify `package.json`, lock files, and source code, causing merge conflicts. Run one, commit, then run the other.
 
 ---
 
@@ -1493,6 +1504,8 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 | FAIL-RETRY | 4–5 | OR 4+ A/B unfixed, OR total unfixed 4–5, OR test failures from 5B fixes | Re-run 5B only (max 3 total 5B runs: Run 1 = initial, Run 2–3 = re-runs; Run 4+ auto-escalates all remaining issues to FAIL-ESCALATE). Applies only to issues WITHOUT documented workarounds — issues with workarounds are evaluated under CONDITIONAL PASS first (priority order). |
 | FAIL-ESCALATE | 6+ | OR 6+ total unfixed across all categories | Set `🔄` on affected features in `_progress.md`, re-run Stage 5, then re-run 5B |
 
+Note: CONDITIONAL PASS requires ALL listed issues to have documented workarounds. Issues without workarounds are evaluated under FAIL-RETRY/FAIL-ESCALATE.
+
 **Threshold logic**: CONDITIONAL PASS has three valid paths evaluated in order (a → b → c; first match wins) — ALL require every listed issue to have a documented workaround: (a) 0 A/B + 1–3 Category C all with workaround, (b) 1–3 A/B documented with workaround + 0 C, (c) A/B ≥1 AND C ≥1 with A/B ≤3 AND C ≤3, all issues (both A/B and C) with workaround. "Workaround" means a documented code workaround, user-facing alternative, or accepted limitation with mitigation — not merely acknowledging the issue exists. 4–5 Category C issues indicate systemic gaps that workarounds alone cannot address → FAIL-RETRY. 6+ Category C issues indicate fundamental implementation gaps → FAIL-ESCALATE. Additionally, 3 consecutive FAIL-RETRY outcomes for the same feature automatically escalate that feature to FAIL-ESCALATE regardless of issue counts. Per-feature escalation is independent of the global thresholds (6+ Category C, 6+ total unfixed) — a feature can escalate via consecutive FAIL-RETRY even when global counts are below FAIL-ESCALATE thresholds, and conversely, global thresholds can trigger FAIL-ESCALATE even when no single feature has 3 consecutive FAIL-RETRY runs.
 
 **"Consecutive" definition**: "Consecutive" is tracked **per-feature**, not globally. If Feature A reports FAIL-RETRY 3 times across 3 separate 5B runs (even if other features pass or fail in between), Feature A escalates to FAIL-ESCALATE. Other features' run counts are independent.
@@ -1523,7 +1536,7 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 | CONDITIONAL PASS (only C) | Skip 6R → 6P or 6P-R |
 | FAIL | Fix manually, re-run 6V |
 
-**6V flaky scenario handling**: A **flaky scenario** is a test that fails on the first run but passes on a subsequent re-run without code changes, typically caused by timing issues or external service latency. A flaky scenario is informational in 6V — does not block the gate. In 7V (production), flaky = FAIL. For both 6V and 7V: re-run a failing scenario once. If it passes on re-run, mark as flaky. In 6V, flaky scenarios are excluded from the gate percentage. In 7V, flaky scenarios count as FAIL (production flakiness is unacceptable).
+**6V flaky scenario handling**: A **flaky scenario** is a test that fails on the first run but passes on a subsequent re-run without code changes, typically caused by timing issues or external service latency. For both 6V and 7V: The verification agent automatically re-runs each failing scenario once before classifying it as a failure. If it passes on re-run, mark as flaky. **6V treatment**: flaky scenarios are excluded from both the pass-rate numerator and denominator (e.g., 18 pass + 1 fail + 1 flaky = 18/19 = 94.7%, not 18/20). Flaky scenarios do not block the 6V gate but must be documented for investigation. **7V treatment**: flaky = FAIL. Production flakiness is unacceptable — a flaky scenario in 7V counts as a failure in the pass-rate denominator (e.g., 13 pass + 1 flaky + 1 fail = 13/15 = FAIL). The entire 7V gate becomes FAIL if any scenario is flaky.
 
 #### Post-6R Routing
 
@@ -1531,7 +1544,7 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 |---|---|
 | PASS | → 6P or 6P-R |
 | CONDITIONAL PASS | Human reviews, then 6P or 6P-R |
-| FAIL | Fix 6V-C manually, re-run 6V, then 6R if needed (max 3 internal fix-verify cycles per 6R run; the 3-cycle counter resets only after a full 6V re-run between 6R sessions — simply re-pasting the 6R prompt without a 6V re-run does NOT reset it; max 2 outer 6V→6R cycles total — after 2 cycles, document remaining issues as known limitations and proceed to 6P/6P-R; track outer cycle count by counting 6R report files or noting cycle number in report headers) |
+| FAIL | Fix 6V-C manually, re-run 6V, then 6R if needed. **Cycle limits**: max 3 internal fix-verify cycles per 6R run (counter resets only after a full 6V re-run — re-pasting the 6R prompt without 6V does NOT reset it). **Max 2 outer 6V→6R cycles** — an outer cycle = one full 6V run followed by one 6R run. Cycle 1: 6V → 6R. Cycle 2: 6V → 6R. After Cycle 2 completes, document remaining issues as known limitations and proceed to 6P/6P-R. Track outer cycle count by noting "Outer Cycle: 1/2" or "2/2" in 6R report headers. |
 
 **Note**: After 3 internal fix-verify cycles within a single 6R run, any remaining 6V-A/B issues are reclassified as 6V-C (requires human judgment). This prevents infinite automated fix attempts on issues that resist auto-remediation.
 
@@ -1564,7 +1577,7 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 
 If 6P-R runs, it defines the design system; any prior 6P modifications must be reverted first to avoid stale token references. The `git revert` approach is preferred because it is reversible and preserves full git history.
 
-**7V gate** (binary — no CONDITIONAL PASS): PASS before 7D. Production flakiness is unacceptable — a flaky scenario in 7V is a FAIL, not informational (unlike 6V). FAIL → if issue is localized (1–2 files, <100 LOC): hotfix, re-deploy, re-run 7V. If issue affects multiple systems or requires architectural changes: rollback the deployment using your hosting provider's rollback feature (e.g., `vercel rollback`), verify the reverted deploy is stable, then investigate offline. If the code itself needs reverting: `git revert HEAD`, then re-deploy.
+**7V gate** (binary — no CONDITIONAL PASS): PASS before 7D. Production flakiness is unacceptable — a flaky scenario in 7V counts as a FAIL (see "6V flaky scenario handling" above for the precise calculation). FAIL → if issue is localized (1–2 files, <100 LOC): hotfix, re-deploy, re-run 7V. If issue affects multiple systems or requires architectural changes: rollback the deployment using your hosting provider's rollback feature (e.g., `vercel rollback`), verify the reverted deploy is stable, then investigate offline. If the code itself needs reverting: `git revert HEAD`, then re-deploy.
 
 **7D gate**: Prerequisite: 7V PASS. PASS/WARN/FAIL before Stage 8. WARN replaces CONDITIONAL PASS for this stage (documentation quality issues that don't block launch). Skip 7D entirely if `tech-stack.md` Documentation section indicates user documentation is not needed.
 
@@ -1591,7 +1604,7 @@ Some stages can be skipped based on upstream gate results:
 
 **Note**: Stage 7V always runs SMOKE scope (max 15 scenarios, P0+P1 features only). 6V modes (full/critical/diff) do not apply to 7V.
 
-**Note**: 6V, 6P/6P-R, and 7V are NEVER skipped — they always run regardless of upstream results.
+**Note**: 5B, 6V, 6P/6P-R, and 7V are NEVER skipped — they always run regardless of upstream results.
 
 ---
 
