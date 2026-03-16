@@ -22,6 +22,7 @@ transmute-framework/
     ├── progress.md              # Progress tracking template
     ├── execution-guide.md       # Canonical stage reference document
     ├── feature_scenario_generation.md  # Scenario extraction algorithm for 6V/7V
+    ├── _rules-candidates.md     # Rule candidate staging area template
     └── rules-templates/         # Stage 3 starter rule templates
         ├── _api-contracts-template.md
         ├── _auth-template.md

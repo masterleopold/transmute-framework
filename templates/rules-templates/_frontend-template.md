@@ -5,7 +5,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 # Frontend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. Do not edit this template directly.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly.
 
 ## Component States
 
@@ -23,7 +23,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 ## Hook Data Shapes
 
-<!-- TODO: Stage 3 — replace with actual hook pattern -->
+<!-- TODO: Stage 3 — replace with actual hook pattern. Source: tech-stack.md | Confidence: HIGH -->
 
 - Never cast backend responses with `as unknown as Type` — create explicit mapping functions when shapes differ; co-locate response types with hooks.
 - When a backend field is renamed or computed, map it explicitly and document the mapping with a comment in the hook.
@@ -46,7 +46,7 @@ globs: ["[FRONTEND_DIR]/**"]
 ## Design Tokens
 
 <!-- TODO: Stage 3 — replace [DESIGN_TOKENS_PATH] with actual path (e.g., src/styles/design-tokens.ts, src/tokens/colors.css). All components import from this single source. -->
-<!-- Note: If this file does not yet exist at scaffold time, Stage 3 creates it as part of the design direction setup. -->
+<!-- Note: Stage 3 creates the design-tokens file based on the design direction from `plancasting/tech-stack.md`. If Stage 0 did not provide a design direction, Stage 3 creates a minimal placeholder that Stage 5 can extend when building the first frontend component. -->
 
 - Import all colors, spacing, typography, and shadows from `[DESIGN_TOKENS_PATH]` — never hardcode color or spacing values in component files; use the token scale.
 - If a new token is needed, add it to the design tokens file, not inline.

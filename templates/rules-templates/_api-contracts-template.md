@@ -5,7 +5,7 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 # API Contract Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/api-contracts.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[HOOKS_DIR]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. Do not edit this template directly.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/api-contracts.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[BACKEND_DIR]`, `[HOOKS_DIR]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/api-contracts.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly.
 
 ## Type Alignment
 
@@ -17,7 +17,7 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 ## Projection Types
 
-<!-- TODO: Stage 3 — replace with actual projection pattern -->
+<!-- TODO: Stage 3 — replace with actual projection pattern from the project's codebase. Source: tech-stack.md | Confidence: HIGH -->
 
 - Create SEPARATE types for different views of the same entity:
   - List view: lightweight projection (e.g., `[ENTITY]Summary`) with only the fields displayed in lists.
@@ -34,7 +34,7 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 ## Field Mapping
 
-<!-- TODO: Stage 3 — replace with actual field mapping examples -->
+<!-- TODO: Stage 3 — replace with actual field mapping examples from the project. Source: tech-stack.md | Confidence: HIGH -->
 
 - When the backend returns renamed or computed fields, hooks MUST map them explicitly.
 - Never use `as unknown as Type` casts to force type compatibility.
@@ -49,7 +49,7 @@ globs: ["[BACKEND_DIR]/**", "[HOOKS_DIR]/**", "[FRONTEND_TYPES_DIR]/**"]
 
 ## Null Handling
 
-<!-- TODO: Stage 3 — replace with actual loading/null patterns -->
+<!-- TODO: Stage 3 — replace with actual loading/null patterns from the project. Source: tech-stack.md | Confidence: HIGH -->
 
 - Distinguish between `undefined` (not yet loaded → show loading), `null` (intentionally absent → show empty/default), and present values — never treat them as interchangeable.
 - Backend functions must return `null` (not `undefined`) for "not found" responses to make the distinction explicit.

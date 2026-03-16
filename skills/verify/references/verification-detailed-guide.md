@@ -310,8 +310,8 @@ A flaky scenario fails inconsistently (fails once, passes on retest).
 
 ## Next Steps
 - If PASS: skip 6R -> proceed to Stage 6P or 6P-R (Visual Polish or Redesign)
-- If CONDITIONAL PASS with Category A/B issues: proceed to Stage 6R
-- If CONDITIONAL PASS with ONLY Category C issues: skip 6R -> proceed to Stage 6P or 6P-R
+- If CONDITIONAL PASS with 6V-A/6V-B issues: proceed to Stage 6R
+- If CONDITIONAL PASS with ONLY 6V-C issues: skip 6R -> proceed to Stage 6P or 6P-R
 - If FAIL: fix critical issues manually, then re-run Stage 6V
 
 ## Recommendations

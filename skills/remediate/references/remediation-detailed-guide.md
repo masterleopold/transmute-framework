@@ -1,6 +1,6 @@
 # Runtime Remediation — Detailed Guide
 
-## Stage 6R: Automated Fix Loop for 6V Verification Failures
+## Stage 6R: Automated Fix-Verify Cycle for 6V Verification Failures
 
 This reference contains the full detailed instructions for Stage 6R remediation, including fixability taxonomy, teammate prompts, safety rules, and report templates.
 
@@ -18,14 +18,14 @@ This is slow and error-prone. Stage 6R automates the mechanical fixes (typically
 
 > **Category System Note**: This stage uses a DIFFERENT category system than Stage 5B:
 > - **5B Categories** (size-based): A = <30 lines per file, B = 30-100 lines AND <150 total, C = >=100 lines or unbuilt features
-> - **6R Categories** (fixability-based): A = auto-fixable code issue, B = semi-auto fixable, C = needs human judgment
-> Classify based on FIXABILITY, not severity. A critical bug that's easy to fix is Category A; a minor issue requiring architectural change is Category C.
+> - **6V/6R Categories** (fixability-based): 6V-A = auto-fixable code issue, 6V-B = semi-auto fixable, 6V-C = needs human judgment
+> Classify based on FIXABILITY, not severity. A critical bug that's easy to fix is 6V-A; a minor issue requiring architectural change is 6V-C.
 
 ## Fixability Taxonomy
 
 Every 6V failure falls into one of three categories:
 
-### Category A: Auto-Fixable (No Judgment Required)
+### 6V-A: Auto-Fixable (No Judgment Required)
 These issues have exactly ONE correct fix.
 
 | Issue Type | Fix Pattern | Example |
@@ -41,7 +41,7 @@ These issues have exactly ONE correct fix.
 | Loading state missing (shows blank instead of skeleton) | Add loading component using project's existing loading patterns | Page shows white flash during data fetch -- add `loading.tsx` |
 | Route constant defined but `page.tsx` in wrong directory | Move the `page.tsx` to the correct directory matching the route | Route is `/projects/[id]/hub` but page is at `/projects/[id]/hub.tsx` (not in a folder) |
 
-### Category B: Semi-Auto-Fixable (Pattern-Based, Needs Verification)
+### 6V-B: Semi-Auto-Fixable (Pattern-Based, Needs Verification)
 These issues have a likely correct fix based on codebase patterns, but the fix could have side effects.
 
 | Issue Type | Fix Pattern | Verify |
@@ -53,7 +53,7 @@ These issues have a likely correct fix based on codebase patterns, but the fix c
 | Empty state component not rendering | Check if the condition for "empty" is correct | Verify the empty state CTA navigates correctly |
 | Cross-feature navigation passes wrong params | Fix the params based on the receiving page's expected params | Verify the receiving page handles the params correctly |
 
-### Category C: Needs Human Judgment (Cannot Auto-Fix)
+### 6V-C: Needs Human Judgment (Cannot Auto-Fix)
 
 | Issue Type | Why It Needs Human | What To Document |
 |---|---|---|
@@ -70,7 +70,7 @@ These issues have a likely correct fix based on codebase patterns, but the fix c
 1. **Fix cascade**: Fixing issue A introduces issue B. ALWAYS run typecheck + affected tests after each fix batch.
 2. **Middleware whitelist over-broadening**: Adding `/api/*` to PUBLIC_ROUTES instead of specific endpoints. ALWAYS add the EXACT route.
 3. **Stub page without proper auth**: Creating a stub `page.tsx` for an authenticated route but forgetting auth guards.
-4. **Fix the symptom, not the cause**: Before wiring a button to a function: (1) Verify function exists, (2) check git blame -- if recently deleted with "defer feature", may be intentional, (3) if truly missing, escalate to Category C. Do NOT create stub functions.
+4. **Fix the symptom, not the cause**: Before wiring a button to a function: (1) Verify function exists, (2) check git blame -- if recently deleted with "defer feature", may be intentional, (3) if truly missing, escalate to 6V-C. Do NOT create stub functions.
 5. **Mobile nav divergence**: ALWAYS copy the EXACT same visibility conditions.
 6. **i18n key added in English only**: Check `plancasting/tech-stack.md` for supported languages.
 7. **Category mis-classification**: ALWAYS verify the fix target actually exists before applying.
@@ -81,7 +81,7 @@ These issues have a likely correct fix based on codebase patterns, but the fix c
 ## Teammate Prompts
 
 ### Teammate 1: "navigation-routing-fixer"
-**Scope**: All navigation, routing, middleware, and link-related fixes (Categories A and B)
+**Scope**: All navigation, routing, middleware, and link-related fixes (6V-A and 6V-B)
 
 Safety Rules:
 1. NEVER modify business logic -- only fix routing, navigation, and middleware configuration.
@@ -95,7 +95,7 @@ Fix types: Public Route Blocked by Middleware, Dead Link in Shared Layout, Broke
 For public route / middleware fixes: Use `browser_close` to end the current session, then `browser_navigate` to start a fresh session. Do NOT verify while logged in.
 
 ### Teammate 2: "component-ui-fixer"
-**Scope**: All UI component, event handler, loading state, empty state, i18n, and button-wiring fixes (Categories A and B)
+**Scope**: All UI component, event handler, loading state, empty state, i18n, and button-wiring fixes (6V-A and 6V-B)
 
 Safety Rules:
 1. NEVER change component visual design or layout.
@@ -109,7 +109,7 @@ Safety Rules:
 Fix types: Button onClick Does Nothing, Missing Loading State, Missing Empty State, Missing i18n Translation Key, Console Error from Missing Import, TypeScript Runtime Error, Confirmation Dialog Missing for Destructive Action.
 
 ### Teammate 3: "backend-data-fixer"
-**Scope**: Backend function fixes, data flow issues, auth context fixes (Categories A and B only)
+**Scope**: Backend function fixes, data flow issues, auth context fixes (6V-A and 6V-B only)
 
 Safety Rules:
 1. NEVER create new backend functions that implement business logic.
@@ -122,7 +122,7 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
 
 ## Phase 3: Integration & Verification
 
-1. **Merge and validate**: Verify no file conflicts between teammates. Run `bun run typecheck`, `bun run lint`, `bun run test`. If any check fails that passed in baseline, revert the fix and move to Category C.
+1. **Merge and validate**: Verify no file conflicts between teammates. Run `bun run typecheck`, `bun run lint`, `bun run test`. If any check fails that passed in baseline, revert the fix and move to 6V-C.
 
 2. **Start the dev server**: Check if already running. If not, start with `bun run dev &`. Wait up to 60 seconds. If the server fails to start, mark fixes as "unverifiable" and proceed to report.
 
@@ -131,18 +131,18 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
    **3-breakpoint verification**: For UI fixes, verify at 1440px, 768px, and 375px to ensure responsive behavior is maintained.
 
    **Tier-based screenshot handling**:
-   - Category A: Single screenshot at primary breakpoint is sufficient
-   - Category B: Before/after screenshots at all 3 breakpoints
+   - 6V-A: Single screenshot at primary breakpoint is sufficient
+   - 6V-B: Before/after screenshots at all 3 breakpoints
    - Responsive layout fixes: Always verify at mobile (375px)
 
-   **Regression detection**: Compare NEW failures against original 6V report. If regressions from 6R fixes: revert, move to Category C. If unrelated: document as "New finding (not caused by 6R)".
+   **Regression detection**: Compare NEW failures against original 6V report. If regressions from 6R fixes: revert, move to 6V-C. If unrelated: document as "New finding (not caused by 6R)".
 
 4. **Update 6V report**: Append remediation results section to `./plancasting/_audits/visual-verification/report.md`. Update the `## Gate Decision` section to reflect post-remediation state.
 
 5. **Generate remediation report** at `./plancasting/_audits/runtime-remediation/report.md`.
 
 6. **Extract verified fix patterns as rules** (see CLAUDE.md 'Path-Scoped Rules'):
-   For each verified Category A/B fix, evaluate if the pattern is generalizable:
+   For each verified 6V-A/6V-B fix, evaluate if the pattern is generalizable:
    - **HIGH confidence** (verified working fix across 2+ features): Append to `.claude/rules/*.md`
    - **MEDIUM confidence** (single-feature but likely generalizable): Append to `plancasting/_rules-candidates.md`
    - 6R rules are inherently higher confidence than 5B rules (battle-tested)
@@ -156,8 +156,8 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
 If a runtime issue requires architectural changes beyond this stage's scope:
 1. Document in `./plancasting/_audits/runtime-remediation/category-c-escalations.md`
 2. Mark as 'REQUIRES HUMAN DECISION'
-3. Include in final report under 'Category C Escalations'
-4. Continue fixing remaining A/B issues -- do not block the loop
+3. Include in final report under '6V-C Escalations'
+4. Continue fixing remaining 6V-A/6V-B issues -- do not block the cycle
 
 ## Post-3-Cycles Escalation
 
@@ -182,9 +182,9 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 - **Total 6V Failures**: [n]
 
 ## Triage Results
-- Category A (auto-fix): [n] attempted, [n] successful, [n] reverted
-- Category B (semi-auto): [n] attempted, [n] successful, [n] reverted
-- Category C (needs human): [n] (not attempted)
+- 6V-A (auto-fix): [n] attempted, [n] successful, [n] reverted
+- 6V-B (semi-auto): [n] attempted, [n] successful, [n] reverted
+- 6V-C (needs human): [n] (not attempted)
 - **Total resolved**: [n] / [total] ([percentage]%)
 
 ## Verification
@@ -202,9 +202,9 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 ### Medium (can fix post-deploy)
 ### Low (nice to have)
 
-## Loop Tracking
-- **Current loop**: [N] / 3 (max 3 completed fix-verify loops)
-- **Previous loop report**: [path or "N/A -- first loop"]
+## Cycle Tracking
+- **Current cycle**: [N] / 3 (max 3 completed fix-verify cycles)
+- **Previous cycle report**: [path or "N/A -- first cycle"]
 
 ## Gate Decision
 - **PASS**: All critical/high issues resolved
@@ -220,19 +220,19 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 ## Next Steps
 - If PASS: proceed to Stage 6P/6P-R -> 7 (Deploy) -> Stage 7V -> Stage 7D
 - If CONDITIONAL PASS: human reviews remaining issues
-- If FAIL: human resolves Category C critical issues, then re-run 6V -> 6R
+- If FAIL: human resolves 6V-C critical issues, then re-run 6V -> 6R
 ```
 
 ## Critical Rules
 
-1. NEVER make business logic decisions. Move ambiguous fixes to Category C.
+1. NEVER make business logic decisions. Move ambiguous fixes to 6V-C.
 2. NEVER weaken security.
 3. ALWAYS preserve the test baseline. Zero test regressions.
 4. ALWAYS typecheck after EVERY fix.
 5. ALWAYS verify fixes in the running app.
 6. NEVER modify auto-generated files.
 7. NEVER create database schema changes.
-8. If a Category B fix introduces a NEW failure of EQUAL or HIGHER severity, revert and move to Category C.
+8. If a 6V-B fix introduces a NEW failure of EQUAL or HIGHER severity, revert and move to 6V-C.
 9. ALWAYS read the component/function context before fixing.
 10. ALWAYS check git blame or commit history when a fix seems too simple.
 11. For i18n fixes: check ALL language files.

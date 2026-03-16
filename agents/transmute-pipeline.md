@@ -115,15 +115,15 @@ For each stage:
 | 6V Result | Next Step |
 |---|---|
 | PASS (zero critical failures) | Skip 6R → proceed to 6P or 6P-R |
-| CONDITIONAL PASS (Category A/B issues) | Proceed to 6R |
-| CONDITIONAL PASS (ONLY Category C issues) | Skip 6R → proceed to 6P or 6P-R |
+| CONDITIONAL PASS (6V-A/6V-B issues) | Proceed to 6R |
+| CONDITIONAL PASS (ONLY 6V-C issues) | Skip 6R → proceed to 6P or 6P-R |
 | FAIL (critical issues) | Stop — fix manually, re-run 6V |
 
 ### Post-6R
 - PASS/CONDITIONAL PASS → proceed to 6P or 6P-R
 - FAIL → resolve, re-run 6V → 6R
 - **Max 3 internal fix-verify cycles per run**: After 3 cycles within a single 6R run, persistent issues escalate to 6V-C. Operator may: (a) manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed.
-- **Rule extraction**: Successful Category A/B fixes are captured as verified fix patterns in `.claude/rules/` (highest confidence — battle-tested).
+- **Rule extraction**: Successful 6V-A/6V-B fixes are captured as verified fix patterns in `.claude/rules/` (highest confidence — battle-tested).
 
 ### 6P vs 6P-R Selection
 

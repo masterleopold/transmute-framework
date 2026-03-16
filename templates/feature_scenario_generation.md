@@ -2,7 +2,9 @@
 
 ## Shared Reference for Stages 6V and 7V
 
-> **WARNING**: **DO NOT PASTE THIS FILE'S CONTENTS INTO CLAUDE CODE AS A PROMPT.** This is a shared reference guide read DURING Stage 6V (Phase 1) and Stage 7V (Phase 0). See `prompt_visual_functional_verification.md` or `prompt_production_smoke_verification.md` for the actual prompts to paste.
+> **WARNING**:
+> - **DO NOT PASTE THIS FILE'S CONTENTS INTO CLAUDE CODE AS A PROMPT.** This is a shared reference guide read DURING Stage 6V (Phase 1) and Stage 7V (Phase 0). See `prompt_visual_functional_verification.md` or `prompt_production_smoke_verification.md` for the actual prompts to paste.
+> - **DO NOT MODIFY THIS FILE** in project copies. It is project-agnostic and shared across all Transmute projects. Updates should only be made in the Transmute Framework Template repository.
 >
 > **Scenario Generation**: Stage 6V reads this file during Phase 1 (Lead Analysis); Stage 7V reads it during Phase 0 (Scenario Generation). The agent generates scenarios dynamically by reading the PRD, codebase, and this guide. Do NOT create scenarios manually. This file MUST be copied to `./plancasting/transmute-framework/` in the project directory before running 6V or 7V (see CLAUDE.md § "Pre-6V Setup" for copy instructions).
 
@@ -117,7 +119,11 @@ Supplement PRD data with actual implementation:
 Create a directed graph of features and their dependencies. Dependencies are extracted from:
 1. **Explicit dependency fields** in `prd/02-feature-map-and-prioritization.md` (if present — look for "Depends on" or "Prerequisites" columns)
 2. **User story prerequisites**: If US-005 requires data from FEAT-002, then features behind US-005 depend on FEAT-002
-3. **Implicit dependencies**: If FEAT-010 (Deploy) requires FEAT-005 (Implementation) to have run, infer the edge. **Inference algorithm**: (1) Read each feature's prerequisites in PRD 02-feature-map. (2) For each prerequisite, add an edge in the graph. (3) Read user stories — if a story for FEAT-A references data created by FEAT-B, add edge FEAT-B → FEAT-A. (4) For features with lifecycle states, add edges based on state transitions.
+3. **Implicit dependencies**: If FEAT-010 (Deploy) requires FEAT-005 (Implementation) to have run, infer the edge. **Inference algorithm**: (1) Read each feature's prerequisites in PRD 02-feature-map. (2) For each prerequisite, add an edge in the graph. (3) Read user stories — if a story for FEAT-A references data created by FEAT-B, add edge FEAT-B → FEAT-A (keyword detection: look for "created by", "requires", "depends on" in story text). (4) For features with lifecycle states, add edges based on state transitions (if FEAT-X produces state S and FEAT-Y is only valid in state S, add edge FEAT-X → FEAT-Y).
+
+**Cycle detection**: After building the graph, topologically sort all features. If a cycle is detected (e.g., FEAT-A → FEAT-B → FEAT-C → FEAT-A), report as ERROR and list the cycle. Do not proceed with scenario generation until the cycle is resolved — either by removing an incorrect edge or by flagging it for PRD correction.
+
+**Transitive reduction** (optional): If FEAT-A → FEAT-B → FEAT-C and also FEAT-A → FEAT-C, the direct FEAT-A → FEAT-C edge is redundant (implied by transitivity). Remove it to simplify the graph. This reduces complexity for scenario ordering without losing coverage.
 
 The following is an illustrative example from a hypothetical project — your product's feature graph should be derived from the PRD feature map (`prd/02-feature-map-and-prioritization.md`).
 
@@ -179,7 +185,9 @@ For each User Flow (UF-NNN):
 - FS-NNN-E2: Submit with weak password → password strength error
 - FS-NNN-E3: Submit with existing email → duplicate account error
 
-**Negative Variants vs. Standalone Negative Scenarios**: Negative variants (E1–E3) are inline error-path tests within a parent FS scenario — they share the same prerequisite data and auth context. Standalone Negative Scenarios (NS-NNN from Step 8) are independent error tests not tied to a specific FS happy path.
+**Negative Variants vs. Standalone Negative Scenarios**: Negative variants (E1–E3) are inline error-path tests within a parent FS scenario — they share the same prerequisite data and auth context. Standalone Negative Scenarios (NS-NNN from Step 8) are independent error tests not tied to a specific FS happy path. **Decision rule**: If the error case occurs during a Feature Scenario's happy path flow (e.g., "submit with invalid email during signup"), make it a variant (FS-NNN-EN). If it's a standalone error condition not tied to any FS flow (e.g., "manually crafted API request with invalid auth token"), make it a Negative Scenario (NS-NNN).
+
+**Counting for Step 9 trimming**: Each negative variant (FS-NNN-EN) counts as a separate scenario. Example: FS-001 + FS-001-E1 + FS-001-E2 = 3 scenarios toward the cap. Each standalone NS-NNN also counts as 1 scenario.
 ```
 
 ### Step 5: Generate Auth Context Scenarios (AS-NNN)
@@ -297,7 +305,12 @@ Apply trimming steps sequentially — check count after each step. **STOP** appl
 - Estimated time: 15-30 minutes
 
 **For 7V (Smoke — Quick Production Validation)**:
-- Generate Feature Scenarios for P0 features (all scenarios) + P1 features (top 5 by user impact) + any P2 features in the critical path (a P2 feature is "in the critical path" if it is a transitive prerequisite of any P0/P1 feature in the Feature Dependency Graph — e.g., a P2 feature that blocks P0/P1 flows). If a feature has no existing Feature Scenario, create a minimal happy-path scenario. **User impact definition**: User impact is measured by: (1) number of personas affected (from PRD user story persona list), (2) frequency of use across user flows, (3) business criticality (revenue-impacting features rank higher). Use PRD data where available.
+- Generate Feature Scenarios for P0 features (all scenarios) + P1 features (top 5 by user impact) + any P2 features in the critical path (a P2 feature is "in the critical path" if it is a transitive prerequisite of any P0/P1 feature in the Feature Dependency Graph — e.g., a P2 feature that blocks P0/P1 flows). If a feature has no existing Feature Scenario, create a minimal happy-path scenario. **User impact scoring**: Assign points to each P1 feature and select the top 5 by score:
+  - **Personas affected**: +1 per persona that has a user story referencing this feature (1–5 points)
+  - **Flow frequency**: +1 if the feature appears in ≥3 user flows (UF-NNN), +0 otherwise
+  - **Business criticality**: +2 if revenue-impacting (payments, billing, subscriptions), +0 otherwise
+  - Total: 0–8 points. Select the top 5 P1 features by score. Ties broken by earlier position in PRD feature map.
+  - Example: FEAT-005 (Billing): 3 personas + 4 flows + revenue = 3+1+2 = 6 points. FEAT-008 (Admin Panel): 1 persona + 1 flow + internal = 1+0+0 = 1 point.
 - Generate Auth Context Scenarios for unauthenticated + 1 authenticated role only. For Auth Context, test one representative cell per route: the primary role expected to access that route (e.g., admin dashboard with admin, user settings with regular user), rather than testing every route × every role combination. Also test the unauthenticated column (all routes as unauthenticated user — expect redirect to /login or error page).
 - Skip Entity State and Role Permission scenarios entirely (too detailed for smoke test).
 - Recommended target: 15 scenarios to fit within 15–30 minute execution window (at ~2 min per scenario, 15 scenarios ≈ 30 min; total 7V duration is 25–45 minutes including scenario generation and infrastructure/environment checks).
@@ -395,7 +408,7 @@ Test user assignments are primary defaults. Teammates testing Auth Context (AS) 
 
 ## Handling Flaky Scenarios
 
-Re-run a failing scenario once. If it passes on re-run, mark as "Flaky — investigate timing" and include in the report's flaky tests section. If both runs fail, mark as failed. Do not retry more than once. **Stage distinction**: For 6V (dev environment), flaky scenarios are informational — flag for investigation but do not block the gate. For 7V (production smoke), a flaky scenario is a FAIL — production instability must be resolved before re-running 7V. Don't exclude flaky scenarios from the matrix, but flag them for developer attention. Flaky scenarios often indicate:
+Re-run a failing scenario once. If it passes on re-run, mark as "Flaky — investigate timing" and include in the report's flaky tests section. If both runs fail, mark as failed. Do not retry more than once. **Stage distinction**: For 6V (dev environment), flaky scenarios are informational — flag for investigation but do NOT block the gate and are EXCLUDED from the pass/fail percentage calculation. They appear in a separate "Flaky Scenarios" section of the report. For 7V (production smoke), a flaky scenario is a FAIL — production instability must be resolved before re-running 7V. Don't exclude flaky scenarios from the matrix, but flag them for developer attention. Flaky scenarios often indicate:
 1. Missing waits/polling in the test (add `expect.poll()` or `expect.toPass()` for eventually-consistent backends)
 2. Race conditions in the app (add explicit wait states)
 3. External service latency (mock external services for consistent timing)
@@ -415,4 +428,4 @@ Before distributing the matrix, the lead should verify:
 4. Role Permission Scenarios cover all role combinations mentioned in user stories
 5. Total scenario count is within the allocated execution time budget (6V: 30–60 min scenario execution, 7V: 15–30 min scenario execution)
 6. All scenario prerequisites (entity states, test accounts) can be set up with existing seed data or UI flows
-7. `_progress.md` was checked — features marked "Needs Re-implementation" or "In Progress" are excluded or flagged
+7. `_progress.md` was checked — features marked `⬜ Not Started`, `🔄 Needs Re-implementation`, `🔧 In Progress`, or `⏸ Blocked` are EXCLUDED from the scenario matrix (no scenarios generated for them). Only `✅ Done` features have scenarios generated.

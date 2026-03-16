@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.1.0** — Template sync: 6R cycle semantics, 6V routing, assumption review, `6V-` prefix consistency
+> **v2.2.0** — Template sync: TODO source annotations, verification grep commands, retention defaults, UTC timestamps, timeout guidance, role model detail, deployment recovery, per-feature escalation tracking
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -249,6 +249,72 @@ transmute-framework/
 - A business plan (markdown or PDF files)
 
 ## Changelog
+
+### v2.1.0
+
+### v2.2.0
+
+**Comprehensive Template Sync (2-Pass Deep Audit)**
+
+**Rules Templates** (all 6 templates updated)
+- Added `Source:` and `Confidence:` metadata to all `<!-- TODO -->` HTML comments for traceability
+- Added post-render verification grep command to all template headers: `grep -n '\[.*\]' .claude/rules/<name>.md`
+- Backend: Expanded validation phrasing ("in the same file as the function, not inline within the function body")
+- Data Model: Added default 90-day retention with GDPR rationale; added "ALL timestamps are UTC" rule
+- Auth: Added glob note for frontmatter clarity; added `[RBAC / ABAC / Custom]` permission model type; added per-tenant role scoping
+- Testing: Added exponential backoff timeout guidance (`intervals: [100, 200, 500]`); expanded axe-core framework-specific integration patterns; explicit five-state enumeration
+- Frontend: Design tokens note clarified (Stage 3 creates based on tech-stack.md design direction)
+- API Contracts: Added source annotations to all TODO comments
+
+**New Template File**
+- Added `_rules-candidates.md` — staging area template for rule candidates from Stages 5B and 6R
+
+**CLAUDE.md Template Updates**
+- Pre-6V Setup: Expanded to numbered 2-step checklist (file copy + port verification)
+- Stage 0: Expanded outputs list and skip conditions with section enumeration
+- Stage 3 prerequisite: Added credential validation details
+- .env.local timing: Expanded with backend deployment timing and mid-pipeline credential guidance
+- 6A/6G scope: Added account linking, signup, logout to 6A; file uploads to 6G; added decision rule with edge cases
+- 6V modes: Clarified applies to 6V only, not 7V (7V always SMOKE scope)
+- 2B gate: Added "none P0-blocking" detail and assumption review conditional
+- 5B gate: Expanded with detailed thresholds (PASS/CONDITIONAL/FAIL-RETRY/FAIL-ESCALATE), per-feature escalation tracking
+- 6V gate: Added category definitions, flaky scenario exclusion from percentage, expanded routing rules
+- 6R: Expanded skip conditions and key rules
+- 7D: Added WARN description (documentation quality issues that don't block launch)
+- Stage 7 prerequisites: Reordered (6H READY first)
+- Added stage skip conditions and tips/troubleshooting cross-references
+- Added Test Count Preservation rule to Part 1
+- CONDITIONAL PASS cascading: Expanded 6H evaluation guidance
+
+**Execution Guide Updates**
+- Stage 6G: "Error Resilience Hardening" → removed "Error" from sub-stage name
+- Stage 6R: "Remediation loop" → "Remediation cycle" terminology alignment
+- 6V/6R: All "Category A/B" → "6V-A/6V-B" in fixability context
+- 5B: "5B-A/B/C" → "Category A/B/C (no prefix)" for size-based categories
+- Pre-6V Setup: Reorganized with CRITICAL file existence check
+- Added Deployment Failure Recovery section (§ 7.1.2)
+- Per-feature escalation: Expanded "consecutive" definition (per-feature, not global)
+- 6V flaky handling: Added exclusion from gate percentage
+- 6P/6P-R switching: Safer `git revert` approach (creates reversible commit)
+- Credential gates: Expanded timing details
+- Stage 0 skip: Added Project Initialization field requirement
+
+**Feature Scenario Generation Updates**
+- WARNING section expanded to multi-line with bullet points
+- Implicit dependency algorithm: Added keyword detection rules for inference
+- Added cycle detection and transitive reduction sections
+- Negative variant counting: Explicit counting rules for Step 9 trimming
+- User impact scoring: Detailed 0-8 point algorithm replacing general description
+- Flaky scenario: Clarified exclusion from 6V gate percentage
+- Progress audit checklist: Expanded with explicit status emoji enumeration
+
+**Skill & Agent Updates**
+- remediate/SKILL.md: Full "Category A/B/C" → "6V-A/6V-B/6V-C" migration; "loop" → "cycle"
+- remediate/references: Same terminology migration across detailed guide
+- verify/references: "Category A/B" → "6V-A/6V-B" in next steps
+- transmute-pipeline agent: "Category A/B" → "6V-A/6V-B" in post-6V routing table
+
+---
 
 ### v2.1.0
 

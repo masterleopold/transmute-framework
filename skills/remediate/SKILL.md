@@ -1,11 +1,11 @@
 ---
 name: remediate
 description: >-
-  Auto-fixes runtime issues found during visual verification (Stage 6V) using a categorized fix loop.
+  Auto-fixes runtime issues found during visual verification (Stage 6V) using a categorized fix-verify cycle.
   This skill should be used when the user asks to "run runtime remediation",
   "fix 6V failures", "run Stage 6R", "auto-fix verification issues",
   "remediate runtime issues", "fix the verification report failures",
-  or "run the remediation loop", or when the transmute-pipeline agent
+  or "run the remediation cycle", or when the transmute-pipeline agent
   reaches Stage 6R of the pipeline.
 version: 1.0.0
 ---
@@ -24,8 +24,8 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/remediation-detailed
 
 3. **6V gate decision check**:
    - **6V PASS**: Skip 6R entirely -- proceed to 6P or 6P-R. No failures to remediate.
-   - **6V CONDITIONAL PASS with Category A/B issues**: Proceed with 6R.
-   - **6V CONDITIONAL PASS with ONLY Category C issues**: Skip 6R -- proceed to 6P or 6P-R. 6R cannot fix Category C.
+   - **6V CONDITIONAL PASS with 6V-A/6V-B issues**: Proceed with 6R.
+   - **6V CONDITIONAL PASS with ONLY 6V-C issues**: Skip 6R -- proceed to 6P or 6P-R. 6R cannot fix 6V-C.
    - **6V FAIL**: STOP -- fix critical issues manually first, then re-run 6V.
 
 4. Create output directory:
@@ -53,7 +53,7 @@ Adapt to your `plancasting/tech-stack.md`: middleware path, route whitelist mech
 
 Complete BEFORE spawning teammates:
 
-1. **Check loop counter** (prevents infinite remediation loops):
+1. **Check cycle counter** (prevents infinite remediation cycles):
    - Read `./plancasting/_audits/runtime-remediation/loop-count.txt`. If absent, this is run 1 — proceed.
    - If it contains `1` or `2`, previous runs have completed — proceed.
    - If it contains `3`, 3 runs have already completed — STOP immediately. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` and halt. Do NOT proceed to 6P or 6P-R.
@@ -61,11 +61,11 @@ Complete BEFORE spawning teammates:
 
 2. **Read project context**: `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/_audits/visual-verification/report.md`
 
-3. **Parse and categorize every failure**: For each 6V failure, record the reference (SC/US/FEAT/FS/NS/AS/ES/RS-NNN), description, severity, and assign to Category A (auto-fix), B (semi-auto), or C (human judgment).
+3. **Parse and categorize every failure**: For each 6V failure, record the reference (SC/US/FEAT/FS/NS/AS/ES/RS-NNN), description, severity, and assign to 6V-A (auto-fix), 6V-B (semi-auto), or 6V-C (human judgment).
 
-   **Quick triage rule**: One-file edit, route addition, or wiring existing function -> Category A. Understanding multiple files or pattern-matching -> Category B. New business logic, architecture decisions, or trade-offs -> Category C.
+   **Quick triage rule**: One-file edit, route addition, or wiring existing function -> 6V-A. Understanding multiple files or pattern-matching -> 6V-B. New business logic, architecture decisions, or trade-offs -> 6V-C.
 
-   **Early exit**: If zero Category A and zero Category B (all Category C): generate report noting no mechanical fixes, skip to 6P/6P-R.
+   **Early exit**: If zero 6V-A and zero 6V-B (all 6V-C): generate report noting no mechanical fixes, skip to 6P/6P-R.
 
 4. **Group fixes by domain** to prevent teammate conflicts:
    - Navigation & Routing: middleware, route files, layout components, Link hrefs
@@ -80,7 +80,7 @@ Complete BEFORE spawning teammates:
    ```
    **Abort gate**: If baseline shows failures unrelated to 6V issues, STOP — pre-existing failures must be resolved before 6R can proceed.
 
-6. **Create the remediation plan** at `./plancasting/_audits/runtime-remediation/plan.md` with triage summary, Category A/B/C issue tables, teammate assignments, and file->teammate mapping.
+6. **Create the remediation plan** at `./plancasting/_audits/runtime-remediation/plan.md` with triage summary, 6V-A/6V-B/6V-C issue tables, teammate assignments, and file->teammate mapping.
 
 ## Phase 2: Spawn Remediation Teammates
 
@@ -95,7 +95,7 @@ Fixes: broken button handlers, missing loading/empty states, missing i18n keys, 
 ### Teammate 3: "backend-data-fixer"
 Fixes: wrong response shapes, auth context propagation, empty query results, missing error handling, subscription issues. NEVER create business logic. NEVER modify schema.
 
-Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes applied, files modified, issues escalated to Category C.
+Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes applied, files modified, issues escalated to 6V-C.
 
 ## Phase 3: Integration & Verification
 
@@ -105,25 +105,25 @@ Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes appl
    bun run lint
    bun run test
    ```
-   If any check regresses from baseline, identify the causing fix, revert it, move to Category C.
+   If any check regresses from baseline, identify the causing fix, revert it, move to 6V-C.
 
 2. **Start the dev server**: Check if running, start if needed. If it fails to start, mark fixes as "unverifiable" and proceed to report (unlike 6V/6P which ABORT, 6R proceeds because fixes are already applied to code).
 
-3. **Targeted re-verification**: For each fix, use Playwright browser tools (navigate, screenshot, console check) to verify the issue is resolved. For public route fixes, use `browser_close` + fresh session. Quick regression sweep of ~5-10 key pages. If a fix didn't resolve the issue, revert and move to Category C.
+3. **Targeted re-verification**: For each fix, use Playwright browser tools (navigate, screenshot, console check) to verify the issue is resolved. For public route fixes, use `browser_close` + fresh session. Quick regression sweep of ~5-10 key pages. If a fix didn't resolve the issue, revert and move to 6V-C.
 
    **3-breakpoint verification**: For UI fixes, verify at all 3 breakpoints (1440px desktop, 768px tablet, 375px mobile) to ensure responsive behavior is maintained.
 
-   **Tier-based screenshot handling**: For Category A fixes, a single screenshot at the primary breakpoint is sufficient. For Category B fixes, capture before/after screenshots at all 3 breakpoints. For fixes affecting responsive layout, always verify at mobile (375px).
+   **Tier-based screenshot handling**: For 6V-A fixes, a single screenshot at the primary breakpoint is sufficient. For 6V-B fixes, capture before/after screenshots at all 3 breakpoints. For fixes affecting responsive layout, always verify at mobile (375px).
 
-4. **Update 6V report**: Append remediation results section to `./plancasting/_audits/visual-verification/report.md`. Update the `## Gate Decision` section: if all A/B resolved and zero C remain, change to PASS. If C remain, change to CONDITIONAL PASS (Category C remaining).
+4. **Update 6V report**: Append remediation results section to `./plancasting/_audits/visual-verification/report.md`. Update the `## Gate Decision` section: if all 6V-A/6V-B resolved and zero 6V-C remain, change to PASS. If 6V-C remain, change to CONDITIONAL PASS (6V-C remaining).
 
-5. **Generate remediation report** at `./plancasting/_audits/runtime-remediation/report.md` with summary, triage results, verification status, files modified, remaining issues by severity, loop tracking, gate decision, rules extracted, and next steps.
+5. **Generate remediation report** at `./plancasting/_audits/runtime-remediation/report.md` with summary, triage results, verification status, files modified, remaining issues by severity, cycle tracking, gate decision, rules extracted, and next steps.
 
 6. **Extract verified fix patterns as rules** (see CLAUDE.md 'Path-Scoped Rules'):
-   For each verified Category A/B fix, evaluate if the pattern is generalizable:
+   For each verified 6V-A/6V-B fix, evaluate if the pattern is generalizable:
    - Is this a tech-stack gotcha? -> rule candidate
    - Is this a recurring pattern (same issue in 3+ routes)? -> rule candidate
-   - Is this a Category C revealing a tech-stack limitation? -> rule candidate
+   - Is this a 6V-C revealing a tech-stack limitation? -> rule candidate
    Route by confidence: HIGH (2+ features) -> `.claude/rules/`, MEDIUM -> `plancasting/_rules-candidates.md`. 6R rules are inherently higher confidence than 5B rules (verified working fixes).
 
 7. **Commit**: Identify backend directory from `plancasting/tech-stack.md`. Stage specific files (avoid `git add -A`):
@@ -141,7 +141,7 @@ Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes appl
 
 1. Request shutdown for all teammates.
 2. Verify all modifications saved and committed.
-3. **Increment run counter**: After all verification is complete, update `loop-count.txt`. If absent, create with `1`. If exists, increment by 1. Only increment after Phase 3 verification fully completes — interrupted runs do not count.
+3. **Increment cycle counter**: After all verification is complete, update `loop-count.txt`. If absent, create with `1`. If exists, increment by 1. Only increment after Phase 3 verification fully completes — interrupted runs do not count.
 4. Leave the dev server running if Stage 6P or 6P-R will run immediately.
 
 ## Unfixable Violation Protocol
@@ -149,12 +149,12 @@ Each teammate runs `bun run typecheck` after EVERY fix. Each reports: fixes appl
 If a runtime issue requires architectural changes beyond this stage's scope:
 1. Document in `./plancasting/_audits/runtime-remediation/category-c-escalations.md`
 2. Mark as 'REQUIRES HUMAN DECISION'
-3. Include in final report under 'Category C Escalations'
-4. Continue fixing remaining A/B issues — do not block the loop
+3. Include in final report under '6V-C Escalations'
+4. Continue fixing remaining 6V-A/6V-B issues — do not block the cycle
 
 ## Post-3-Cycles Escalation
 
-After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist:
+After 3 internal fix-verify cycles within a single 6R run, if 6V-A/6V-B issues persist:
 - Escalate ALL remaining 6V-A/B to 6V-C (human judgment required)
 - Update gate to CONDITIONAL PASS
 - Proceed to 6P/6P-R without further cycle attempts
@@ -172,23 +172,23 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 
 - PASS: proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
 - CONDITIONAL PASS: human reviews remaining issues, decides to deploy or fix first
-- FAIL: human resolves Category C critical issues, then re-run 6V -> 6R
+- FAIL: human resolves 6V-C critical issues, then re-run 6V -> 6R
 
 ## Critical Rules
 
-1. NEVER make business logic decisions. Ambiguous fixes go to Category C.
+1. NEVER make business logic decisions. Ambiguous fixes go to 6V-C.
 2. NEVER weaken security. Adding public routes is fine if PRD says public. Removing auth guards is NEVER acceptable.
 3. ALWAYS preserve test baseline. Zero test regressions is non-negotiable.
 4. ALWAYS typecheck after EVERY fix, not just at the end.
 5. ALWAYS verify fixes in the running app, not just in code.
 6. NEVER modify auto-generated files (`_generated/`, `.next/`, `node_modules/`).
 7. NEVER create database schema changes.
-8. If a Category B fix introduces a NEW failure of EQUAL or HIGHER severity, revert and move to Category C.
+8. If a 6V-B fix introduces a NEW failure of EQUAL or HIGHER severity, revert and move to 6V-C.
 9. ALWAYS read component/function context before fixing. Check git blame when a fix seems too simple.
 10. For i18n fixes: check ALL language files.
 11. For stub pages: ALWAYS include auth guards, loading states, and error handling.
 12. If 6V report has zero failures, output a clean report and exit.
-13. Maximum 3 internal fix-verify cycles per run (tracked in `loop-count.txt`).
+13. Maximum 3 internal fix-verify cycles per run (tracked in `loop-count.txt` — filename preserved for backward compatibility).
 14. ALWAYS respect the project's file organization conventions.
 
 ## Output Specification
@@ -197,9 +197,9 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 |----------|------|
 | Remediation Plan | `./plancasting/_audits/runtime-remediation/plan.md` |
 | Remediation Report | `./plancasting/_audits/runtime-remediation/report.md` |
-| Category C Escalations | `./plancasting/_audits/runtime-remediation/category-c-escalations.md` |
-| Remaining Blockers (after 3 loops) | `./plancasting/_audits/runtime-remediation/remaining-blockers.md` |
-| Loop Counter | `./plancasting/_audits/runtime-remediation/loop-count.txt` |
+| 6V-C Escalations | `./plancasting/_audits/runtime-remediation/category-c-escalations.md` |
+| Remaining Blockers (after 3 cycles) | `./plancasting/_audits/runtime-remediation/remaining-blockers.md` |
+| Cycle Counter | `./plancasting/_audits/runtime-remediation/loop-count.txt` |
 | Baseline Typecheck Log | `./plancasting/_audits/runtime-remediation/baseline-typecheck.log` |
 | Baseline Tests Log | `./plancasting/_audits/runtime-remediation/baseline-tests.log` |
 | Last Remediated Commit | `./plancasting/_audits/runtime-remediation/last-remediated-commit.txt` |
