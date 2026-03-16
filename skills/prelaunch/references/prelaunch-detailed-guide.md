@@ -18,7 +18,8 @@ Before beginning:
 2. **5B Gate Decision**:
    - **PASS**: Proceed to 6H verification
    - **CONDITIONAL PASS**: Proceed only if each remaining issue has a documented workaround or explicit deferral decision (see execution-guide.md § "Gate Decision Outcomes" for canonical 5B CONDITIONAL PASS criteria — multiple valid paths exist based on A/B and C issue counts)
-   - **FAIL**: STOP — do not run 6H until 5B issues are resolved
+   - **FAIL-RETRY**: STOP — resolve 5B issues and re-run 5B before proceeding to 6H (see execution-guide.md § "Gate Decision Outcomes" for definitions)
+   - **FAIL-ESCALATE**: STOP — escalate to operator; do not proceed until 5B achieves PASS or CONDITIONAL PASS
 3. Verify all Stage 6 audit reports exist:
    - `./plancasting/_audits/security/report.md` (6A)
    - `./plancasting/_audits/accessibility/report.md` (6B)
@@ -89,7 +90,7 @@ Stage 6H generates:
 - `./plancasting/_launch/readiness-report.md` — final readiness assessment with READY/NOT READY decision
 - `./plancasting/_launch/unfixable-violations.md` (if applicable) — blocking issues requiring operator intervention
 
-**Note**: Stage 6H is the only stage using binary READY/NOT READY terminology (instead of PASS/CONDITIONAL PASS/FAIL). This is intentional: pre-launch verification is a binary decision — the product is either deployable or it is not. There is no 'conditional' deployment.
+**Note**: Stage 6H is the only stage using binary READY/NOT READY terminology (instead of PASS/CONDITIONAL PASS/FAIL). This stage uses READY/NOT READY instead of PASS/CONDITIONAL PASS/FAIL because 6H is a binary deployment gate — either all deployment prerequisites are met (READY), or they are not (NOT READY). NOT READY requires fixing blockers and re-running 6H. There is no "conditional" deployment.
 
 ## Agent Team Architecture
 
@@ -97,12 +98,13 @@ Stage 6H generates:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and all audit reports in `./plancasting/_audits/`.
-2. Read `./plancasting/_audits/implementation-completeness/report.md` for known issues and assumptions. If this file does not exist, STOP — Stage 5B is a prerequisite (see Prerequisites section). Do not proceed until 5B has been run.
-3. **Verify audit report existence**: Before reading unfixable violations, confirm these files exist: `./plancasting/_audits/security/report.md`, `./plancasting/_audits/accessibility/report.md`, `./plancasting/_audits/performance/report.md`, `./plancasting/_audits/refactoring/report.md`, `./plancasting/_audits/resilience/report.md`, `./plancasting/_audits/seed-data/report.md` (if 6F has run), `./plancasting/_audits/documentation/report.md` (if 6D has run). Missing reports indicate that stage was skipped — note in the readiness report.
-4. If any unfixable violation files exist from prior stages: `./plancasting/_audits/security/unfixable-violations.md`, `./plancasting/_audits/accessibility/unfixable-violations.md`, `./plancasting/_audits/performance/unfixable-violations.md`, `./plancasting/_audits/refactoring/unfixable-violations.md`, `./plancasting/_audits/resilience/unfixable-violations.md`, `./plancasting/_audits/documentation/unfixable-violations.md`, `./plancasting/_audits/seed-data/unfixable-violations.md` — read them and include their critical items in the Blocking Issues section of the readiness report. If a file does not exist, that audit stage had no unfixable violations — skip it.
-5. Create `./plancasting/_launch/checklist.md` — the master pre-launch checklist with all items to verify.
-6. Create a task list for all teammates.
+1. Ensure output directory exists: `mkdir -p ./plancasting/_launch`
+2. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and all audit reports in `./plancasting/_audits/`.
+3. Read `./plancasting/_audits/implementation-completeness/report.md` for known issues and assumptions. If this file does not exist, STOP — Stage 5B is a prerequisite (see Prerequisites section). Do not proceed until 5B has been run.
+4. **Verify audit report existence**: Before reading unfixable violations, confirm these files exist: `./plancasting/_audits/security/report.md`, `./plancasting/_audits/accessibility/report.md`, `./plancasting/_audits/performance/report.md`, `./plancasting/_audits/refactoring/report.md`, `./plancasting/_audits/resilience/report.md`, `./plancasting/_audits/seed-data/report.md` (if 6F has run), `./plancasting/_audits/documentation/report.md` (if 6D has run). Missing reports indicate that stage was skipped — note in the readiness report.
+5. If any unfixable violation files exist from prior stages: `./plancasting/_audits/security/unfixable-violations.md`, `./plancasting/_audits/accessibility/unfixable-violations.md`, `./plancasting/_audits/performance/unfixable-violations.md`, `./plancasting/_audits/refactoring/unfixable-violations.md`, `./plancasting/_audits/resilience/unfixable-violations.md`, `./plancasting/_audits/documentation/unfixable-violations.md`, `./plancasting/_audits/seed-data/unfixable-violations.md` — read them and include their critical items in the Blocking Issues section of the readiness report. If a file does not exist, that audit stage had no unfixable violations — skip it.
+6. Create `./plancasting/_launch/checklist.md` — the master pre-launch checklist with all items to verify.
+7. Create a task list for all teammates.
 
 ### Phase 2: Spawn Verification Teammates
 
@@ -291,7 +293,7 @@ After all teammates complete:
 
    **NOT READY** = one or more criteria above fail.
 
-   **Operator Override Procedure**: If 6H returns NOT READY but the operator decides to launch despite blockers: (1) The operator documents the override in the readiness report under a new '## Launch Override' section with: reason for override, list of accepted blockers, risk assessment, and mitigation plan. (2) Proceed to Stage 6V with the documented override. Note: This override is a human decision point — the pipeline does not have an automated approval mechanism. **Override verification**: If this stage reads a previous 6H report showing NOT READY, check whether a `## Launch Override` section exists. If NOT READY is present but no override section exists, STOP and require the operator to either fix blockers or document the override decision before proceeding.
+   **Operator Override Procedure**: The operator is the person running the Transmute pipeline. If 6H returns NOT READY but the operator decides to launch despite blockers: (1) The operator documents the override in the readiness report under a new '## Launch Override' section with: reason for override, list of accepted blockers, risk assessment, and mitigation plan. (2) Proceed to Stage 6V with the documented override. Note: This override is a human decision point — the pipeline does not have an automated approval mechanism. Override justification must be documented in the readiness report with: (a) the specific blocker being overridden, (b) the risk assessment, and (c) the mitigation plan. Security blockers (CVSS ≥ 9.0) cannot be overridden. **Override verification**: If this stage reads a previous 6H report showing NOT READY, check whether a `## Launch Override` section exists. If NOT READY is present but no override section exists, STOP and require the operator to either fix blockers or document the override decision before proceeding.
 
    **Launch-blocking definition**: An unfixable violation is launch-blocking ONLY if it prevents core business functionality (auth broken, payment cannot complete, data loss possible). Non-critical unfixable issues (minor accessibility gap on secondary feature, performance slightly over baseline) are NOT launch-blocking — document them as post-launch items. If uncertain, classify as blocking and let the operator override. **Unfixable violations consolidation**: Read all `unfixable-violations.md` files from prior audit stages (`./plancasting/_audits/{security,accessibility,performance,refactoring,resilience}/unfixable-violations.md`) — each stage may have created one. Evaluate each violation against this launch-blocking definition. Reference the source stage and issue in the readiness report.
 
@@ -311,7 +313,7 @@ After all teammates complete:
    - If READY → proceed to Stage 6V (Visual & Functional Verification).
    - If NOT READY → fix blockers and re-run 6H.
 
-   6H's routing decision is: READY → proceed to Stage 6V (Visual & Functional Verification). NOT READY → fix blockers and re-run 6H. After 6V completes, 6V determines the next step (6R then 6P, or directly to 6P if no fixable issues) — see execution-guide.md § "Gate Decision Outcomes" → "Post-6V routing" for the decision table. 6V never routes directly to deploy; 6P always runs before deployment.
+   6H's routing decision is: READY → proceed to Stage 6V (Visual & Functional Verification). NOT READY → fix blockers and re-run 6H. After 6V completes, 6V determines the next step (6R then 6P, or directly to 6P if no fixable issues) — see execution-guide.md § "Gate Decision Outcomes" → "Post-6V routing" for the decision table. 6V never routes directly to deploy; 6P or 6P-R always runs before deployment.
 
 2. Output summary: launch readiness status (READY/NOT READY), blocker count, non-critical issue count.
 

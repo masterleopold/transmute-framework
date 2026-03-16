@@ -56,7 +56,7 @@ Stage 6A implements rate limiting for **AUTH endpoints** (login, signup, passwor
 
 This stage runs AFTER Stage 6E (Code Refactoring) — per CLAUDE.md Stage 6 ordering, resilience hardening should follow refactoring for cleaner error handling patterns. Before beginning:
 1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6 audits. Do not harden code with unverified implementation completeness."
-2. If 5B shows FAIL, STOP — run Stage 5B remediation first. Do not harden code that has unresolved implementation gaps. If CONDITIONAL PASS, review the documented Category C issues — proceed with awareness of known gaps. Do NOT harden features with Category C status — their implementation may change during re-implementation.
+2. If 5B shows FAIL (FAIL-RETRY or FAIL-ESCALATE — see execution-guide.md § "Gate Decision Outcomes" for definitions), STOP — re-run Stage 5/5B until PASS or CONDITIONAL PASS before resilience hardening. If CONDITIONAL PASS, review the documented Category C issues — proceed with awareness of known gaps. Do NOT harden features with Category C status — their implementation may change during re-implementation.
 3. Verify `./plancasting/_audits/refactoring/report.md` exists (Stage 6E output). If missing, STOP: "Stage 6E (Code Refactoring) has not been completed. Stage 6G MUST run after 6E per CLAUDE.md mandatory ordering. Run 6E first, then restart 6G." If it exists, read it — especially the "Extracted Error Handling Patterns for Stage 6G" section (if present) — to reuse extracted error handling utilities rather than creating new ones.
 4. Verify `./plancasting/_audits/performance/report.md` exists (Stage 6C output — per CLAUDE.md ordering, 6C runs before 6G). If missing, WARN and use generic timeout baselines from the relevant BRD file. Search with `grep -rl 'availability\|reliability\|non-functional' ./plancasting/brd/` to find the relevant BRD file. Common location: `08-non-functional-requirements.md` (file number may vary by project).
 5. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions
@@ -102,19 +102,20 @@ Stage 6G generates:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and `./plancasting/prd/15-non-functional-specifications.md`. Search with `grep -rl 'availability\|reliability\|non-functional' ./plancasting/brd/` to find the relevant BRD file. Common location: `08-non-functional-requirements.md` (file number may vary by project). Read the BRD file for availability and reliability requirements. Read `./plancasting/_audits/performance/report.md` if it exists — use identified performance characteristics to inform timeout values and retry configurations.
-2. **Rate limiting scope verification**: If `./plancasting/_audits/security/report.md` exists (Stage 6A output), read its rate limiting section and create a scope boundary table in `./plancasting/_audits/resilience/plan.md` listing: (a) all endpoints already rate-limited by 6A (auth-tier), (b) all data-mutation endpoints where 6G will add rate limiting. **Additionally, perform an independent scan** of all data-mutation endpoints in the codebase to verify 6A identified all gaps — do NOT rely solely on 6A's flagged gaps. If the independent scan finds endpoints 6A missed, add them to the resilience plan. Flag any overlaps or gaps for resolution before spawning teammates.
-3. Map all external dependencies:
+1. Ensure output directory exists: `mkdir -p ./plancasting/_audits/resilience`
+2. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and `./plancasting/prd/15-non-functional-specifications.md`. Search with `grep -rl 'availability\|reliability\|non-functional' ./plancasting/brd/` to find the relevant BRD file. Common location: `08-non-functional-requirements.md` (file number may vary by project). Read the BRD file for availability and reliability requirements. Read `./plancasting/_audits/performance/report.md` if it exists — use identified performance characteristics to inform timeout values and retry configurations.
+3. **Rate limiting scope verification**: If `./plancasting/_audits/security/report.md` exists (Stage 6A output), read its rate limiting section and create a scope boundary table in `./plancasting/_audits/resilience/plan.md` listing: (a) all endpoints already rate-limited by 6A (auth-tier), (b) all data-mutation endpoints where 6G will add rate limiting. **Additionally, perform an independent scan** of all data-mutation endpoints in the codebase to verify 6A identified all gaps — do NOT rely solely on 6A's flagged gaps. If the independent scan finds endpoints 6A missed, add them to the resilience plan. Flag any overlaps or gaps for resolution before spawning teammates.
+4. Map all external dependencies:
    - Third-party APIs called by your backend actions/functions (e.g., Convex actions, API routes, serverless functions)
    - Auth provider
    - File storage service
    - Email service
    - Any other external services from `plancasting/tech-stack.md`
-4. Identify all multi-step operations (workflows that involve multiple mutations or actions in sequence).
-5. If `./plancasting/_audits/refactoring/report.md` exists (Stage 6E output), identify shared error handling patterns, utilities, or helpers that 6E extracted (e.g., `handleApiError()`, `withRetry()`, shared validation helpers). List them in the resilience plan. Instruct all teammates to USE these existing patterns rather than creating new ones — 6E just eliminated duplication, and 6G should not reintroduce it.
+5. Identify all multi-step operations (workflows that involve multiple mutations or actions in sequence).
+6. If `./plancasting/_audits/refactoring/report.md` exists (Stage 6E output), identify shared error handling patterns, utilities, or helpers that 6E extracted (e.g., `handleApiError()`, `withRetry()`, shared validation helpers). List them in the resilience plan. Instruct all teammates to USE these existing patterns rather than creating new ones — 6E just eliminated duplication, and 6G should not reintroduce it.
 
-6. Create `./plancasting/_audits/resilience/plan.md` with the analysis and task assignments.
-7. Create a task list for all teammates with dependency tracking.
+7. Create `./plancasting/_audits/resilience/plan.md` with the analysis and task assignments.
+8. Create a task list for all teammates with dependency tracking.
 
 ### Phase 2: Spawn Hardening Teammates
 
@@ -124,6 +125,7 @@ When evaluating mutations, classify them as either truly idempotent (safe to ret
 Spawn the following 3 teammates.
 
 **Execution Order Decision**:
+Sequential execution required if: (a) API contract changes span both backend and frontend, (b) database schema modifications affect query patterns in other teammates' scope, or (c) shared middleware/config files are modified. Otherwise, default to parallel.
 1. **Default (parallel)**: All 3 teammates run in parallel — use when the lead's Phase 1 analysis finds zero or low-risk API contract changes. If Teammate 1 discovers API contract changes during execution, they document changes in their completion message; the lead reconciles in Phase 3.
 2. **Sequential (if HIGH-RISK API contract changes)**: If Phase 1 identifies high-risk API changes, spawn Teammate 1 first, then Teammates 2+3 in parallel after Teammate 1 completes. This avoids wasted frontend work on incompatible implementations. **HIGH-RISK API contract changes** include: error response shapes fundamentally change (e.g., from `{ error: string }` to `{ code, message, details }`), new required error codes added to 5+ endpoints, mutation return types change, or new input validation requirements added retroactively. If Phase 1 analysis identifies ANY of these, use Sequential order. Otherwise, use Default (parallel).
 3. **Mid-execution escalation**: If Teammate 1 discovers critical API changes mid-execution that would invalidate Teammate 2's work, the lead notifies Teammate 2 immediately; less critical changes are reconciled in Phase 3.
@@ -144,11 +146,11 @@ Your tasks:
 1. EXTERNAL SERVICE FAILURE HANDLING: Scan all backend functions that call external APIs (e.g., Convex actions, API routes, serverless functions).
    For each external call:
    - Verify there is a try/catch with appropriate error handling.
-   - Verify timeout is configured (not waiting indefinitely). **Timeout baselines**: fast API calls: 3–5s; file operations: 30s; AI model calls: 60–120s; long-running workflows: per business SLA. If `./plancasting/_audits/performance/report.md` exists, extract measured latencies for each operation type and use measured value + 50% buffer as the timeout. If the performance report does not exist (Stage 6C hasn't completed yet), use the baseline values above. Document this in the resilience report and re-visit timeout configuration after 6C completes if actual measured latencies differ significantly.
+   - Verify timeout is configured (not waiting indefinitely). **Timeout baselines**: fast API calls: 3–5s; file operations: 30s; AI model calls: 60–120s; long-running workflows: per business SLA. If `./plancasting/_audits/performance/report.md` exists, extract measured latencies for each operation type and use measured value + 50% buffer as the timeout. If `./plancasting/_audits/performance/report.md` does not exist (6C hasn't completed yet), use these generic baselines. After 6C completes, update timeout values based on measured p95 latencies from the performance report. Document this in the resilience report and re-visit timeout configuration after 6C completes if actual measured latencies differ significantly.
    - **For external API calls**: Implement retry logic with exponential backoff for transient failures (network errors, 5xx responses, and 429 rate limit responses). Configure: maximum 3 retries, delay = min(2^attempt × 1000ms, 30000ms) + random(0, 1000ms) jitter, where attempt starts at 1 — i.e., retry 1: ~2-3s, retry 2: ~4-5s, retry 3: ~8-9s, then stop. For 429 responses, honor the `Retry-After` header when present (parse both seconds-value and HTTP-date formats per RFC 7231) (capped at 30 seconds).
    - **For backend mutations**: Before adding retry logic, verify idempotency first (see Idempotency Note below for definitions and examples). Only add automatic retries for idempotent mutations; non-idempotent mutations MUST surface errors to the user with a manual retry option instead.
    - **Circuit breaker decision** (evaluate BEFORE implementing): In serverless environments (Convex actions, Lambda, Edge Functions), there is no persistent in-memory state between invocations. **Recommendation for most serverless products**: Use retry-with-exponential-backoff alone (option b below) — circuit breakers add complexity and state management overhead that rarely pays off in serverless architectures. Only implement full circuit breakers if the product uses long-running servers with persistent state, or if a specific external service has frequent, prolonged outages (>5 minutes).
-     - **(a) Full circuit breaker** (long-running servers or frequent outages): States: CLOSED (normal) → OPEN (after 5 consecutive failures, return cached/fallback response for 60-second cooldown) → HALF-OPEN (after cooldown, allow one probe request — success → CLOSED, failure → OPEN). In serverless, persist state via database table or key-value store (e.g., Convex table, Redis).
+     - **(a) Full circuit breaker** (long-running servers or frequent outages): States: CLOSED (normal) → OPEN (after 5 consecutive failures within a 5-minute sliding window, return cached/fallback response for 60-second cooldown) → HALF-OPEN (after cooldown, allow one probe request — success → CLOSED, failure → OPEN). In serverless, persist state via database table or key-value store (e.g., Convex table, Redis).
      - **(b) Retry-with-backoff only** (recommended default for serverless): The exponential backoff configured above provides sufficient resilience. No additional circuit state needed.
      - **(c) Fail fast** (non-critical features): Skip both circuit breakers and retries, surface errors to the user immediately. Choose when data integrity outweighs availability.
      Document the chosen approach for each external service.
@@ -229,7 +231,7 @@ Your tasks:
 
 3. LOADING AND TIMEOUT STATES:
    - Verify all queries show a loading state, not a blank screen or flash of content.
-   - Add timeout handling: if a query takes more than 10 seconds, show a "taking longer than expected" message with a retry option. Adapt to your data layer: (a) REST/GraphQL: implement `AbortController` with timeout, (b) Reactive backends (Convex, Firebase, Supabase Realtime): check if the subscription has not returned data within the timeout window (e.g., `useQuery` returns `undefined` for 10+ seconds), (c) For all: provide context-appropriate messaging.
+   - Add timeout handling: if a query exceeds its expected duration, show a "taking longer than expected" message with a retry option. Use calibrated timeout values from `./plancasting/_audits/performance/report.md` (if available) — set the timeout to 2× the measured p95 latency for each operation. If the performance report is unavailable, use 10 seconds as a conservative default. Adapt to your data layer: (a) REST/GraphQL: implement `AbortController` with timeout, (b) Reactive backends (Convex, Firebase, Supabase Realtime): check if the subscription has not returned data within the timeout window (e.g., `useQuery` returns `undefined` beyond the calibrated threshold), (c) For all: provide context-appropriate messaging.
    - Verify navigation during loading doesn't cause errors (component unmounts while query is pending).
 
 4. BACKEND CONNECTION RESILIENCE: Review backend connection handling (e.g., Convex WebSocket, Supabase Realtime, Firebase listeners, REST API timeouts).
@@ -347,8 +349,9 @@ After all teammates complete:
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
+1. Commit all changes: `git add -A && git commit -m 'feat(resilience): Stage 6G error resilience hardening'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
 
 ## Critical Rules
 

@@ -139,7 +139,6 @@ Category D suggestions are for POST-LAUNCH review. They do NOT block Stage 7 dep
    - If `progress.md` is missing or shows incomplete phases → 6P-R failed mid-execution. Do NOT proceed — request operator approval before continuing.
    - If `design-plan.md` exists but 6P-R's `progress.md` shows incomplete status, verify with the operator whether 6P-R was intentionally abandoned before proceeding.
    - If `design-plan.md` does not exist → 6P-R was not run. Proceed with 6P.
-   - Also check if `./plancasting/_audits/visual-polish/progress.md` exists without `design-plan.md` — this indicates an interrupted 6P-R attempt. Verify with the operator before proceeding with 6P.
 
 1. **`frontend-design` plugin** (recommended but has a fallback):
    Check if the skill file exists at `/mnt/skills/public/frontend-design/SKILL.md`.

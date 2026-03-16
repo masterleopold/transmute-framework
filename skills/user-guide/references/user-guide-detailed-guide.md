@@ -2,9 +2,9 @@
 
 ## Stage 7D: External User Documentation Site
 
-Stage 7D runs AFTER Stage 7V achieves PASS or CONDITIONAL PASS (7V FAIL blocks 7D). It requires a live production URL for screenshots and link verification.
+Stage 7D runs AFTER Stage 7V achieves PASS or CONDITIONAL PASS (7V FAIL blocks 7D). It requires a live production URL for screenshots and link verification. If the production URL is unavailable or unstable, use the staging/preview URL for screenshots and link verification. Note the URL used in the report header so the operator can re-capture with the production URL after deployment stabilizes.
 
-**Skip Condition**: Read `./plancasting/tech-stack.md` § Documentation section. If it states user documentation is not needed, do NOT run this stage — proceed directly to Stage 8 (Feedback Loop) / 9 (Maintenance). The 7D gate does not apply when skipped. If skipping, create a brief note at `./plancasting/_audits/user-guide/report.md` stating "Stage 7D skipped per tech-stack.md — user documentation not applicable." This allows downstream stages to distinguish "skipped" from "not yet run."
+**Skip Condition**: Read `./plancasting/tech-stack.md` § Documentation. If it states user documentation is not needed, skip this stage. Document the skip in `./plancasting/_audits/user-guide/report.md`: "Stage 7D skipped per tech-stack.md — user documentation not applicable." Proceed directly to Stage 8 or Stage 9.
 
 ````text
 You are a senior technical writer acting as the TEAM LEAD for a multi-agent user guide generation project using Claude Code Agent Teams. Your task is to generate a complete, deployable Mintlify documentation site containing user-facing guides organized by user journey — derived from the PRD screen specifications, user stories, user flows, and the live production application.
@@ -22,7 +22,7 @@ Stage 7D runs AFTER Stage 7V because:
 
 **Stage Sequence**: ... → 7V (Production Smoke Verification) → **7D (this stage)** → 8 (Feedback Loop) / 9 (Maintenance)
 
-**Stack Adaptation**: This prompt assumes Mintlify as the documentation platform. If `plancasting/tech-stack.md` specifies a different documentation platform (Docusaurus, GitBook, etc.), adapt the docs.json structure, MDX components, and CLI commands accordingly. The content generation rules (user journeys, screenshots, terminology) apply regardless of platform.
+**Stack Adaptation**: The default documentation framework is Mintlify. If `plancasting/tech-stack.md` specifies a different framework (Docusaurus, Starlight, Gitbook, etc.), adapt the directory structure, configuration files, and component syntax accordingly. The content generation rules (user journeys, screenshots, terminology) apply regardless of platform.
 
 ## Input
 
@@ -48,7 +48,7 @@ Stage 7D runs AFTER Stage 7V because:
   - `14-business-rules-and-logic.md` — business rules affecting user behavior
 - **Existing Developer Docs** (Stage 6D): `./docs/` — if a help section exists (e.g., `./docs/help/`), reuse as content source (adapt to user-friendly language, do NOT copy verbatim)
 - **Product Logo** (Stage 0): If Stage 0 collected a product logo, it is recorded in `plancasting/tech-stack.md` under the Design Direction section. Copy to `./user-guide/public/` for Mintlify branding.
-- **Tech Stack**: `./plancasting/tech-stack.md` — product name, design direction, branding, documentation platform config. Check `plancasting/tech-stack.md` under the Documentation section for this configuration. If the Documentation section says "No — not needed," STOP immediately and report: "Stage 7D skipped — user opted out of user-facing documentation in Stage 0."
+- **Tech Stack**: `./plancasting/tech-stack.md` — product name, design direction, branding, documentation platform config. Check `plancasting/tech-stack.md` under the Documentation section for this configuration. If the Documentation section says "No — not needed," STOP immediately, create the skip note at `./plancasting/_audits/user-guide/report.md` (per Skip Condition above), and report: "Stage 7D skipped — user opted out of user-facing documentation in Stage 0."
 - **Project Rules**: `./CLAUDE.md`
 - **E2E Constants**: `./e2e/constants.ts` — test user credentials for authenticated page screenshots
 - **Playwright Config**: `./playwright.config.ts` — browser configuration
@@ -66,7 +66,6 @@ Generate a complete Mintlify documentation site under `./user-guide/`. The direc
 user-guide/
 ├── docs.json                  # Root config (branding, theme, languages array)
 ├── en/                        # English (base language)
-│   ├── docs.json              # English navigation config
 │   ├── introduction.mdx       # Welcome + product overview
 │   ├── quickstart.mdx         # First user flow end-to-end
 │   ├── journeys/              # DYNAMICALLY GENERATED from PRD user flows
@@ -83,8 +82,7 @@ user-guide/
 │   ├── troubleshooting.mdx    # From 7V report + PRD interaction patterns
 │   └── changelog.mdx          # From PRD release plan
 ├── <session-lang>/            # Session language version (e.g., ja/) — mirrors en/
-│   ├── docs.json              # Language-specific navigation
-│   └── (identical page structure, translated content)
+│   └── (identical page structure, translated content — no per-language docs.json)
 ├── images/                    # Auto-captured via Playwright (Phase 1 step 10)
 │   ├── <journey-step>-desktop.png
 │   ├── <journey-step>-mobile.png
@@ -215,7 +213,7 @@ Valid structure: `tabs`, `anchors`, and `dropdowns` are **siblings** under `navi
   ]
 }
 ~~~
-The root `languages` array configures per-language branding overrides (banner, footer, navbar). Each language gets its own directory with a per-language `docs.json` for navigation (groups and pages).
+The root `languages` array configures per-language branding overrides (banner, footer, navbar). Navigation for all languages is defined centrally in the root `docs.json` (see configuration model below) — per-language directories contain only content MDX files, not separate `docs.json` files.
 
 **docs.json configuration model**:
 - **Multi-language**: The root `docs.json` contains branding configuration (name, theme, colors, logo, footer, etc.) AND the `navigation.languages` array, which embeds per-language navigation groups directly. Each language entry in the array has its own `groups` for navigation. Content MDX files live in per-language directories (e.g., `en/`, `ja/`), but navigation is defined centrally in the root `docs.json`.
@@ -256,7 +254,7 @@ Based on observed documentation generation outcomes:
 
 1. **PRD-as-docs copy**: Agent copies PRD specification text verbatim. PRD is for developers — user guides are for non-technical users. Rewrite completely in plain, task-oriented language.
 2. **Feature-list organization**: Agent organizes docs by feature ID (FEAT-001, FEAT-002) instead of user journey. Users think in tasks ("How do I deploy?"), not feature numbers.
-3. **Missing navigation entries in docs.json**: Agent creates MDX files but forgets to add them to the `navigation` in per-language `docs.json`. Pages exist but are unreachable from the sidebar.
+3. **Missing navigation entries in docs.json**: Agent creates MDX files but forgets to add them to the `navigation` in the root `docs.json`. Pages exist but are unreachable from the sidebar.
 4. **Hardcoded branding placeholders**: Agent uses placeholder colors/logos instead of extracting from `plancasting/tech-stack.md` Design Direction section.
 5. **Broken internal links**: MDX files link to pages that don't exist or use wrong paths. Mintlify uses paths relative to the language root directory, without file extensions.
 6. **Jargon leakage**: Technical terms from PRD/BRD leak into user guides — "mutation," "query," "pipeline stage," "schema," "validator," "FEAT-007," "US-*," "SC-*," "FR-*," "BR-* (or BRL-*)," "UF-*." Use the product's user-facing terminology exclusively.
@@ -271,7 +269,7 @@ Based on observed documentation generation outcomes:
 11. **Translation inconsistency**: Translated version diverges structurally from English base — different sections, different page count, different navigation groups. The session-language version MUST mirror the English structure exactly.
 12. **Language config mismatch**: Root `docs.json` `languages` array doesn't match actual language directories on disk.
 13. **Wrong config field**: Using `versions` for languages (should be `languages`), or `mint.json` filename (should be `docs.json`).
-14. **Missing per-language navigation**: If using the legacy per-directory navigation model, each language directory needs its own `docs.json`. The recommended approach embeds navigation in the root `docs.json`'s `navigation.languages` array — verify your configuration matches your chosen model.
+14. **Missing per-language navigation**: The recommended approach embeds all language navigation in the root `docs.json`'s `navigation.languages` array — do NOT create per-language `docs.json` files. Verify your root `docs.json` has a `navigation.languages` entry for each language directory on disk.
 15. **Deeply nested groups**: Mintlify supports one level of group nesting (a top-level group's `pages` array can contain sub-group objects), but nesting sub-groups inside sub-groups causes confusing sidebar UX. Limit to one level of nesting and use `anchors` for top-level organization.
 16. **Screenshots show loading/skeleton state**: Playwright captures before data finishes loading — screenshot shows spinners instead of content. ALWAYS wait for data to settle: use `browser_wait_for` with the `text` parameter set to visible text that indicates the page has loaded (e.g., `"Dashboard"`, `"Your Projects"`, a heading or label) — or use `textGone` to wait for loading indicators to disappear (e.g., `"Loading..."`, `"Please wait"`). Do NOT capture immediately after navigation.
 17. **Screenshots expose test/seed data**: Screenshots captured with test user show identifiable test data ("Test User", "smoke-test@..."). Use realistic-looking seed data or crop screenshots to exclude personal data.
@@ -293,15 +291,23 @@ Based on observed documentation generation outcomes:
 8. NEVER copy PRD text verbatim — rewrite in user-friendly, non-technical language.
 9. Use `![Alt text](/images/file.png)` markdown syntax for screenshots — images go in `images/` directory at docs root. Do NOT use `<Frame><img src="..." /></Frame>`.
 
+## Session Recovery
+
+If resuming from a prior incomplete Stage 7D session:
+1. Check if `./plancasting/_audits/user-guide/guide-context.md` exists — if so, Phase 1 (context gathering) completed.
+2. Check if `./user-guide/docs.json` exists — if so, Phase 2 (site setup) started.
+3. Check if `./plancasting/_audits/user-guide/report.md` exists with a Gate Decision — if so, Stage 7D completed. Verify the gate result and proceed.
+4. Resume from the first incomplete phase.
+
 ## Agent Team Architecture
 
 ### Phase 1: Lead Analysis & Planning
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-**Gate: Stage 7V Must PASS First** — This stage requires a PASS from Stage 7V (Production Smoke Verification). If 7V has not been run or did not PASS, do NOT proceed.
+**Gate: Stage 7V Must PASS or CONDITIONAL PASS First** — This stage requires PASS or CONDITIONAL PASS from Stage 7V (Production Smoke Verification). If 7V has not been run or returned FAIL, do NOT proceed.
 
-**Upstream Gate**: Verify `./plancasting/_audits/production-smoke/report.md` exists and shows PASS. If 7V shows FAIL, STOP — do not run 7D. Fix production issues first, re-run 7V, then proceed.
+**Upstream Gate**: Verify `./plancasting/_audits/production-smoke/report.md` exists and shows PASS or CONDITIONAL PASS. If 7V shows FAIL, STOP — do not run 7D. Fix production issues first, re-run 7V, then proceed.
 
 **6P/6P-R Gate Prerequisite**: Also verify that `./plancasting/_audits/visual-polish/report.md` shows PASS or CONDITIONAL PASS (or that `./plancasting/_audits/visual-polish/design-plan.md` exists if 6P-R was used). If 6P/6P-R is FAIL, do NOT proceed — return to Stage 6P to resolve visual defects before documenting the product.
 
@@ -314,7 +320,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    4. Only delete after explicit operator confirmation or after verifying zero uncommitted changes.
    This ensures a clean slate — stale pages from previous runs cannot linger and create orphans. This is what makes Stage 7D idempotent: every run produces a fresh, complete site derived from the current PRD state. The lead (not a teammate) performs this deletion.
 
-1. **Verify Node.js version**: Run `node --version` — Mintlify CLI requires Node.js v20.17.0+. If the version is below this, STOP and report: "Node.js v20.17.0+ required for Mintlify CLI. Current version: [version]. Upgrade before running Stage 7D."
+1. **Verify Node.js version**: Run `node --version` — Mintlify CLI requires Node.js v20.17.0+. If the version is below this and can be upgraded, upgrade first. If Node.js upgrade is not feasible, skip `mint` CLI validation (note "CLI validation not available — Node.js below v20.17.0" in the report) and use manual validation only. Content generation does not require the Mintlify CLI — only `mint validate`, `mint dev`, and `mint broken-links` do.
 
 2. **Read 7V report** — confirm production is stable. If 7V status is FAIL, STOP and report that Stage 7D requires a passing 7V.
 
@@ -355,7 +361,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
 
    g. Check `prd/12-api-specifications.md` (if it exists) and the feature map — determine whether the product has a **public API** that end users interact with. If yes, note whether an OpenAPI spec file exists in the codebase. Record the decision (yes/no) and OpenAPI spec path (if any) for the content map — Teammate 2 uses this to decide whether to write API reference pages, and Teammate 3 uses it to include/exclude the API Reference tab in docs.json navigation.
 
-9. **Build content map** — create `./_guide-context.md` in the project root directory (teammates MUST read this file before starting — it contains the authoritative content map and branding). Save to `./_guide-context.md` (project root directory). If `_guide-context.md` already exists (retained from a prior FAIL'd run — see Phase 5 step 2), read it first: if PRD files have been modified since the prior run (check `git diff` on `prd/`), regenerate the content map from scratch rather than reusing the stale context. Otherwise, reuse the content map and branding sections, then update only the screenshot mode and manifest fields in step 10. Include:
+9. **Build content map** — create `./_guide-context.md` in the same directory as `CLAUDE.md` (teammates MUST read this file before starting — it contains the authoritative content map and branding). Save to `./_guide-context.md` (same directory as `CLAUDE.md`). If `_guide-context.md` already exists (retained from a prior FAIL'd run — see Phase 5 step 2), read it first: if PRD files have been modified since the prior run (check `git diff` on `prd/`), regenerate the content map from scratch rather than reusing the stale context. Otherwise, reuse the content map and branding sections, then update only the screenshot mode and manifest fields in step 10. Include:
    - Product name, tagline, production URL
    - Journey groups with their pages and source UF-*/SC-*/US-* references
    - Concept pages and their sources
@@ -873,7 +879,7 @@ After all teammates complete:
 
 ## Structure Validation
 - Root docs.json: VALID / INVALID ([error])
-- Per-language docs.json: VALID / INVALID ([errors]) / N/A (English-only — navigation in root docs.json)
+- Navigation model: Root-centralized / N/A (English-only — navigation in root docs.json)
 - Navigation entries: [n] pages configured
 - Orphan pages: [n] ([list])
 - Missing pages: [n] ([list — in nav but no file])
@@ -947,7 +953,7 @@ Apply the following gate logic to determine the audit report's Gate Decision:
 |---|---|
 | **PASS** | All P0/P1 features documented, zero jargon leakage, zero broken links, all docs.json files valid, all navigation entries resolve, translation parity (if multi-language), CLI checks pass (or N/A if CLI unavailable) |
 | **WARN** | P0/P1 fully covered but: P2 coverage gaps, minor style inconsistencies, 1-2 jargon instances in non-critical pages, orphan pages (MDX files not in any navigation), minor `mint a11y` issues, or Mintlify CLI checks not tested (CLI unavailable). Deploy with known issues documented. |
-| **FAIL** | Any of: missing P0/P1 feature coverage, broken navigation (pages in nav but no file), invalid docs.json, ≥3 jargon instances, translation structure mismatch, broken screenshot references (image references pointing to non-existent files). Fix before deploying. |
+| **FAIL** | Any of: missing P0/P1 feature coverage, broken navigation (pages in nav but no file), invalid docs.json, ≥3 'always flag' jargon instances (PRD/BRD identifiers like FEAT-NNN, US-NNN, SC-NNN, FR-NNN, BR-NNN), OR any jargon instance in introduction.mdx or quickstart.mdx, translation structure mismatch, broken screenshot references (image references pointing to non-existent files). Fix before deploying. |
 
 Note: 7D uses WARN instead of CONDITIONAL PASS because documentation gaps are less severe than code defects — WARN indicates "deployable with known documentation gaps."
 
@@ -1006,7 +1012,7 @@ For each guide page, follow this transformation pipeline:
 - **Stage 8 integration**: Stage 8 (Feedback Loop) includes a "Documentation" feedback category. User feedback about unclear or missing documentation routes back to updating the Mintlify site. Stage 8's test-and-docs-updater teammate generates documentation fixes. After Stage 8 completes, if documentation was updated: either (a) manually edit the affected MDX files in `./user-guide/`, or (b) re-run Stage 7D in full to regenerate all pages with latest production state (recommended if >3 pages affected).
 - **After Stage 6P-R merge**: If 6P-R was used (design overhaul), always re-run 7D to recapture screenshots reflecting the new design. Verify image paths: `grep -r 'src="' user-guide/ --include='*.mdx'`.
 - **Stage 9 integration**: If dependency updates change UI behavior or component APIs, re-verify affected journey pages.
-- **Re-running 7D**: This stage is idempotent — re-running it deletes and recreates the entire `./user-guide/` directory with fresh content derived from the current PRD. WARNING: Custom content manually added after a prior 7D run will be DESTROYED. Commit or backup any custom changes before re-running 7D. Before deletion, verify no custom content was manually added — use `git diff ./user-guide/` to check. **Pre-flight cleanup**: If `./user-guide/` already exists, the agent must delete it (`rm -rf ./user-guide/`) before regenerating to prevent stale files from a prior run persisting. Use this after significant PRD changes or major feature releases.
+- **Re-running 7D**: This stage is idempotent — re-running it deletes and recreates the entire `./user-guide/` directory with fresh content derived from the current PRD. WARNING: Custom content manually added after a prior 7D run will be DESTROYED. Commit or backup any custom changes before re-running 7D. **Pre-flight cleanup**: Follow the Phase 1 pre-generation cleanup safety protocol (check git status, verify no custom content via `git diff ./user-guide/`, get operator confirmation before deletion). Do NOT use `rm -rf` without these safety checks. Use this after significant PRD changes or major feature releases.
 
 ## Critical Rules
 

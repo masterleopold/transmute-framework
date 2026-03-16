@@ -71,7 +71,7 @@ For each stage:
 | 2 | prd | Stage 1 complete | `plancasting/prd/` directory |
 | 2B | validate-specs | Stages 1+2 complete | `plancasting/_audits/spec-validation/report.md` |
 | 3 | scaffold | Stage 2B PASS | Project skeleton, `plancasting/_scaffold-manifest.md` |
-| 4 | Manual — verify CLAUDE.md Part 2 populated | Stage 3 complete | CLAUDE.md complete |
+| 4 | Manual — verify CLAUDE.md Part 2 populated, verify `.claude/rules/*.md` generated | Stage 3 complete | CLAUDE.md complete, `.claude/rules/*.md` present |
 | 5 | implement | Stages 3+4 complete | Working product, `plancasting/_progress.md` |
 | 5B | audit-completeness | Stage 5 complete | `plancasting/_audits/implementation-completeness/report.md` |
 | 6A | audit-security | 5B PASS | `plancasting/_audits/security/report.md` |

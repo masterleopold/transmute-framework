@@ -79,7 +79,7 @@ This stage is idempotent — re-running detects existing work (via `progress.md`
 2. If `progress.md` shows incomplete phase X:
    - X ≤ 2 (interactive phases): re-run Phases 0–2 (read existing context/plan but re-confirm with user)
    - X ≥ 3 (implementation): continue from the next unchecked step in `progress.md`
-3. If `progress.md` missing but `context.md` exists → assume Phase 1 completed, continue from Phase 2
+3. If `progress.md` missing but `context.md` exists → assume Phase 0 completed, continue from Phase 1
 4. If neither exists → restart from Phase 0 (full context collection)
 
 ## Prerequisites
@@ -90,6 +90,7 @@ This stage is idempotent — re-running detects existing work (via `progress.md`
    - If `./plancasting/_audits/runtime-remediation/report.md` exists: must show PASS or CONDITIONAL PASS
    - If only `./plancasting/_audits/visual-verification/report.md` exists: must show PASS or CONDITIONAL PASS with only 6V-C issues (6R correctly skipped — 6R cannot fix human-judgment issues). If 6V shows CONDITIONAL PASS with 6V-A/6V-B issues, STOP — run 6R first.
    - If neither exists: verify with operator that prior stages were intentionally skipped
+   - If the 6V report contains a `## Post-Remediation Gate Update` section (appended by 6R), use that gate status instead of the original `## Gate Decision`.
 
 3. **Dev server port available**: Before running this stage, verify the dev server port is available (`lsof -i :3000` — if busy, `kill -9 <PID>`). This prompt starts the dev server internally.
 
@@ -1296,7 +1297,7 @@ Generate `./plancasting/_audits/visual-polish/redesign-report.md` (note: uses `r
 
 - **PASS**: All design decisions implemented, visual review passed, validation clean → proceed to Stage 7
 - **CONDITIONAL PASS**: Minor visual issues remain but documented → proceed to Stage 7, address in next iteration
-- **FAIL**: Critical visual issues, validation failures, or broken dark mode → fix before proceeding
+- **FAIL**: Any critical visual issue on a HIGH-priority page (landing, dashboard, auth), OR validation failures (typecheck/lint/test), OR broken dark mode on 3+ pages → fix before proceeding
 
 ## Screenshots
 - Before: `./screenshots/visual-polish/before/`
@@ -1361,7 +1362,7 @@ If this stage is interrupted mid-execution:
 
 3. **ALWAYS get explicit user approval on the design plan** (Phase 2) before implementing anything. The user's design preferences override any default recommendations.
 
-4. **ALWAYS use the `frontend-design` skill** (if available) for aesthetic decisions. It prevents generic AI-generated aesthetics. **The lead invokes the skill once, in Phase 5 (Anti-AI-Slop Refinement), covering all remaining fixes in a single consolidated invocation** — not per-fix or per-pattern. Teammates read the shared output — they do NOT invoke the skill themselves. This ensures design consistency across all phases.
+4. **ALWAYS use the `frontend-design` skill** (if available) for aesthetic decisions. It prevents generic AI-generated aesthetics. **The lead invokes the frontend-design skill once during this stage (in Phase 5 — Anti-AI-Slop Refinement), not per-fix or per-pattern**. Teammates read the shared output — they do NOT invoke the skill themselves. This ensures design consistency across all phases.
 
 5. **ALWAYS take before/after screenshots.** Every change must be visually documented and verified.
 

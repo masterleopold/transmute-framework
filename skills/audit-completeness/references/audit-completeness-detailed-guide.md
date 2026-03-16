@@ -20,7 +20,7 @@ This stage runs with a FRESH context window, focused SOLELY on finding and fixin
 
 Issues found during this audit are classified into three SIZE-BASED categories:
 - **Category A**: <30 executable code lines per affected file (count only functional code; exclude imports, comments, blank lines, and type annotations) — stub text replacement, dead links, missing simple states
-- **Category B**: 30–100 lines per file AND <150 lines total across all Category B files combined (if combined total exceeds 150 lines, collectively escalate to Category C) — component body rebuild, form handler wiring, modal content population
+- **Category B**: 30–100 lines per file AND <150 lines total across all Category B files combined (if combined total exceeds 150 lines, collectively escalate as a SINGLE Category C issue — one collective escalation, not one per file) — component body rebuild, form handler wiring, modal content population
 - **Category C**: ≥100 lines in any single file OR ≥150 lines total across all affected files OR unbuilt features — escalate to Stage 5 re-run
 
 > ⚠️ This differs from Stage 6V/6R, which classifies by FIXABILITY (A = auto-fixable, B = semi-auto, C = needs human judgment). Size-based categories here determine whether the fix is small enough for a 5B teammate to handle or requires a full Stage 5 re-run.
@@ -67,6 +67,13 @@ This pattern is DISTINCT from stubs. It occurs when Stage 5's frontend teammate 
 2. **Navigation gaps**: Sidebar/navbar links that don't include all implemented features
 3. **Dashboard aggregation**: Dashboard widgets that show hardcoded zeros instead of real query results
 
+## Output
+
+- `./plancasting/_audits/implementation-completeness/report.md` — Gate decision, category breakdown (A/B/C), per-feature analysis, and Per-Feature 5B History table
+- `./plancasting/_audits/implementation-completeness/unfixable-violations.md` — Issues requiring human decision (generated in Phase 4 if any Category C issues exist that cannot be resolved by auto-fix; omitted if no such issues exist)
+- Updated `./plancasting/_progress.md` — Feature statuses updated based on audit findings (✅ → 🔄 for Category C features)
+- Updated `.claude/rules/` — New path-scoped rules extracted from recurring patterns (HIGH confidence only; MEDIUM/LOW staged to `./plancasting/_rules-candidates.md`)
+
 ## Input
 
 - **Codebase**: Complete project directory (post-Stage 5)
@@ -84,6 +91,13 @@ This pattern is DISTINCT from stubs. It occurs when Stage 5's frontend teammate 
 
 ## Session Recovery
 
+| Condition | Action |
+|---|---|
+| No prior 5B report exists | This is Run 1. Start fresh. |
+| Prior report exists, Run Number < 3 | This is a re-run. Increment Run Number. Resume from last incomplete feature. |
+| Prior report exists, Run Number = 3 | Third run (final auto-fix attempt). If issues remain after this run, FAIL-ESCALATE to operator. |
+| Per-feature FAIL-RETRY history shows 2+ attempts on same feature | FAIL-ESCALATE that specific feature. Continue with remaining features. |
+
 If this stage is interrupted:
 1. Check if `./plancasting/_audits/implementation-completeness/report.md` already exists (from a previous partial run).
 2. If it exists, check its contents:
@@ -93,16 +107,9 @@ If this stage is interrupted:
    - (d) If no 'Issues Found' section exists → Phase 1 scan did not complete. Re-run Phase 1 from step 1.
 3. If the report file does not exist at all, restart from Phase 1 step 1.
 4. Check `plancasting/_progress.md` for any features already marked as 🔄 — these were identified in a previous partial run.
-5. Determine the Run Number: If the existing report contains a completed gate decision (indicating a prior run completed), increment Run Number by 1 for this run. If the report exists but has no gate decision (prior run did not complete), keep the same Run Number. If no report exists, this is Run 1. Run 1 = initial audit. Run 2 = first re-run after fixes. Run 3 = second re-run. If Run Number reaches 4 (third re-run), skip Phase 2 auto-fixes — escalate all remaining A/B issues to Category C and document: 'Escalation — Run 4+: Repeated fix attempts indicate systemic issue. Recommend full Stage 5 re-run for affected features.' Common causes for reaching Run 4: (a) backend dependencies still missing (escalate to Stage 5 re-run), (b) teammate repeatedly making identical mistakes (escalate to lead for direct intervention). The operator must then decide: re-run Stage 5 for affected features (set `🔄` in `_progress.md`) or accept the issues and proceed to Stage 6.
+5. Determine the Run Number: If the existing report contains a completed gate decision (indicating a prior run completed), increment Run Number by 1 for this run. If the report exists but has no gate decision (prior run did not complete), keep the same Run Number. If no report exists, this is Run 1. Run 1 = initial audit. Run 2 = first re-run after fixes. Run 3 = second re-run (final auto-fix attempt — if issues remain after Phase 2/3, the gate evaluates them normally but the operator is warned this is the last automated attempt). If Run 3 results in FAIL-RETRY or FAIL-ESCALATE, escalate all remaining A/B issues to Category C and document: 'Escalation — max retries: Repeated fix attempts indicate systemic issue. Recommend full Stage 5 re-run for affected features.' Common causes: (a) backend dependencies still missing (escalate to Stage 5 re-run), (b) teammate repeatedly making identical mistakes (escalate to lead for direct intervention). The operator must then decide: re-run Stage 5 for affected features (set `🔄` in `_progress.md`) or accept the issues and proceed to Stage 6.
 
 > **Dual escalation summary**: Two independent escalation mechanisms exist: (1) Global Run 4+ escalates ALL remaining issues to FAIL-ESCALATE. (2) Per-feature 3 consecutive FAIL-RETRY cycles escalate that specific feature. Either can trigger FAIL-ESCALATE independently.
-
-| Condition | Action |
-|---|---|
-| No prior 5B report exists | This is Run 1. Start fresh. |
-| Prior report exists, Run Number < 3 | This is a re-run. Increment Run Number. Resume from last incomplete feature. |
-| Prior report exists, Run Number = 3 | Maximum retries reached. FAIL-ESCALATE to operator. |
-| Per-feature FAIL-RETRY history shows 2+ attempts on same feature | FAIL-ESCALATE that specific feature. Continue with remaining features. |
 
 ## Stack Adaptation
 
@@ -298,7 +305,7 @@ As the team lead, perform the full audit scan yourself before delegating fixes:
 
    **Category C example**: `useUserProfile` hook is listed in `_codegen-context.md` but was never created. Creating it requires a new backend query, frontend hook, and 150+ lines of component code to consume it. This is NOT a stub fix — it's a missing feature requiring Stage 5 re-implementation.
 
-   **Multi-file classification rule**: Category A — all files need <30 lines each. Category B — largest file needs <100 lines AND total across all files <150 lines. Category C — largest file needs ≥100 lines OR total ≥150 lines across all affected files. If ambiguous, default to the higher category. If multiple independent issues happen to be in the same feature, classify each issue separately.
+   **Multi-file classification rule**: Category A — all files need <30 lines each. Category B — each file needs 30–100 lines AND total across all files <150 lines. Category C — largest file needs ≥100 lines OR total ≥150 lines across all affected files. If ambiguous, default to the higher category. If multiple independent issues happen to be in the same feature, classify each issue separately.
 
    **Fixing Priority Within A/B Categories**: (1) Fix issues in P0/P1 critical user flows first. (2) Then fix P2/P3 flow issues. (3) Within each flow, fix backend issues before frontend (frontend may depend on backend being correct). (4) Within each layer, fix integration gaps before stubs (a component can't be functional if it depends on missing backend functions).
 
@@ -331,7 +338,14 @@ Based on findings, spawn up to 3 teammates. If no issues are found in a category
 
 **Per-feature escalation rule**: If a single feature (same FEAT-ID) reports FAIL-RETRY three consecutive times across separate 5B runs (not Stage 5 re-runs), that feature automatically escalates to FAIL-ESCALATE regardless of overall category counts. A Stage 5 re-run for a feature resets that feature's consecutive FAIL-RETRY counter to 0 (the feature has been re-implemented). "Three consecutive times" means three 5B runs where that specific feature returned FAIL-RETRY — other features' results and intervening PASS/CONDITIONAL PASS outcomes for OTHER features are irrelevant. **Reading previous run state**: At the start of Phase 1, read the previous audit report at `./plancasting/_audits/implementation-completeness/report.md` if it exists — extract the per-feature `5B Runs` column to continue tracking consecutive FAIL-RETRY counts. If no previous report exists, this is Run 1. Track per-feature run counts in the audit report's feature table using a `5B Runs` column (e.g., `FEAT-003: 5B-run-1=FAIL-RETRY, 5B-run-2=FAIL-RETRY, 5B-run-3=FAIL-RETRY → ESCALATE`). This prevents infinite retry loops on features that consistently fail due to deeper architectural issues. Note: this is independent of the global Run Number (Run 4+ rule); a feature can escalate at global Run 2 if it has individually failed 3 times across prior runs.
 
-**Note**: This table determines whether Phase 2 teammate spawning is necessary. Phase 4 (report generation) and Phase 5 (rule extraction) ALWAYS run regardless of early exit — the report is required by downstream stages (6A–6G, 6H), and rule extraction captures any patterns found during the Phase 1 scan even if no fixes were needed. Save the report to `./plancasting/_audits/implementation-completeness/report.md` with the gate decision and Category C details.
+**Phase execution flow** (not all phases are conditional):
+- **Phase 1** (scan): ALWAYS runs — required to identify issues
+- **Phase 2** (fix): CONDITIONAL — only if Category A/B issues found AND Run Number < 4 (see table above)
+- **Phase 3** (verify): CONDITIONAL — only if Phase 2 ran (verifies fixes didn't introduce regressions)
+- **Phase 4** (report + gate): ALWAYS runs — the report is required by downstream stages (6A–6G, 6H)
+- **Phase 5** (rule extraction): ALWAYS runs — captures patterns found during Phase 1 scan even if no fixes were needed
+
+Save the report to `./plancasting/_audits/implementation-completeness/report.md` with the gate decision and Category C details.
 
 ---
 **⚠️ IMPORTANT: Everything below this line is TEAMMATE instructions, not lead instructions. The lead spawns these teammates AFTER completing Phase 1. Do NOT execute teammate instructions yourself — delegate them.**
@@ -577,7 +591,7 @@ After all teammates complete:
    - **CONDITIONAL PASS**: Applies when ANY of these conditions is met (check in order, first match wins):
      (a) All A/B fixed, 1–3 Category C documented with clear descriptions and workarounds → proceed to Stage 6
      (b) 1–3 A/B remain unfixed (each documented with either a code workaround, a user-facing alternative, OR an accepted limitation with explicit operator approval noted in the report), zero Category C → proceed to Stage 6
-     (c) BOTH unfixed A/B AND Category C exist: CONDITIONAL PASS only if A/B ≤ 3 AND Category C ≤ 3 (each with documented workaround); otherwise → evaluate FAIL-RETRY/FAIL-ESCALATE conditions below (total unfixed ≥ 6 → FAIL-ESCALATE, not FAIL-RETRY)
+     (c) BOTH unfixed A/B AND Category C exist: CONDITIONAL PASS only if A/B ≤ 3 AND Category C ≤ 3 AND total unfixed (A/B + C) ≤ 5 (each with documented workaround) — note: the total cap of 5 is stricter than the individual caps of 3 (e.g., A/B=3 + C=2 is valid, but A/B=3 + C=3 = 6 > 5 → FAIL-RETRY); otherwise → evaluate FAIL-RETRY/FAIL-ESCALATE conditions below (total unfixed ≥ 6 → FAIL-ESCALATE, not FAIL-RETRY)
      Proceed to Stage 6 with known gaps noted in the report
    - **FAIL-RETRY** (re-run 5B): ANY of: (a) 4+ Category A/B issues remain unfixed (without workarounds), (b) test failures from 5B fixes, (c) 4–5 Category C issues (exceeds the 3 max for CONDITIONAL PASS but below systemic failure threshold), (d) total unfixed (A/B + C) 4–5 (exceeds CONDITIONAL PASS mixed threshold). Before re-running, diagnose WHY the fix failed (missing backend dependency, incorrect hook API, type mismatch) — re-running without diagnosis will loop. Maximum 3 total 5B runs (Run 1 = initial, Run 2 = first re-run, Run 3 = second re-run). Run 4+ = escalation. If A/B issues persist after Run 3 (third attempt), escalate all remaining A/B issues to Category C. If this is Run 4+ (check the Run Number in the existing report), skip Phase 2 and escalate all remaining A/B issues to Category C in Phase 4.
    - **FAIL-ESCALATE** (re-run Stage 5): 6+ Category C issues, OR 6+ total unfixed issues across all categories combined AFTER Phase 2/3 fix attempts (i.e., remaining unfixed A/B that Phase 2 could not resolve + all Category C), OR 3 consecutive FAIL-RETRY outcomes for the same feature (indicates systemic implementation failure)
@@ -590,10 +604,12 @@ After all teammates complete:
    ## Category C Escalations (if any)
    [List features that need Stage 5 re-run with specific gaps described]
 
+   > If Category C issues exist, also generate `./plancasting/_audits/implementation-completeness/unfixable-violations.md` listing each Category C issue with: Feature ID, description, why it cannot be auto-fixed, recommended human action, and workaround if available.
+
    ## Per-Feature 5B History
    | Feature ID | Run 1 | Run 2 | Run 3 | Escalation |
    |---|---|---|---|---|
-   [Track per-feature outcomes across 5B runs — 3 consecutive FAIL-RETRY for a single feature triggers automatic FAIL-ESCALATE]
+   [Track per-feature outcomes across 5B runs — 3 consecutive FAIL-RETRY for a single feature triggers automatic FAIL-ESCALATE. IMPORTANT: When updating this report, ALWAYS preserve the Per-Feature 5B History table from the previous run. Append new run results — do not overwrite. This table persists state across sessions.]
 
    ## Issues by Feature
    [Detailed breakdown per feature]
@@ -609,6 +625,8 @@ After all teammates complete:
    - If **FAIL-ESCALATE**: Output the list of features needing re-implementation and STOP. The operator must re-run Stage 5 for those features before proceeding.
 
 ### Phase 5: Rule Extraction (Post-Gate)
+
+> **Note**: This phase runs for ALL gate outcomes (PASS, CONDITIONAL PASS, FAIL-RETRY, FAIL-ESCALATE). For FAIL outcomes, extracted rules are provisional — they will be validated or superseded when Stage 5 re-runs the affected features. Provisional rules still have value: they capture patterns that caused issues, helping the re-run avoid repeating them.
 
 After the gate decision but before the final commit, extract implementation lessons as path-scoped rules. See CLAUDE.md § 'Path-Scoped Rules' for the full specification. If `plancasting/_rules-candidates.md` does not exist, create it with the standard header from the template before appending candidates.
 
@@ -631,6 +649,7 @@ After the gate decision but before the final commit, extract implementation less
    ~~~
 
 3. **Classify confidence and route**:
+   Confidence levels: HIGH = pattern affects 2+ distinct features (same-feature duplicates count as 1). MEDIUM = single feature but generalizable pattern. LOW = edge case or uncertain applicability.
    - **HIGH** (2+ distinct features affected with clear pattern — occurrences within the same feature count as 1 feature): Append the rule directly to the appropriate `.claude/rules/*.md` file. Include the evidence comment.
    - **MEDIUM** (single feature but generalizable): Append the candidate to `plancasting/_rules-candidates.md`.
    - **LOW** (edge case or uncertain): Append the candidate to `plancasting/_rules-candidates.md`.
@@ -657,6 +676,8 @@ After the gate decision but before the final commit, extract implementation less
 8. If a component fix requires backend changes that don't exist, this is a Category C issue — do NOT create backend stubs to unblock frontend.
 9. The goal is NOT perfection — it is completeness. Every feature should be FUNCTIONAL. Polish happens in Stage 6.
 10. This stage should fix, not redesign. Maintain the architectural decisions made in Stage 5.
+
+Blocking items (1–6) MUST pass for ✅ Done status. Secondary items (7, 9) — if failed, the feature is still ✅ Done but failures are documented in the audit report for future attention. Session recovery items (8, 10) MUST be recorded for future session continuity.
 
 **5B Quality Standard**: 5B fixes should bring components from 'scaffold' to 'working' — happy path complete, loading/error states present, no obvious bugs. This is NOT production polish (Stage 6P handles that). The bar is: 'does this work as described in the PRD?'
 ````

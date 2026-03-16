@@ -21,9 +21,9 @@ This is a LIGHTER pass than 6V — it focuses on "does the deployed app work?" n
 
 **Scope**: Smoke verification covers P0+P1 features only, with a maximum of 15 scenarios (see `feature_scenario_generation.md` Step 9 for SMOKE generation rules). Out of scope: exhaustive screen state coverage, edge cases, accessibility compliance, and performance profiling — those are Stage 6V concerns.
 
-**Flaky Scenario Rule**: Unlike Stage 6V where flaky scenarios are informational (excluded from the gate percentage), in Stage 7V **flaky scenarios are classified as FAIL**. Production must be stable and deterministic. If a scenario passes on some runs but fails on others, the product is unreliable for users. Investigate and fix the instability before re-running 7V.
+**Flaky Scenario Rule**: Flaky scenarios (pass on retry) count as FAIL in Stage 7V. Production must be deterministic. Investigate the root cause before re-running 7V.
 
-**Stage Sequence**: ... → 6V (Verification) → 6R (Runtime Remediation) → 6P/6P-R → 7 (Deploy) → **7V (this stage)** → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
+**Stage Sequence**: Business Plan → 0 → 1 → 2 → 2B → 3+4 → 5 → 5B → 6A–6G → 6H → 6V → [6R — only if 6V finds 6V-A/B issues] → 6P/6P-R → 7 → **7V (this stage)** → 7D → 8 / 9
 
 ## Known Failure Patterns
 
@@ -82,13 +82,17 @@ Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actua
 
 **Pre-Check: 6P-R Branch Merge Verification**: If `./plancasting/_audits/visual-polish/design-plan.md` exists (indicating 6P-R was run), verify the `redesign/frontend-elevation` branch has been merged into main before proceeding with ANY smoke checks. If not merged, all subsequent checks would test a deployment without visual polish changes. Run: `git log --oneline main | head -20` and verify a merge commit or redesign commits are present.
 
-1. **Production URL must be accessible**: The deployed application must be live and responding.
+1. **Stage 7 (Deployment) must be complete**: The application must be deployed to the production URL specified in `plancasting/tech-stack.md`. Do not start 7V until deployment has finished successfully.
 
-2. **Recommended sanity check**: If `./plancasting/_launch/readiness-report.md` exists, verify it shows READY. If it shows NOT READY, STOP — resolve pre-launch blockers first. If the file does not exist, proceed but note in the 7V report: "Stage 6H pre-launch verification was not completed." Also verify that either `./plancasting/_audits/visual-verification/report.md` or `./plancasting/_audits/visual-polish/report.md` exists. If neither exists, warn that pre-deployment verification may not have been completed — proceed with caution.
+2. **Production URL must be accessible**: Verify with a basic HTTP check: `curl -sI <production-url> | head -1` (expect HTTP 200 or 301/302). If the URL is unreachable, STOP and verify deployment status before proceeding.
 
-3. **Scenario generation file**: If the smoke test will generate scenarios from scratch (no 6V matrix exists), verify `./plancasting/transmute-framework/feature_scenario_generation.md` exists. If missing, copy from the template directory before proceeding (see execution-guide.md § "Pre-6V Setup" for copy instructions).
+3. **Stage 6V must be complete**: Stage 6V provides the baseline comparison for production verification. Its report (`./plancasting/_audits/visual-verification/report.md`) is required input — 7V compares production behavior against what passed in dev. If 6V was not run, 7V cannot detect deployment-specific regressions.
 
-4. **Output directories**:
+4. **Recommended sanity check**: If `./plancasting/_launch/readiness-report.md` exists, verify it shows READY. If it shows NOT READY, STOP — resolve pre-launch blockers first. If the file does not exist, proceed but note in the 7V report: "Stage 6H pre-launch verification was not completed." Also verify that either `./plancasting/_audits/visual-verification/report.md` or `./plancasting/_audits/visual-polish/report.md` exists. If neither exists, warn that pre-deployment verification may not have been completed — proceed with caution.
+
+5. **Scenario generation file**: If the smoke test will generate scenarios from scratch (no 6V matrix exists), verify `./plancasting/transmute-framework/feature_scenario_generation.md` exists. If missing, copy from the template directory before proceeding (see execution-guide.md § "Pre-6V Setup" for copy instructions).
+
+6. **Output directories**:
    ~~~bash
    mkdir -p ./plancasting/_audits/production-smoke
    mkdir -p ./screenshots/production
@@ -104,6 +108,8 @@ If the session disconnects mid-verification, start a new session and re-paste th
 ## Verification Checklist
 
 This stage does NOT use agent teams — it is a single-agent sequential check. This stage should complete in 25–45 minutes (3–5 min scenario generation + 15–25 min core checks + 5–8 min for 6R/6P/navigation verification + 2–5 min performance/integrations). If the application has grown beyond what can be verified in 45 minutes (50+ pages, 10+ integrations — 'pages' = distinct routes in the application's routing config; 'integrations' = external services configured in `.env.local`), consider running a scoped Stage 6V (`critical` mode) against the production URL instead.
+
+**Language**: Check `./plancasting/tech-stack.md` for the `Session Language` setting. Generate the report in the specified language. Code, URLs, and technical identifiers remain in English.
 
 ### Check 0. Generate Smoke Scenario Matrix (MUST run FIRST)
 
@@ -268,13 +274,15 @@ For each page:
 
 ### Check 5. Stage 6R Fix Verification (if 6R report exists)
 
+If Stage 6R was run, verify its fixes in production. If 6R was skipped (6V returned PASS or CONDITIONAL PASS with only 6V-C issues), skip this verification.
+
 If Stage 6R was run (`./plancasting/_audits/runtime-remediation/report.md` exists), verify that ALL auto-applied fixes survived the build and deployment pipeline. This catches cases where:
 - The deployment was triggered from a commit before 6R fixes were applied
 - Edge middleware caching serves a stale version that doesn't include the fixes
 - Build-time optimizations (tree-shaking, CSS purging) removed fix artifacts
 
 **How to verify**:
-1. Read the 6R report (from `./plancasting/_audits/runtime-remediation/report.md`) "Auto-Fixed (Category 6V-A)" and "Semi-Auto-Fixed (Category 6V-B)" tables
+1. Read the 6R report (from `./plancasting/_audits/runtime-remediation/report.md`) "Auto-Fixed (6V-A)" and "Semi-Auto-Fixed (6V-B)" tables
 2. For EACH fix listed as "Verified: PASS" in the 6R report, re-test the specific issue on production:
 
 | Fix Type | Re-Test Method |
@@ -605,10 +613,12 @@ Generate `./plancasting/_audits/production-smoke/report.md`:
 
 ## Gate Decision
 - **PASS**: All critical flows work, all pages load, no console errors, all external APIs respond 2xx
-- **CONDITIONAL PASS**: All P0 critical flows pass, all pages load, but minor issues exist in P1/P2 features (e.g., non-critical integration timeout, minor visual discrepancy from 6V baseline). Document issues for post-launch fix. Stage 7D and Stage 8 can proceed.
+- **CONDITIONAL PASS**: All P0 critical flows pass (happy paths complete), all pages load, but minor non-blocking issues exist in P0/P1 features (e.g., non-critical integration timeout, minor visual discrepancy from 6V baseline). Document issues for post-launch fix. Stage 7D and Stage 8 can proceed.
 - **FAIL**: Any critical flow broken OR pages don't load OR critical navigation failure (invisible/unstyled links) OR external API health check fails — immediate action required (see Rollback Guidance)
 
-Note: Stage 7V was previously binary (PASS or FAIL). CONDITIONAL PASS was added to handle minor P1/P2 issues that do not block downstream stages. **FAIL triggers**: critical infrastructure broken, critical user flows broken, critical navigation invisible/unstyled, external API health checks fail, or 6R fixes missing from deployment. **Does NOT trigger FAIL**: non-critical visual issues (missing 6P enhancements, minor layout differences from dev), non-functional performance metrics below target. Non-critical issues are documented in the report but do NOT affect the gate decision — address them through Stage 8 (Feedback Loop).
+Note: Stage 7V uses the universal three-outcome gate system: PASS, CONDITIONAL PASS, FAIL. CONDITIONAL PASS handles minor P1 issues that do not block downstream stages (P2 features are out of 7V's SMOKE scope). **FAIL triggers**: critical infrastructure broken, critical user flows broken, critical navigation invisible/unstyled, external API health checks fail, or 6R fixes missing from deployment. **Does NOT trigger FAIL**: non-critical visual issues (missing 6P enhancements, minor layout differences from dev), non-functional performance metrics below target. Non-critical issues are documented in the report but do NOT affect the gate decision — address them through Stage 8 (Feedback Loop).
+
+**Flaky handling (7V vs 6V)**: In 6V, flaky scenarios are excluded from the pass-rate denominator. In 7V, flaky scenarios count as FAIL — see the Flaky Scenario Rule above.
 
 **Critical Production Failures**: If 7V result is FAIL (critical functionality broken in production), do NOT proceed to Stage 7D. Halt and escalate for hotfix + re-deploy or rollback. Only proceed to Stage 7D after 7V achieves PASS or CONDITIONAL PASS. After hotfix is deployed, re-run Stage 7V in full to verify the fix. If 7V PASS or CONDITIONAL PASS, continue to Stage 7D. Do NOT proceed to 7D based on partial re-verification — 7V must produce a full report.
 
@@ -653,7 +663,7 @@ If a critical failure is found:
 
 After verification completes:
 - Delete or deactivate any test accounts/organizations created during the smoke test
-- If the app uses soft delete, mark test entities with `deletedAt` immediately. Note: soft-deleted records remain in the database for a retention period before permanent deletion (check CLAUDE.md or your project's soft-delete configuration for the actual period) — ensure smoke test records don't pollute analytics during this window.
+- If the app uses soft delete, mark test entities with `deletedAt` immediately. Note: soft-deleted records remain in the database for a retention period before permanent deletion. Check `plancasting/tech-stack.md` § Soft Delete Policy for the retention period, or CLAUDE.md Part 2 § Architecture if tech-stack.md does not define it. Ensure smoke test records don't pollute analytics during this window.
 - If cleanup is not possible without admin access, document the test account details for manual cleanup
 
 **Cleanup scope**: Only clean up accounts created DURING THIS 7V run. To distinguish: check the account creation timestamp against the 7V start time, or use identifiable naming patterns (e.g., `smoke-test-YYYY-MM-DD-HHMMSS@domain`). Pre-existing test accounts (from previous 7V runs or manual creation) should be preserved unless explicitly requested by the operator — they may be needed for future 7V runs.
@@ -676,13 +686,13 @@ After verification completes (regardless of gate decision):
 5. If ANY critical flow fails, follow the Rollback Guidance above. Do NOT mark as "known issue for later."
 6. Keep this stage FAST — 25–45 minutes max. This is smoke testing, not comprehensive regression. The navigation smoke test (Check 7) should take ~5 minutes — test highest-traffic paths only, not every link.
 7. ALWAYS compare against Stage 6V results — if something passed in 6V but fails in 7V, it's a deployment-specific issue (environment, config, infrastructure).
-7a. **Flaky scenarios**: If a scenario fails once but passes on retry (reported as 'flaky' in Playwright output), treat it as **FAIL** in 7V. Production flakiness is unacceptable — unlike 6V where flaky is informational. Do NOT mark a scenario as passing if it required a retry. Document the flaky behavior in the report and investigate the root cause.
+7a. **Flaky scenarios**: See the Flaky Scenario Rule at the top of this prompt. Do NOT mark a scenario as passing if it required a retry. Document the flaky behavior in the report.
 8. ALWAYS clean up test accounts after verification to avoid polluting production data and analytics.
 9. ALWAYS verify test user login works BEFORE proceeding to authenticated page checks. If login fails, check: auth provider redirect URIs include production domain, auth env vars point to production (not dev), test users exist in the auth provider (not just the app database).
 10. ALWAYS test public utility routes (`/sitemap.xml`, `/robots.txt`, `/api/health`) WITHOUT authentication. These are the most commonly broken routes in production because they're easy to forget when configuring middleware whitelists.
-11. If a Stage 6R report exists, ALWAYS verify 6R fixes in production BEFORE detailed feature/navigation checks (Checks 7-8). Check 4 (page loads) is a prerequisite that must run first. If 6R fixes are missing, the deployment is wrong — flag immediately rather than discovering the same issues again through later checks.
+11. If a Stage 6R report exists, ALWAYS verify 6R fixes in production BEFORE detailed feature/navigation checks (Checks 7-8). Check 4 (page loads) is a prerequisite that must run first. If 6R fixes are missing, the deployment is wrong — flag immediately rather than discovering the same issues again through later checks. If 6R was skipped (6V returned PASS or CONDITIONAL PASS with only 6V-C issues), skip this check.
 12. ALWAYS test navigation at BOTH desktop and mobile viewports on production. CSS purging affects production builds differently than dev — navigation links that are visible in dev may be invisible in production due to dynamic Tailwind class purging.
-13. If a Stage 6R report exists, ALWAYS check the deployed commit hash against the 6R remediation commit hash (stored in `./plancasting/_audits/runtime-remediation/last-remediated-commit.txt` and in the 6R report's `Commit Hash` field). If they don't match, the production deployment doesn't include the remediation fixes. If 6R was not run (no report exists), skip this check.
+13. If a Stage 6R report exists, ALWAYS check the deployed commit hash against the 6R remediation commit hash (stored in `./plancasting/_audits/runtime-remediation/last-remediated-commit.txt` and in the 6R report's `Commit Hash` field). If they don't match, the production deployment doesn't include the remediation fixes. If 6R was skipped (6V returned PASS or CONDITIONAL PASS with only 6V-C issues, so no report exists), skip this check.
 14. If a Stage 6P report exists, spot-check visual polish changes in production. CSS purging, font loading, and tree-shaking can silently remove visual enhancements that work in dev. These are MEDIUM severity (not blocking) but should be documented.
 15. NEVER modify application code, production configuration, or database records during this stage (except for creating/cleaning up test accounts as documented). This stage is verification-only. If issues are found, document them in the report for the Rollback Guidance procedure.
 

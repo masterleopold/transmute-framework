@@ -28,9 +28,10 @@ All stages follow the **Transmute Full-Build Approach**: every feature in the Bu
 
 - **Never skip** 5B, 6V, 6P/6P-R, or 7V. Always run exactly one of 6P or 6P-R (default: 6P). (5B catches the #1 cause of Stage 6 failures — frontend stubs and duplication that slip through fatigued quality gates.) Note: 5B uses four outcomes (PASS, CONDITIONAL PASS, FAIL-RETRY, FAIL-ESCALATE) — see execution-guide.md § "Gate Decision Outcomes" for thresholds and recovery actions.
 - **6P / 6P-R mutual exclusivity**: Run exactly one, never both. To switch: commit 6P work, `git revert` the 6P commit, then run 6P-R in a new session.
-- **6R skip conditions**: Skip 6R only if 6V returns PASS (zero issues) or CONDITIONAL PASS with only 6V-C issues (human-judgment items — architectural decisions, design trade-offs — that 6R cannot auto-fix). If 6V returns FAIL, fix critical issues and re-run 6V before considering 6R. If skipped, 6P/6P-R uses the 6V report as input.
-- **Stage 7 prerequisites**: 6H READY + 6V PASS or CONDITIONAL PASS + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS (one of 6P/6P-R always runs) + 6D complete (mandatory for software products; its output serves as Stage 7's deployment reference). Note: 6D = developer/deployment docs (Stage 6); 7D = user guide (runs after Stage 7 deployment, optional). If 6D was skipped, refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running.
-- **Stage 8 prerequisite**: Stage 7V must achieve PASS or CONDITIONAL PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN (non-blocking issues documented but not gate-failing; FAIL blocks Stage 8 until resolved). Note: Stage 7D uses PASS/WARN/FAIL instead of the universal PASS/CONDITIONAL PASS/FAIL because it produces documentation, not code — WARN indicates quality gaps that do not block deployment.
+- **6R skip conditions**: Skip 6R only if 6V returns PASS (zero issues) or CONDITIONAL PASS with only 6V-C issues (human-judgment items — architectural decisions, design trade-offs — that 6R cannot auto-fix). If 6V returns FAIL, resolve critical blocking issues (manually or by re-running relevant Stage 5/6 steps) and re-run 6V until it achieves PASS or CONDITIONAL PASS before proceeding to 6R. If skipped, 6P/6P-R uses the 6V report as input.
+- **Stage 3 prerequisite**: Stage 2B must PASS or CONDITIONAL PASS before Stage 3.
+- **Stage 7 prerequisites**: 6H READY + 6V PASS or CONDITIONAL PASS + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS (one of 6P/6P-R always runs) + 6D complete (mandatory for software products; its output serves as Stage 7's deployment reference; skip 6D only if `tech-stack.md` has `developer-docs-needed: false` or the product is non-software). Note: 6D = developer/deployment docs (Stage 6); 7D = user guide (runs after Stage 7 deployment, optional). If 6D was skipped, refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running.
+- **Stage 8 prerequisite**: Stage 7V must achieve PASS or CONDITIONAL PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN (non-blocking issues documented but not gate-failing; FAIL blocks Stage 8 until resolved). Note: Stage 7D uses PASS/WARN/FAIL instead of the universal PASS/CONDITIONAL PASS/FAIL because it produces documentation, not code — WARN indicates quality gaps that do not block proceeding to Stage 8.
 - **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json`, lock files, and source code. Run one, commit, then the other.
 - **Stage 9 prerequisite**: Stage 9 does not formally require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies.
 
@@ -215,13 +216,13 @@ Valid status values: `⬜ Not Started`, `🔧 In Progress`, `✅ Done`, `🔄 Ne
 
 ```
 ⬜ → 🔧 → ✅ → 🔄 → 🔧 → ✅
-          ↓              ↓
-         ⏸ ←───────────⏸
-          ↓
-         🔧 (unblocked)
+     ↓              ↓
+    ⏸ ←────────────⏸
+     ↓
+    🔧 (unblocked)
 ```
 
-**Stage 5 resumption**: The Feature Orchestrator (Stage 5) reads this file at startup and performs a **positional scan** (top-to-bottom, not status-prioritized) to resume from the first `🔧 In Progress`, `⬜ Not Started`, or `🔄 Needs Re-implementation` feature, skipping all `✅ Done` and `⏸ Blocked` features. Features marked `🔧 In Progress` from a crashed session are inspected for sub-status (backend/frontend/tests completeness) and resumed from the first incomplete layer — see `prompt_feature_orchestrator.md` § "Session Recovery" and execution-guide.md § "Stage 5" for details. (`⏸ Blocked` features are treated like `✅ Done` for resumption purposes but retain their `⏸` status so the operator can unblock and re-run later.) This enables multi-session execution when the feature count exceeds the session limit.
+**Stage 5 resumption**: The Feature Orchestrator (Stage 5) reads this file at startup and performs a **positional scan** (top-to-bottom, not status-prioritized) to resume from the first `🔧 In Progress`, `⬜ Not Started`, or `🔄 Needs Re-implementation` feature, skipping all `✅ Done` and `⏸ Blocked` features. Features marked `🔧 In Progress` from a crashed session are inspected for sub-status (backend/frontend/tests completeness) and resumed from the first incomplete layer — see `plancasting/transmute-framework/prompt_feature_orchestrator.md` § "Session Recovery" and execution-guide.md § "Stage 5" for details. (`⏸ Blocked` features are treated like `✅ Done` for resumption purposes but retain their `⏸` status so the operator can unblock and re-run later.) This enables multi-session execution when the feature count exceeds the session limit.
 
 ### Path-Scoped Rules (`.claude/rules/`)
 

@@ -7,7 +7,9 @@ You are a senior full-stack engineer and tech lead acting as the TEAM LEAD for a
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → **3+4 (this stage)** → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
 
-**Stage 3 vs Stage 4 Boundary**: Stage 3 generates all scaffold code (components, pages, hooks, backend functions, tests, configuration). Stage 4 validates that CLAUDE.md Part 2 was correctly populated by Stage 3 — verifying no `[PLACEHOLDER]` markers remain and all project-specific values match `tech-stack.md`. These are separate phases within a single prompt to allow operator review between scaffold generation and CLAUDE.md verification.
+**Prerequisite gate**: Verify `./plancasting/_audits/spec-validation/report.md` exists and shows PASS or CONDITIONAL PASS (Stage 2B gate). If FAIL or missing, STOP: "Stage 2B must PASS or CONDITIONAL PASS before Stage 3. Run Stage 2B first."
+
+**Stage 3 vs Stage 4 Boundary**: Stage 3 generates all scaffold code (components, pages, hooks, backend functions, tests, configuration). Stage 4 validates that CLAUDE.md Part 2 was correctly populated by Stage 3 — verifying no `[PLACEHOLDER]` markers remain and all project-specific values match `tech-stack.md`. These are separate phases within a single prompt to allow operator review between scaffold generation and CLAUDE.md verification. Search for these placeholder patterns: `[PLACEHOLDER]`, `[TODO]`, `TODO:`, `{{ }}`, and any `[ALL_CAPS_WITH_UNDERSCORES]` patterns. Use: `grep -rnE '\[([A-Z_]{3,})\]|TODO:|\{\{.*\}\}' .claude/rules/ CLAUDE.md`
 
 ## Critical Framing: Full-Build Approach
 
@@ -151,7 +153,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    - PRD ID → Code file mapping table (COMPLETE — every PRD artifact mapped)
    - A note: "This scaffolding covers the COMPLETE product. All features are represented."
 5. **Figma design token extraction**: If Figma designs are referenced in `plancasting/tech-stack.md`, verify Figma MCP tools are available by attempting a test call. If unavailable, manually extract design tokens from the Figma URL (colors, spacing, typography, border radii) and include them in Teammate 3's spawn prompt.
-6. Create the initial `plancasting/_scaffold-manifest.md` as a markdown table. Include the instruction at the top: "Teammates: append your generated files below as you work." Use this format — the `File Path` column MUST use full relative paths from the project root (Stage 5B uses grep against this file for orphan detection; incomplete paths cause false positives):
+6. Create the initial `plancasting/_scaffold-manifest.md` template as a markdown table with the expected file structure. Teammates append their generated files to this manifest as they work. The lead validates completeness and finalizes the manifest during Phase 4 (see Assignment note below). Include the instruction at the top: "Teammates: append your generated files below as you work." Use this format — the `File Path` column MUST use full relative paths from the project root (Stage 5B uses grep against this file for orphan detection; incomplete paths cause false positives):
 
    | File Path | Type | Feature | Imported By (pages/components) |
    |---|---|---|---|
@@ -163,11 +165,11 @@ As the team lead, complete the following BEFORE spawning any teammates:
 
 **Shared config file ownership**: `next.config.ts` (or framework equivalent) is owned by Teammate 5 (Test Infrastructure & Configuration). If Teammate 4 needs configuration entries (CSP headers, auth redirects, i18n aliases), Teammate 4 documents them in a separate file (e.g., `plancasting/_next-config-additions.md`) and the lead merges them into `next.config.ts` during Phase 4. Teammate 4 MUST NOT directly write to `next.config.ts`. The lead resolves all config file conflicts during Phase 4 integration.
 
-**Assignment**: The lead is responsible for creating and populating `_scaffold-manifest.md` during Phase 4 (Structural Integration). The lead collects file inventories from all teammates and assembles the manifest before declaring Stage 3 complete.
+**Assignment**: The lead is responsible for creating and populating `_scaffold-manifest.md` during Phase 4 (Structural Integration). The lead collects file inventories from all teammates and assembles the manifest before declaring Stage 3 complete. **BLOCKING**: Stage 3 MUST NOT declare completion until `_scaffold-manifest.md` is written to disk and covers all generated files. This manifest is the primary defense against Stage 5's duplication failure pattern — without it, Stage 5 agents will rebuild scaffold components inline.
 
 **CLAUDE.md Part 2 population**: The lead populates CLAUDE.md Part 2 during Phase 4 (after all teammates complete), using outputs from all teammates: Teammate 1's backend patterns → Backend Rules, Teammate 2's page structure → Architecture, Teammate 3's component patterns → Frontend Rules, Teammate 4's schema and API patterns → Data Model notes, Teammate 5's test setup → Commands section. Replace ALL `[PLACEHOLDER]` markers. This is a Phase 4 task, not a teammate task.
 
-`_scaffold-manifest.md` schema:
+`_scaffold-manifest.md` schema: The manifest (`_scaffold-manifest.md`) is auto-generated by Stage 3 during scaffolding. It maps which components are used by which pages. Format: a table with columns for Component Name, File Path, Used By (page/feature), and Type (page/component/hook/function).
 - **Components**: List all scaffold component files with their PRD traceability (SC-xxx), the pages that import them, and the hooks they consume
 - **Pages**: List all page/route files with their PRD screen spec (SC-xxx) and the components they compose
 - **Hooks**: List all custom hooks with their backend function dependencies
@@ -364,7 +366,6 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
   - Component-level tokens: button styles, input styles, card styles.
 
 **`tailwind.config.ts`** (CUSTOMIZE — never use defaults)
-- The instructions below apply to Next.js App Router. For other frameworks (Remix, SvelteKit, Vite + React, etc.), adapt the CSS file location, metadata patterns, and config bridge syntax. The core principle (Tailwind v4 requires `@config` bridge for `tailwind.config.ts`) applies to all frameworks.
 - Check the Tailwind CSS version in `package.json` or `plancasting/tech-stack.md`. The `@config` directive and CSS-first configuration requirements below apply ONLY to Tailwind v4+. For Tailwind v3, standard `tailwind.config.ts` auto-loading applies.
 - Extend Tailwind's default theme with the design tokens defined above.
 - Custom colors, fonts, spacing, border-radius, box-shadow, animation keyframes.
@@ -388,6 +389,7 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
   In Tailwind v3, `borderColor.DEFAULT` was enough. In v4, the `colors` object is the single source for all color utilities (`bg-*`, `text-*`, `border-*`, `ring-*`).
 
 **`src/styles/globals.css`** (CRITICAL — Tailwind v4 config bridge. Skip this section for Tailwind v3 projects.)
+- The instructions below apply to Next.js App Router. For other frameworks (Remix, SvelteKit, Vite + React, etc.), adapt the CSS file location, metadata patterns, and config bridge syntax. The core principle (Tailwind v4 requires `@config` bridge for `tailwind.config.ts`) applies to all frameworks.
 - **MUST include `@config` directive** (Tailwind v4+ only): Tailwind CSS v4 uses CSS-first configuration. Unlike v3, the JS config file (`tailwind.config.ts`) is NOT automatically loaded. You MUST add `@config "../../tailwind.config.ts";` immediately after `@import "tailwindcss";` in `globals.css`. Without this, ALL custom theme extensions (colors, fonts, spacing, animations, shadows, border-radius) defined in `tailwind.config.ts` will be silently ignored — no error, no warning — and every custom Tailwind utility class (`bg-primary-500`, `font-display`, `text-text-heading`, `p-space-4`, etc.) will produce zero CSS output. The result is an unstyled UI with only raw CSS variable fallbacks working. This is the #1 cause of "my Tailwind v4 styles aren't working" bugs.
   ~~~css
   @import "tailwindcss";
@@ -785,11 +787,13 @@ After all teammates complete their tasks:
 9. **Verify all required output files exist**. Stage 3 generates the following outputs that downstream stages depend on: all source code scaffold files, `plancasting/_codegen-context.md`, `plancasting/_progress.md`, `plancasting/_scaffold-manifest.md`, `ARCHITECTURE.md`, populated CLAUDE.md Part 2, `.claude/rules/*.md` (starter rules), and `plancasting/_rules-candidates.md` (empty). Verify all exist before completing this stage. If any are missing, generate them before declaring Stage 3 complete.
 
 10. **Gate Decision**: Determine the scaffold outcome:
-   - **PASS**: All required output files exist, PRD coverage ≥ 95% (SC, API, data entities all have scaffold files), CLAUDE.md Part 2 fully populated (no `[PLACEHOLDER]`, `[PROJECT_NAME]`, `[N]`, `[e.g.,`, `[BACKEND_DIR]`, `[FRONTEND_DIR]`, or other bracketed template markers remain), `_progress.md` lists all features, `.claude/rules/` populated → proceed to Stage 4
-   - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded, CLAUDE.md Part 2 populated and `_progress.md` present (rules may be incomplete) → proceed to Stage 4 with noted gaps
+   - **PASS**: All required output files exist, PRD coverage ≥ 95% (SC, API, data entities all have scaffold files), CLAUDE.md Part 2 fully populated (no `[PLACEHOLDER]`, `[PROJECT_NAME]`, `[N]`, `[e.g.,`, `[BACKEND_DIR]`, `[FRONTEND_DIR]`, or other bracketed template markers remain), `_progress.md` lists all features, `.claude/rules/` populated → proceed to Stage 5
+   - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded, CLAUDE.md Part 2 populated and `_progress.md` present (rules may be incomplete) → proceed to Stage 5 with noted gaps
    - **FAIL**: PRD coverage < 80%, OR CLAUDE.md Part 2 not populated, OR `_progress.md` missing, OR required output files missing → re-run Stage 3
 
    > **Terminology note**: "Coverage" in this stage means scaffold coverage — the percentage of PRD screens (SC-xxx), API endpoints, and data entities that have corresponding scaffold files. This differs from Stage 2B's "coverage" (BRD→PRD requirement traceability).
+
+   > **Measurement**: Coverage is per-feature: count features with scaffold files ÷ total PRD features. Supplement with per-artifact-type verification: all P0 features should have SC (screen), API, and data entity scaffold files.
 
    > **NOTE**: These Stage 3+4 gate thresholds (≥95% PASS, ≥80% CONDITIONAL PASS) are defined here as the canonical source. execution-guide.md does not duplicate them.
 

@@ -35,6 +35,10 @@ You are a **Frontend Implementation Teammate** — responsible for building the 
 
 You implement frontend components, pages, hooks, and client-side logic for the feature assigned to you by the Feature Orchestrator (team lead).
 
+## Session Language
+
+Check `plancasting/tech-stack.md` for the `Session Language` setting. Write user-facing strings (UI labels, toast messages, error messages) in that language. Code and comments remain in English.
+
 ## Before Writing Any Code
 
 1. **Read CLAUDE.md** — Follow all Part 1 immutable rules (especially Component Rules and Design & Visual Identity) and Part 2 project-specific rules.
@@ -57,6 +61,44 @@ You implement frontend components, pages, hooks, and client-side logic for the f
 8. **Scaffold inventory**: List ALL existing scaffold files BEFORE writing code. Extend them.
 9. **API Contract Alignment**: Frontend types must match ACTUAL backend response shape, not database schema. Create SEPARATE types for projections. NEVER use `as unknown as Type`.
 
+## Design Guidelines
+
+Execute the aesthetic direction from `tech-stack.md` with precision. If the "Design Direction" section is missing or incomplete, fall back to: (a) existing component styles in completed features, (b) design tokens file if it exists, (c) the UI component library's default theme.
+
+### Typography
+Choose fonts intentionally — avoid defaulting to generic fonts (Inter, Roboto, Arial, system-ui) unless they align with the project's stated design direction. Use the fonts established in the design tokens file.
+
+### Color
+Use dominant colors with sharp accents — not evenly-distributed palettes. Follow the palette in the design tokens file.
+
+### Motion
+Apply purposeful animations — CSS transitions on hover/focus, staggered reveals on page load, smooth state changes. Keep animations purposeful — enhance understanding, don't decorate.
+
+### Spatial Composition
+Use intentional layout choices — asymmetry, generous negative space, controlled density. Break predictable grid layouts where appropriate.
+
+### Design Quality Sub-Rules
+
+a. Use ONLY the design tokens from the project's design-tokens file — never hardcode colors, fonts, or spacing.
+b. Apply micro-interactions: CSS transitions on hover/focus states, smooth state changes, subtle entrance animations.
+c. Skeleton screens for loading states must match the actual component layout and use the design system's colors.
+d. Empty states must be visually composed with illustrations or icons — not just text saying "No items found."
+e. Icons: ALWAYS use the project's icon library (specified in `plancasting/tech-stack.md` "Icon library" field). NEVER use inline SVG `<path>` elements for standard UI icons. The only acceptable inline SVGs are: product logos, brand marks, or custom illustrations.
+f. Error states must be styled and helpful — not raw error strings.
+g. NEVER produce generic AI-looking UI: no default Tailwind colors, no Inter/Roboto fonts, no uniform card grids, no purple-on-white gradients.
+h. Every component must be visually consistent with already-completed features. Check existing components for patterns.
+
+## I18n
+
+Check `plancasting/tech-stack.md` for i18n configuration. If i18n is enabled: use translation keys (`t('key')`) for all user-facing strings — never hardcode display text directly. Add all new keys to the messages file(s). If i18n is NOT enabled: use hardcoded strings but follow naming and formatting conventions from the design tokens.
+
+## Feature Flags
+
+If this feature has ops/experiment/permission flags:
+- Wrap appropriate components with `<FeatureGate>`.
+- Implement fallback UIs.
+- Remember: these are NOT release gates. The feature ships enabled. Flags are for kill switches, A/B tests, or role gating.
+
 ## Output
 
 - Component files (with all states)
@@ -75,6 +117,33 @@ grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Sta
 
 Every component must render meaningful UI with real data from hooks — no empty returns, no hardcoded placeholder text, no commented-out JSX with TODO markers.
 
+## Frontend Testing Pitfalls
+
+These are jsdom + testing-library pitfalls (React-specific; adapt patterns to Vue/Svelte equivalents if applicable):
+
+a. **Portal components**: Components using `createPortal` (Dialog, Sheet, Modal, ConfirmDialog) render into `document.body`, invisible to testing-library. Mock `react-dom` in the test file:
+   ```typescript
+   vi.mock("react-dom", async () => {
+     const actual = await vi.importActual<typeof import("react-dom")>("react-dom");
+     return { ...actual, createPortal: (node: React.ReactNode) => node };
+   });
+   ```
+
+b. **SVG className**: In jsdom, `svgElement.className` returns `SVGAnimatedString`, not a string. Use `svgElement.getAttribute("class")` instead.
+
+c. **axe + canvas**: axe-core's color contrast check calls `canvas.getContext()`, which jsdom doesn't implement. Stub it in test setup:
+   ```typescript
+   HTMLCanvasElement.prototype.getContext = vi.fn();
+   ```
+
+d. **Multiple role="status"**: Components that wrap other `role="status"` elements (e.g., LoadingState wrapping Spinner) produce multiple matches. Use `getAllByRole("status")` with `.find()` instead of `getByRole("status")`.
+
+e. **`exactOptionalPropertyTypes`**: Don't pass `prop={undefined}` to components — TypeScript's exactOptionalPropertyTypes treats this differently from omitting the prop entirely.
+
+f. **Button visibility vs. enablement mismatch**: When a button's render condition and its `disabled`/`isDisabled` condition are defined separately, they can disagree. Rule: every state that satisfies the RENDER condition must also be reachable by the ENABLE condition. Test all terminal states (cancelled, failed, completed) to verify the button is both visible AND clickable when it should be.
+
+g. **CSS/Tailwind purge gaps**: Dynamic classes like `bg-${color}-500` get purged — use complete class names.
+
 ## Known Failure Patterns
 
 - **Frontend stubs surviving quality gates** — ALWAYS apply anti-stub quality gates even when fatigued
@@ -82,7 +151,6 @@ Every component must render meaningful UI with real data from hooks — no empty
 - **Inline page code instead of component composition** — Check scaffold files first
 - **Orphan scaffold components** — Implement existing scaffold, don't create duplicates
 - **Context window degradation** — End session if quality gate fails 2x in sequence; resume fresh
-- **CSS/Tailwind purge gaps** — Dynamic classes like `bg-${color}-500` get purged — use complete class names
 
 ## Cross-Feature UI Updates
 
@@ -100,3 +168,5 @@ After implementing a feature, update cross-feature UI: navigation menus, dashboa
 - [ ] Extends scaffold files (no duplicates)
 - [ ] Frontend types match backend response shape
 - [ ] Anti-stub grep returns zero matches
+- [ ] I18n keys used if i18n is enabled
+- [ ] Feature flags implemented if applicable

@@ -1,7 +1,7 @@
 ---
 name: user-guide
 description: >-
-  Generates a user-facing documentation site (Mintlify) from the PRD and production application.
+  Generates a user-facing documentation site from the PRD, user stories, user flows, BRD business rules, and the production application.
   This skill should be used when the user asks to "generate user documentation",
   "create the user guide", "build the Mintlify docs site", "generate user-facing docs",
   "create documentation for users", "run stage 7D", "generate the docs site",

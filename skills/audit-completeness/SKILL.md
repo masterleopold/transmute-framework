@@ -13,7 +13,7 @@ version: 1.0.0
 
 Lead a multi-agent implementation completeness audit using Claude Code Agent Teams. Systematically verify that EVERY feature in the PRD has been FULLY implemented — not just scaffolded — and fix any gaps found.
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-detailed-guide.md` for the complete teammate instructions, scan scripts, fix patterns, and coordination protocol.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-completeness-detailed-guide.md` for the complete teammate instructions, scan scripts, fix patterns, and coordination protocol.
 
 ## Why This Stage Exists
 

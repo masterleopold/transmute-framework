@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.9.0** — 17th-pass audit sync: gate precision, cross-template consistency, Session Language propagation, safety hardening
+> **v3.0.0** — 22nd-pass audit sync: gate precision, cross-template consistency, Session Language propagation, safety hardening
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -145,7 +145,7 @@ Stages **4** and **7** are manual and cannot be invoked via commands.
 
 The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are checked before each stage runs. If a stage fails, fix the issue and run `/transmute:cast resume`.
 
-### Gate Logic (v2.5.0)
+### Gate Logic
 
 - **5B**: PASS requires zero issues + all tests pass; FAIL triggers RETRY (4-5 Category C, 3+ A/B unfixed, or test failures) or ESCALATE (6+ Category C); per-feature consecutive FAIL-RETRY tracking (3x → auto-escalate)
 - **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
@@ -217,7 +217,7 @@ transmute-framework/
 │   ├── prd-writer.md            # PRD section writer
 │   ├── feature-backend.md       # Backend implementation
 │   ├── feature-frontend.md      # Frontend implementation
-│   ├── feature-tests.md         # Test writing
+│   ├── feature-tests.md         # E2E test writing
 │   └── feature-reviewer.md      # Code review gate
 ├── skills/                      # 23 stage skills
 │   ├── tech-stack/              # Stage 0
@@ -250,42 +250,40 @@ transmute-framework/
 
 ## Changelog
 
-### v2.9.0
+### v3.0.0
 
-**Gate Precision**
-- 7V gate changed from binary to 3-outcome (PASS/CONDITIONAL PASS/FAIL) — CONDITIONAL PASS documents minor P1/P2 issues for post-launch fix
-- 6V PASS definition clarified: zero actionable issues, not literally zero observations
-- 6R max-cycle exhaustion documented as exception to FAIL blocking, not a true CONDITIONAL PASS
-- 5B FAIL-ESCALATE thresholds clarified with independent trigger conditions
-- 5B CONDITIONAL PASS path (c) gains total cap: A/B + C ≤ 5
+**22nd-Pass Audit Sync** — comprehensive alignment of all plugin files with the canonical Transmute Framework Template (17th → 22nd pass audits).
 
-**Cross-Template Consistency**
-- Rule templates gain cross-template sync annotations (e.g., `[ERROR_TYPE]` must match between backend and auth)
-- Rule count limits (max 15 rules per file) added to all 6 rule templates with splitting guidance
-- `feature_scenario_generation.md` paths generalized to bracketed placeholders
+**Safety-Critical Gate Fixes**
+- 6V gate system: corrected to "worse-of" dual system (percentage-based AND fixability-based); plugin previously described pass rate as "sole gate determinant"
+- Post-6R FAIL routing: corrected to "fix 6V-C manually" (human-judgment issues); plugin previously said "fix 6V-A/B manually" (opposite categories)
+- 6P max-cycle exhaustion: expanded with explicit "effectively converts to CONDITIONAL PASS" framing, "NOT a true CONDITIONAL PASS" clarification, and updated report format string
+- Stage 1 gate reclassified: no formal PASS/FAIL gate (grouped with Stages 0, 2, 4); plugin previously described a lightweight gate
+- 6V/7V scenario caps: split into distinct rows (150 for 6V full, 15 for 7V smoke); plugin previously merged into single row
 
-**Session Language Propagation**
-- BRD and PRD spawn contexts now include explicit Session Language instructions for parallel teammates
-- BRD Session Language fallback changed from STOP to default English
+**Template Files** (all synced byte-identical with canonical template)
+- CLAUDE.md: added missing Stage 3 prerequisite (2B must PASS/CONDITIONAL PASS), expanded 6R skip condition recovery detail, added 6D skip condition clause, corrected Stage 8 WARN description ("proceeding to Stage 8" not "deployment")
+- execution-guide.md: 13 differences resolved including 6P-R prerequisite precision, credential tiers format, 5B "(without workaround)" qualifier removal, Stage 8 batch limit removal, skip conditions simplification
+- feature_scenario_generation.md: 10 updates to skill reference copies (verify + smoke) — added Step 0 (filter by implementation status), generalized codebase paths to bracketed placeholders, expanded cycle detection to 3-step procedure, added Mermaid validation, expanded flaky handling stage distinction
+- All 6 rule templates: cross-reference corrections (Auth Guards, Query Filters), baseline rule count, EMPTY_COMPONENT comment, testing cross-reference target, TODO comment format
 
-**Safety Hardening**
-- 6P-R pre-flight check verifies 6P hasn't already run before proceeding
-- 6P mutual exclusivity check added at prerequisite stage
-- State transitions: `🔄` can now transition to `⏸ Blocked`; pre-block status preserved in Notes column
-- 6D changed from "strongly recommended" to "mandatory for software products" for Stage 7 prerequisites
-- Stage 8 prerequisite changed: 7V PASS → 7V PASS or CONDITIONAL PASS
-- Stage 9 adds breaking-change warning for dependency updates to production
+**Skill Detailed Guides** (all 23 replaced with canonical prompt files)
+- All stage prompts now match the 22nd-pass audit versions exactly
+- Stale duplicate reference files removed (remediation-detailed-guide.md, security-detailed-guide.md, a11y-detailed-guide.md, audit-detailed-guide.md)
+- SKILL.md reference paths updated to match new filenames
 
-**New Sections**
-- Gate Decision sections added to BRD (Stage 1) and PRD (Stage 2) prompts with full decision trees
-- Never-skip stages table added to execution-guide.md Stage Skip Logic
-- 6D early-draft check added before 6H
-- Git prerequisite added to execution-guide.md
+**Agent Definitions** (all 7 updated)
+- feature-tests.md: narrowed from all-test-types to E2E-only (backend tests → backend builder, component tests → frontend builder)
+- feature-reviewer.md: checklists aligned with template quality gate (10 items, blocking/secondary classification)
+- feature-backend.md: added crash recovery, Session Language, 13 backend testing sub-rules, cross-feature integration, verification steps, completion message format
+- feature-frontend.md: added 7 frontend testing pitfalls, expanded design guidelines (typography/color/motion/spatial/8 sub-rules), i18n, Session Language, feature flags
+- brd-writer.md: fixed domain naming (3 mismatches), fixed domain file assignments, dynamic token budget, BRD issues handling
+- prd-writer.md: dynamic token budget, BRD issues handling
+- transmute-pipeline.md: Stage 4 adds `.claude/rules/*.md` verification
 
-**Template Updates**
-- CLAUDE.md: enhanced state transition diagram, E2E selector hierarchy expanded, test count preservation reframed as behavior-based
-- execution-guide.md: scaffold manifest completeness guidance, Mintlify note for 7D, prompt file path note
-- All rule templates: preamble expansion with conditional section guidance
+**Metadata**
+- SKILL.md descriptions updated: docs (6D) reflects user-facing help docs, user-guide (7D) reflects broader input sources
+- Gate Logic section header: removed stale version reference
 
 ### v2.8.0
 

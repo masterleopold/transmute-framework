@@ -82,6 +82,11 @@ Specify scope when running this stage:
 
 Default: `full`.
 
+**MODE selection**:
+- **MODE: full** — Run all scenarios. Use for first 6V run, after major code changes, or when uncertain.
+- **MODE: diff** — Run only scenarios affected by files changed since the last 6V run. Uses `./plancasting/_audits/visual-verification/last-verified-commit.txt` as the baseline. Extract changed files via `git diff [last-commit]...HEAD --name-only`. Default to MODE: full if the baseline commit file doesn't exist.
+- **MODE: critical** — P0/P1 features only.
+
 **How to specify scope**: Append the mode on a new line when pasting the prompt, or type it as a separate follow-up message after pasting. Examples: `MODE: full`, `MODE: critical`, `MODE: diff`. If unspecified or unrecognized, defaults to `full`.
 
 ## Stack Adaptation
@@ -974,6 +979,8 @@ After all teammates complete:
    - **CONDITIONAL PASS**: ≥80.0% and <90.0% criteria pass rate, 1–3 high-severity issues — document for post-deploy fix
    - **FAIL**: <80.0% criteria pass rate, OR any critical failure (page won't load, core flow broken, auth broken) — fix before deploy
 
+   **Critical paths definition**: Critical paths = all P0 features' happy-path scenarios (derived from `./plancasting/prd/06-user-flows.md`, filtered to P0 priority). These MUST achieve at least 1 passing scenario for PASS or CONDITIONAL PASS. P1-P3 features may have failures without blocking the gate.
+
    **Dual-system decision matrix** — use the WORSE of the two systems:
 
    | Percentage | Categories Present | Final Gate | Next Stage |
@@ -986,23 +993,29 @@ After all teammates complete:
    | CONDITIONAL (≥80%, <90%) | 6V-C only | CONDITIONAL PASS | → 6P/6P-R (document C issues for human) |
    | FAIL (<80%) | Any | FAIL | Manual fix + re-run 6V |
 
+   > **Note**: All rows additionally require: all pages load successfully and zero critical failures. If either condition fails, the gate is FAIL regardless of percentage.
+
    The category system determines 6R routing (whether auto-fix is attempted); the percentage system sets the overall quality bar.
+
+   **Post-gate routing**:
+   - PASS (zero 6V-A/B issues) → Skip 6R, proceed to 6P/6P-R
+   - CONDITIONAL PASS (6V-C issues only) → Skip 6R; proceed to 6P/6P-R (document 6V-C issues for human review). If ANY 6V-A/B issues exist, 6R is mandatory per CLAUDE.md
+   - FAIL → Fix critical issues and re-run 6V before proceeding
 
    ## Failure Categorization (for 6R routing)
 
    **Category definitions** (for 6R routing — full details in Stage 6R prompt):
    - **6V-A** (auto-fixable): broken links, dead code, incorrect imports — 6R fixes automatically
-   - **6V-B** (semi-auto): stub components, missing loading states — 6R fixes with effort
+   - **6V-B** (semi-auto): pattern-based fixes requiring verification — button wiring, conditional logic, missing feedback, auth redirects, stub components, missing loading states — 6R fixes then verifies
    - **6V-C** (human judgment): architectural issues, design decisions — 6R cannot fix
 
    These categories classify *fixability*, not severity. A critical bug that's easy to fix is 6V-A; a minor issue requiring architectural change is 6V-C. **IMPORTANT**: All issue categories in the report MUST use the `6V-` prefix (6V-A, 6V-B, 6V-C) to distinguish from Stage 5B's size-based categories. Never output bare "Category A", "Category B", or "Category C" — it will be confused with Stage 5B's size-based A/B/C system.
 
    **Handling flaky scenarios**: A flaky scenario fails inconsistently (fails once, passes on retest).
-   - Retest a failing scenario once. If it passes on retest: mark as "FLAKY — cause TBD" in the Issues table.
-   - If it fails both times: mark as "FAILED" (not flaky).
-   - Do NOT attempt 3+ retries — preserve test execution time budget.
+   - Re-test up to 3 times. If still flaky after retries, classify as 6V-C (human-judgment) — exclude from the pass-rate denominator. Document instability for developer investigation.
+   - If it fails all retries: mark as "FAILED" (not flaky).
    - **For 6V (this stage)**: Flaky scenarios do NOT block the gate decision and are EXCLUDED from the pass/fail percentage calculation. Include them in the report as severity "Informational" in a separate "Flaky Scenarios" section. If more than 2 flaky scenarios are found, recommend re-running 6V in a fresh session. The gate outcome is unaffected by flaky count — they are flagged for post-launch investigation only.
-   - **For 7V (production)**: Flaky scenarios cause a FAIL gate — production flakiness is unacceptable.
+   - **For 7V (production)**: Flaky scenarios count as FAIL. Production must be deterministic — investigate the root cause before re-running 7V.
 
    **6R cross-reference requirement**: Every failure entry in the table below MUST include the scenario ID (FS-NNN, AS-NNN, ES-NNN, RS-NNN, or NS-NNN) that detected it, in addition to the SC-NNN/US-NNN/FEAT-NNN references. Stage 6R uses these scenario IDs to categorize and prioritize fixes.
 

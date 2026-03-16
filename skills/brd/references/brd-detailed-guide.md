@@ -467,11 +467,13 @@ Include the gate decision in the Final Summary output and in `_review-log.md`: "
 12. **Cross-Feature Interactions**: When documenting a requirement, consider how it interacts with ALL other features (not just features from the same Business Plan phase). Document these interactions explicitly.
 13. **Lowercase Anchors**: Use lowercase anchors in all heading IDs and cross-reference links (e.g., `#br-001` not `#BR-001`) for compatibility with case-sensitive systems and downstream PRD linking. When creating cross-reference links to other BRD sections, use lowercase in the anchor portion (e.g., `[See BR-001](./06-business-requirements.md#br-001)` not `#BR-001`). Markdown heading IDs are auto-generated in lowercase by most renderers.
 
-## Gate Decision
+## Gate Decision (Simplified Reference)
 
-- **PASS**: All 23 BRD files generated and complete, master feature inventory covers 100% of Business Plan features, assumption volume < 30%, all cross-references resolve, mermaid diagrams render without syntax errors
-- **CONDITIONAL PASS**: All BRD files generated, assumption volume ≥ 30% (flagged for operator review before Stage 2), or minor cross-reference gaps in non-critical sections (glossary, appendices). Operator must review assumptions before proceeding.
-- **FAIL**: Missing critical BRD files (business requirements, functional requirements, security requirements), master feature inventory incomplete (Business Plan features not captured), or files are empty/corrupted. Re-run Stage 1.
+> The canonical gate decision logic is in the detailed Gate Decision section above (§ Gate Decision, after Phase 7). This simplified reference summarizes the three possible outcomes — if any discrepancy, the detailed decision tree above takes precedence.
+
+- **PASS**: All 23 BRD files generated and complete, master feature inventory covers 100% of Business Plan features, zero CRITICAL/HIGH issues, all BRs traceable, all cross-references resolve, mermaid diagrams render without syntax errors. Note: assumption volume ≥ 30% triggers a pipeline halt (operator review before Stage 2) but does NOT downgrade the gate outcome.
+- **CONDITIONAL PASS**: All BRD files generated, 100% feature inventory coverage, zero CRITICAL/HIGH issues, but minor gaps in non-critical sections (glossary, appendices, formatting). Document each gap in `_review-log.md`. Assumption volume interaction same as PASS.
+- **FAIL**: Missing critical BRD files, master feature inventory incomplete, unresolved CRITICAL/HIGH issues, untraceable BRs, or files empty/corrupted. Re-run Stage 1.
 
 > **Session Language**: Read `./plancasting/tech-stack.md` § 'Session Language' and generate all BRD content in the specified language. If Session Language is not set, STOP: 'Stage 1 requires Session Language to be defined in tech-stack.md by Stage 0.'
 

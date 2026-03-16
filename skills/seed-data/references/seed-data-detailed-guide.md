@@ -53,9 +53,9 @@ Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project'
 
 ## Prerequisites
 
-Running after 6E is MANDATORY per CLAUDE.md ordering (the default pipeline sequence). Unlike Stage 6G which requires 6E's refactoring output, seed data generation can technically proceed without refactoring — but deviating from the mandatory ordering requires explicit operator approval. 6E stabilizes the schema before seed data generation. If 6E has NOT yet been run, WARN: "Stage 6E has not completed — seed data generated pre-refactoring may need regeneration if 6E introduces schema changes (field renames, table merges, index additions)." Note this in the report. This stage can proceed after 5B PASS or CONDITIONAL PASS. Before beginning:
-1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6 audits. Seed data must target finalized schemas."
-2. If 5B shows FAIL, FAIL-RETRY, or FAIL-ESCALATE, STOP — re-run Stage 5 for affected features and re-run 5B until PASS or CONDITIONAL PASS. If CONDITIONAL PASS, review the documented Category C issues — skip generating seed data for features with Category C status (their schema may change during re-implementation). Document skipped features in the seed data report.
+Running after 6E is the mandatory pipeline sequence per CLAUDE.md ordering. Unlike Stage 6G which requires 6E's refactoring output, seed data generation does not directly depend on 6E's output — but deviating from the mandatory ordering requires explicit operator approval. 6E stabilizes the schema before seed data generation. If 6E has NOT yet been run, WARN: "Stage 6E has not completed — seed data generated pre-refactoring may need regeneration if 6E introduces schema changes (field renames, table merges, index additions)." Note this in the report. This stage can proceed after 5B PASS or CONDITIONAL PASS. Before beginning:
+1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6F. Seed data must target finalized schemas."
+2. If 5B shows FAIL, FAIL-RETRY, or FAIL-ESCALATE (see execution-guide.md § "Gate Decision Outcomes" for definitions), STOP — re-run Stage 5 for affected features and re-run 5B until PASS or CONDITIONAL PASS. If CONDITIONAL PASS, review the documented Category C issues — skip generating seed data for features with Category C status (their schema may change during re-implementation). Document skipped features in the seed data report.
 3. Verify `./plancasting/_audits/refactoring/report.md` exists (Stage 6E output). If present, read it — especially any "Schema Changes" section (field renames, table merges, index additions). If schema changes are documented, verify the current schema file (e.g., `./convex/schema.ts`, `prisma/schema.prisma`, or equivalent per `tech-stack.md`) reflects those changes before proceeding. All seed data must target the CURRENT post-refactoring schema, not the pre-refactoring schema. Include schema change awareness in all teammate spawn prompts. If the refactoring report is missing, warn: "Stage 6E (Code Refactoring) has not been run. Proceeding, but seed data may need regeneration if schema changes occur during 6E."
 4. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
 5. Verify `./plancasting/_audits/security/report.md` exists (Stage 6A output) — per CLAUDE.md ordering, 6A runs before this stage and this file SHOULD exist. If present, read it to understand any recently added auth requirements that affect seed data generation (e.g., new auth guards, rate limiting on seed endpoints). If missing, WARN: "Stage 6A has not completed — seed data may not account for auth changes. Proceed with caution."
@@ -83,10 +83,11 @@ Stage 6F generates:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, your schema file (e.g., `./convex/schema.ts` for Convex), and `./plancasting/prd/11-data-model.md`.
-2. Read `./plancasting/prd/01-product-overview.md` for personas and `./plancasting/prd/06-user-flows.md` for user journeys.
-3. Read `./plancasting/brd/14-business-rules-and-logic.md` for data validation rules and constraints.
-4. Build a **Seed Data Plan**:
+1. Ensure output directory exists: `mkdir -p ./plancasting/_audits/seed-data`
+2. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, your schema file (e.g., `./convex/schema.ts` for Convex), and `./plancasting/prd/11-data-model.md`.
+3. Read `./plancasting/prd/01-product-overview.md` for personas and `./plancasting/prd/06-user-flows.md` for user journeys.
+4. Read `./plancasting/brd/14-business-rules-and-logic.md` for data validation rules and constraints.
+5. Build a **Seed Data Plan**:
    - Map every table/collection in your schema to the seed data it needs.
    - Define data volume tiers:
      - **Dev**: Minimal data (5–20 records per table) for rapid iteration
@@ -95,12 +96,12 @@ As the team lead, complete the following BEFORE spawning any teammates:
    - Define persona-based data sets: for each persona in the PRD, create a complete user account with associated data that demonstrates their typical usage.
    - Identify edge case data: empty states, maximum-length strings, special characters, Unicode, boundary values.
    - Map data dependencies: which tables must be seeded first (e.g., users before projects, projects before tasks).
-5. Decide the seed data auth strategy (direct database insertion vs. API-based user creation). This decision affects ALL teammates — communicate it in the teammate spawn prompts. **Recommended approach**: Use the auth provider's API if available and credentials are in `.env.local` — this ensures auth provider consistency (e.g., password hashes, MFA enrollment). Direct database insertion is faster but may create users that cannot log in via the auth flow. See Teammate 1 instructions for the detailed decision tree.
-6. Verify the schema's soft-delete field name (common names: `deletedAt`, `deleted_at`, `isDeleted`, `deletionTimestamp`). Read the actual schema file and document the exact field name. Communicate this to all teammates in their spawn prompts so soft-deleted seed records use the correct field.
-7. Verify `seed/.seed-ids.json` is in `.gitignore`. If not, add `seed/.seed-ids.json` to `.gitignore` (example entry: `seed/.seed-ids.json`) — this file contains environment-specific IDs that should not be committed. If `.seed-ids.json` exists from a previous run, it will be overwritten by Teammate 1.
-8. Decide the seed data idempotency strategy: (a) Upsert logic (preferred) — check-before-insert with natural unique keys, (b) Reset-required — document that `seed:reset` must run before re-seeding, (c) Deterministic IDs — use reproducible seed identifiers. Document the chosen approach in `seed/README.md`.
-9. Create `./seed/README.md` with the seed data plan and the chosen idempotency strategy.
-10. Create a task list for all teammates with dependency tracking.
+6. Decide the seed data auth strategy (direct database insertion vs. API-based user creation). This decision affects ALL teammates — communicate it in the teammate spawn prompts. **Recommended approach**: Use the auth provider's API if available and credentials are in `.env.local` — this ensures auth provider consistency (e.g., password hashes, MFA enrollment). Direct database insertion is faster but may create users that cannot log in via the auth flow. See Teammate 1 instructions for the detailed decision tree.
+7. Verify the schema's soft-delete field name (common names: `deletedAt`, `deleted_at`, `isDeleted`, `deletionTimestamp`). Read the actual schema file and document the exact field name. Communicate this to all teammates in their spawn prompts so soft-deleted seed records use the correct field.
+8. Verify `seed/.seed-ids.json` is in `.gitignore`. If `.seed-ids.json` is not listed in `.gitignore`, add `seed/.seed-ids.json` to `.gitignore` immediately before proceeding. This is a blocking requirement — do not continue without it. This file contains environment-specific IDs that should not be committed. If `.seed-ids.json` exists from a previous run, it will be overwritten by Teammate 1.
+9. Decide the seed data idempotency strategy: (a) Upsert logic (preferred) — check-before-insert with natural unique keys, (b) Reset-required — document that `seed:reset` must run before re-seeding, (c) Deterministic IDs — use reproducible seed identifiers. Trade-offs: (a) Upsert = safest, can re-seed anytime, but slower. (b) Reset-required = faster but breaks if seed runs twice accidentally — use only for `seed:demo`. (c) Deterministic IDs = predictable but requires careful key design. Recommendation: use (a) for `seed:dev` and `seed:test`. Document the chosen approach in `seed/README.md`.
+10. Create `./seed/README.md` with the seed data plan and the chosen idempotency strategy.
+11. Create a task list for all teammates with dependency tracking.
 
 ### Phase 2: Spawn Seed Data Teammates
 
@@ -365,6 +366,8 @@ After all teammates complete:
    - Soft-delete filtering — queries that filter `deletedAt === null` correctly exclude soft-deleted seed records
    - Enum/status values — all status fields contain valid enum values per the schema
 
+   Output: JSON `{ "referential_integrity": true/false, "soft_delete_filtering": true/false, "enum_values": true/false, "summary": "All checks pass" }`. Gate: FAIL if any check returns false.
+
 ### Integrity Check Failure Recovery
 
 If integrity checks fail:
@@ -396,8 +399,9 @@ If integrity checks fail:
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
+1. Commit all changes: `git add -A && git commit -m 'feat(seed): Stage 6F seed data generation'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
 
 ## Critical Rules
 

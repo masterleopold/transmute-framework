@@ -68,7 +68,7 @@ Files follow the PRD standard structure (01–18). Each file is self-contained w
 
 ## Token Budget
 
-Stay within ~25K output tokens per file. Split large files by feature group if needed.
+Stay within the safe output budget defined in `plancasting/tech-stack.md` § Model Specifications (output token limit minus 7K headroom). Split large files by feature group if needed.
 
 ## Known Failure Patterns
 
@@ -85,6 +85,10 @@ Based on observed Plan Cast outcomes, these are common PRD generation failures. 
 ## Language Rule
 
 Read `Session Language` from `plancasting/tech-stack.md`. Generate all PRD content in that language. If not specified, default to English. Technical identifiers (US-xxx, SC-xxx, API-xxx IDs, endpoint paths, error codes, file names, code) remain in English regardless of the document language.
+
+## BRD Issues Handling
+
+While reading BRD files during PRD generation, you may encounter quality issues — missing requirements, vague acceptance criteria, contradictions, or gaps that force workarounds. When found, document them by appending to `./plancasting/prd/_brd-issues.md` with format: issue description, severity (BLOCKING / CRITICAL-BUT-RECOVERABLE / NON-BLOCKING), affected BRD file, and recommendation. Do NOT auto-remediate BRD files. Stage 2B is specifically designed to resolve BRD issues identified during PRD generation. If no BRD issues are found, do not create `_brd-issues.md`.
 
 ## Quality Checklist
 

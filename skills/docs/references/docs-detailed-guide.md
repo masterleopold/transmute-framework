@@ -10,7 +10,7 @@ You are a senior technical writer acting as the TEAM LEAD for a multi-agent docu
 ## Prerequisites
 
 Stage 6D runs after Stage 5B PASS or CONDITIONAL PASS. Run Stage 6D AFTER Stage 6G (per pipeline ordering in CLAUDE.md). Can run after 5B PASS for an early draft, but MUST re-run after 6E–6G if code changed. Stage 6D = internal developer documentation (API reference, architecture, dev guide). Stage 7D = external user-facing site (Mintlify). Stage 6D always runs; Stage 7D is optional per tech-stack.md.
-1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS. If the file does not exist, STOP: 'Stage 5B report not found — implementation completeness is unverified. Run Stage 5B before Stage 6D.' If 5B shows FAIL, FAIL-RETRY, or FAIL-ESCALATE, STOP — do not generate documentation for a codebase with unresolved implementation gaps. Report: 'Stage 5B FAIL — resolve implementation gaps before generating documentation.' If CONDITIONAL PASS, check Phase 1 step 4's blocking gate first: if ≥25% Category C or any P0 incomplete, STOP. Otherwise, document Category C features as 'Planned' with the `⚠️ Planned` callout rather than 'Available'.
+1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS. If the file does not exist, STOP: 'Stage 5B report not found — implementation completeness is unverified. Run Stage 5B before Stage 6D.' If 5B shows FAIL, FAIL-RETRY, or FAIL-ESCALATE, STOP — do not generate documentation for a codebase with unresolved implementation gaps. Report: 'Stage 5B FAIL — resolve implementation gaps before generating documentation.' If CONDITIONAL PASS, check Phase 1 step 5's blocking gate first: if >25% of total features are Category C or any P0 feature is incomplete, STOP — do not run 6D (see Phase 1 step 5 for calculation details). Otherwise, document Category C features as 'Planned' with the `⚠️ Planned` callout rather than 'Available'.
 2. Verify `./plancasting/_audits/refactoring/report.md` exists (Stage 6E). This file SHOULD exist per Stage 6 ordering (6E → 6F → 6G → 6D). If missing, WARN: "Stage 6E has not completed. If 6E restructures modules or renames functions after 6D, documentation structure may need regeneration." Note this in the report and proceed with caution — document current module boundaries but flag that they may shift after 6E. If the 6E report exists, also read its 'Schema Changes' section to ensure API documentation reflects post-refactoring schema.
 3. Verify `./plancasting/_audits/resilience/report.md` exists (Stage 6G). If missing, documentation may need updating after 6G completes — note this in the report.
 4. Verify `./seed/README.md` exists (Stage 6F). If missing, WARN: "Stage 6F has not completed — seed data documentation will be omitted from developer setup guide." The developer guide's `local-setup.md` references seed commands; if no seed scripts exist yet, document them as "available after Stage 6F."
@@ -56,6 +56,7 @@ docs/
 └── changelog.md          # Initial changelog entry
 ~~~
 
+- `./plancasting/_audits/documentation/report.md` — Stage 6D audit report with Gate Decision
 - `./plancasting/_audits/documentation/unfixable-violations.md` (if applicable) — Documentation gaps requiring source changes
 
 Note: `docs/` is internal developer documentation (Stage 6D output). `user-guide/` is the external user-facing Mintlify site (Stage 7D output — optional per tech-stack.md). They are separate documentation trees serving different audiences. Stage 6D generates lightweight markdown help docs as a foundation. Stage 7D imports, enhances, and publishes them to a Mintlify site. Do not worry about visual polish or branding in 6D — Stage 7D handles presentation.
@@ -99,22 +100,23 @@ Based on observed documentation generation outcomes:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read codebase structure, PRD, BRD, tech-stack.md, and `./ARCHITECTURE.md` (if it exists — if not, derive architecture from `plancasting/tech-stack.md`, `CLAUDE.md`, and codebase structure per Critical Rule 7 below).
-2. Build a **Documentation Map**: which features need user docs, which backend functions need API docs, what developers need to know.
-3. Create `./plancasting/_audits/documentation/_doc-context.md` with the documentation map and writing style guidelines:
+1. Ensure output directory exists: `mkdir -p ./plancasting/_audits/documentation`
+2. Read codebase structure, PRD, BRD, tech-stack.md, and `./ARCHITECTURE.md` (if it exists — if not, derive architecture from `plancasting/tech-stack.md`, `CLAUDE.md`, and codebase structure per Critical Rule 7 below).
+3. Build a **Documentation Map**: which features need user docs, which backend functions need API docs, what developers need to know.
+4. Create `./plancasting/_audits/documentation/_doc-context.md` with the documentation map and writing style guidelines:
    - Product help docs: conversational tone, task-oriented, no jargon, screenshot descriptions (text descriptions of what the user sees)
    - API docs: technical, precise, include argument types and return types
    - Developer guide: practical, code-example-heavy, assumes familiarity with the stack in tech-stack.md
-4. **BLOCKING GATE**: Before spawning teammates, verify implementation completeness. Read `./plancasting/_audits/implementation-completeness/report.md` and check feature status. **Calculating the 25% threshold**: (1) Count total features from `plancasting/prd/02-feature-map-and-prioritization.md` (count FEAT-IDs). (2) Count Category C features from the 5B report. (3) Calculate: Category C count / total feature count. If >25% OR any P0 feature has Category C status, STOP — documentation of unbuilt features will create misleading docs. Wait for Stage 5 re-run to reduce Category C count before proceeding with 6D. **Recovery**: Set affected features to `🔄 Needs Re-implementation` in `_progress.md`, re-run Stage 5 for those features, re-run 5B, then re-run 6D. Note: 5B CONDITIONAL PASS allows up to 3 Category C issues with documented workarounds. Examples: 12 features, 3 Category C = 25% (at threshold — proceed). 12 features, 4 Category C = 33% (exceeds 25% — STOP). 20 features, 4 Category C = 20% (safe to proceed).
-5. Create a task list for all teammates with dependency tracking.
+5. **BLOCKING GATE**: Before spawning teammates, verify implementation completeness. Read `./plancasting/_audits/implementation-completeness/report.md` and check feature status. **Calculating the 25% threshold**: (1) Count total features from `plancasting/prd/02-feature-map-and-prioritization.md` (count FEAT-IDs). (2) Count Category C features from the 5B report. (3) Calculate: Category C count / total feature count. Threshold: >25% (strictly greater than). At exactly 25% (e.g., 3 of 12 features), PROCEED. Above 25% (e.g., 4 of 12 = 33.3%), STOP. If >25% OR any P0 feature has Category C status, STOP — documentation of unbuilt features will create misleading docs. Wait for Stage 5 re-run to reduce Category C count before proceeding with 6D. **Recovery**: Set affected features to `🔄 Needs Re-implementation` in `_progress.md`, re-run Stage 5 for those features, re-run 5B, then re-run 6D. Note: 5B CONDITIONAL PASS allows up to 3 Category C issues with documented workarounds. Examples: 12 features, 3 Category C = 25% (at threshold — proceed). 12 features, 4 Category C = 33% (exceeds 25% — STOP). 20 features, 4 Category C = 20% (safe to proceed).
+6. Create a task list for all teammates with dependency tracking.
 
 **Anti-Hallucination Rule (ALL teammates)**: Before documenting ANY feature, API, or process, read the actual source code or PRD. Do NOT write documentation from memory or assumption. Hallucinated documentation is the #1 cause of Stage 6D failures.
 
 ### Phase 2: Spawn Documentation Teammates
 
-Spawn the following 3 teammates. Each teammate's spawn prompt MUST include the documentation map and writing style guidelines. Safety net for session resumption: re-verify the 25% Category C threshold (see Phase 1 step 4 for full criteria). If >25% of features or ANY P0 feature have Category C status, STOP immediately and output: "Stage 6D HALTED — Product is less than 75% feature-complete (Stage 5B shows >25% Category C issues or P0 feature gaps). Documentation is premature and will require substantial rework. Resolve Stage 5B failures before proceeding." Do not spawn teammates. If Stage 5B reported PASS, this threshold should not be triggered. If the file does not exist, WARN and proceed (implementation completeness unverified).
+Spawn the following 3 teammates. Each teammate's spawn prompt MUST include the documentation map and writing style guidelines. Safety net for session resumption: re-verify the 25% Category C threshold (see Phase 1 step 5 for full criteria). If >25% of features or ANY P0 feature have Category C status, STOP immediately and output: "Stage 6D HALTED — Product is less than 75% feature-complete (Stage 5B shows >25% Category C issues or P0 feature gaps). Documentation is premature and will require substantial rework. Resolve Stage 5B failures before proceeding." Do not spawn teammates. If Stage 5B reported PASS, this threshold should not be triggered. If the file does not exist, WARN and proceed (implementation completeness unverified).
 
-All teammates: Before creating any files, check if `./docs/` already exists. If it does, read existing content and preserve any sections marked as 'Manual' or 'User-added'. Manual content markers: `<!-- MANUAL: Do not regenerate -->` at the start and `<!-- END MANUAL -->` at the end of manually edited sections. Search for these markers before regenerating any file. If no markers are present and the file exists, rename it as backup (e.g., `api-old.md`) before generating fresh content. For auto-generated sections (e.g., API docs from source), regenerate. If in doubt, rename the existing file (e.g., `api-old.md`) and generate fresh, then manually merge critical manual content.
+All teammates: Before creating any files, check if `./docs/` already exists. If it does, read existing content and preserve any sections marked as 'Manual' or 'User-added'. Manual content markers: `<!-- MANUAL: Do not regenerate -->` at the start and `<!-- END MANUAL -->` at the end of manually edited sections. Search for these markers before regenerating any file. (On first run, these markers will not exist. This convention applies to subsequent re-runs where docs/ has been manually edited.) If no markers are present and the file exists, rename it as backup (e.g., `api-old.md`) before generating fresh content. For auto-generated sections (e.g., API docs from source), regenerate. If in doubt, rename the existing file (e.g., `api-old.md`) and generate fresh, then manually merge critical manual content.
 
 #### Teammate 1: "help-docs-writer"
 **Scope**: Product help documentation (internal markdown — distinct from Stage 7D Mintlify site)
@@ -193,7 +195,7 @@ Your tasks:
 
 Writing style: Technical, precise. Use TypeScript type notation. Include code examples for every function.
 
-**Incomplete features**: Before documenting any backend function, check `./plancasting/_audits/implementation-completeness/report.md` (Stage 5B output). If the function belongs to a feature marked as Category C (incomplete), add this callout at the top of the function's documentation: `> ⚠️ **Planned**: This API is not yet available. See the product roadmap for timeline.` Document the API contract from the PRD even if the implementation is incomplete — this helps developers understand the intended design — but clearly mark it as not-yet-available.
+**Incomplete features**: Before documenting any backend function, check `./plancasting/_audits/implementation-completeness/report.md` (Stage 5B output). If the function belongs to a feature marked as Category C (incomplete), use a visually distinct callout: `> ⚠️ **Not Yet Implemented** — This API is planned for a future phase. Current status: [FEAT-ID] is incomplete per the Stage 5B report. Use [workaround or alternative] in the meantime.` Document the API contract from the PRD even if the implementation is incomplete — this helps developers understand the intended design — but clearly mark it as not-yet-available.
 
 When done, message the lead with: number of functions documented, domains covered, number of Planned markers added.
 ~~~
@@ -311,9 +313,10 @@ Generate `./plancasting/_audits/documentation/report.md` with the gate decision.
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
-3. Leave `_doc-context.md` in place for session recovery (consistent with other Stage 6 sub-stages).
+1. Commit all changes: `git add -A && git commit -m 'docs: Stage 6D developer documentation'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
+4. Leave `_doc-context.md` in place for session recovery (consistent with other Stage 6 sub-stages).
 
 ## Critical Rules
 
@@ -335,6 +338,8 @@ If a documentation issue cannot be resolved without access to information that d
 1. Document the gap with a `> ⚠️ DOCUMENTATION GAP: [description of what's missing and why it couldn't be documented]` marker in the affected doc file
 2. Include the gap in the Stage 6D report under a "Documentation Gaps" section
 3. Continue with remaining documentable content — do not block the entire stage on one gap
+
+DOCUMENTATION GAP markers are temporary. After Stage 6G and 6H complete, either resolve the gap or escalate as an unfixable violation. Do not ship documentation with unresolved gap markers.
 
 **Documentation Gap vs. Unfixable Violation**: A documentation gap (marked inline with `> ⚠️ DOCUMENTATION GAP:`) is missing information that prevents complete docs (e.g., undocumented function behavior). An unfixable documentation violation (written to `plancasting/_audits/documentation/unfixable-violations.md`) is a critical error that could mislead developers (e.g., code examples that won't compile, documented APIs that don't exist). Both are reported in the final report.
 ````

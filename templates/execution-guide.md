@@ -42,7 +42,7 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold + 
 | 6V. Visual & Functional Verification | Running app + PRD | `./plancasting/_audits/visual-verification/report.md` | `prompt_visual_functional_verification.md` | 30–120 min (scales with scenario count) |
 | 6R. Runtime Remediation | 6V report + codebase | `./plancasting/_audits/runtime-remediation/report.md`, updated `.claude/rules/` (if fix patterns found) | `prompt_runtime_remediation.md` | 15–45 min |
 | 6P. Visual Polish & UI Refinement | Running app + 6R report (or 6V report if 6R was skipped) | `./plancasting/_audits/visual-polish/report.md` | `prompt_visual_polish.md` | 20–40 min |
-| 6P-R. Frontend Design Elevation *(alternative to 6P)* | Same as 6P (Stage 6V must have completed; if 6V found 6V-A/B issues, 6R must be PASS or CONDITIONAL PASS; if 6V found only 6V-C, 6R is skipped) | `./plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md`, `screenshots/visual-polish/` | `prompt_frontend_redesign.md` | 2–4 hrs (interactive) |
+| 6P-R. Frontend Design Elevation *(alternative to 6P)* | Same as 6P (Stage 6V must have completed with PASS or CONDITIONAL PASS; if 6V found 6V-A/B issues, 6R must be PASS or CONDITIONAL PASS; if 6V found only 6V-C, 6R is skipped) | `./plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md`, `screenshots/visual-polish/` | `prompt_frontend_redesign.md` | 2–4 hrs (interactive) |
 | 7. Deployment | Verified codebase (6H READY + 6V PASS or CONDITIONAL PASS + 6R PASS/CONDITIONAL PASS if run + 6P or 6P-R PASS or CONDITIONAL PASS + 6D complete (mandatory for software products)) | Production environment | (manual / CI/CD) | 15–30 min |
 | 7V. Production Smoke Verification | Production URL | `./plancasting/_audits/production-smoke/report.md` | `prompt_production_smoke_verification.md` | 25–45 min |
 | 7D. User Guide Generation | PRD/BRD + production URL + 7V report | `./user-guide/`, `./plancasting/_audits/user-guide/report.md` | `prompt_generate_user_guide.md` | 30–60 min |
@@ -69,9 +69,7 @@ Before starting, ensure the following are in place.
 
 **Business Plan**: Your Business Plan markdown files must be placed at `./plancasting/businessplan/`. This directory is read-only input for all stages. The Business Plan can be a single file or multiple files — the prompts will read all `.md` and `.pdf` files in the directory.
 
-<!-- Credential tier NAMES and TIMING (🔴🟡🟠🔵) are used by Stage 0 to categorize product-specific credentials in tech-stack.md.
-     Tier definitions: red = before Stage 3, yellow = before Stage 5, orange = before Stage 7, blue = optional.
-     CLAUDE.md § "Pipeline Execution Guide" cross-references this section. -->
+**Credential tiers** (used by Stage 0 to categorize product-specific credentials in `tech-stack.md`): 🔴 Red = before Stage 3, 🟡 Yellow = before Stage 5, 🟠 Orange = before Stage 7, 🔵 Blue = optional.
 
 **Pipeline Infrastructure Credentials**: These are required by the Transmute pipeline itself (not the product being built — E2B provides sandbox execution for autonomous code generation during Stage 5). Have these ready before starting:
 
@@ -717,6 +715,7 @@ ls ./plancasting/businessplan/
 # 1B. Spec Validation passed
 cat ./plancasting/_audits/spec-validation/report.md | head -20
 # Verify this file exists and shows PASS or CONDITIONAL PASS.
+# If FAIL: STOP — go back to Stage 2B and resolve spec validation issues before Stage 5.
 
 # 2. Tech stack is configured
 cat ./plancasting/tech-stack.md | head -10
@@ -1154,7 +1153,7 @@ Paste the contents of **`prompt_visual_polish.md`**.
 
 > See § "Gate Decision Outcomes" → "Category Systems" for canonical category definitions (O/E/D).
 
-**Prerequisite**: If Stage 6V found issues, Stage 6R must PASS or CONDITIONAL PASS before running 6P. If 6V passed with no issues, 6P can run directly after 6V. If 6R has unresolved critical functional issues, do NOT run 6P. **Exception**: If 6R FAIL persists after the maximum 2 outer 6V→6R cycles, remaining issues are documented as known limitations and 6P/6P-R may proceed — the max-cycle exhaustion effectively converts the 6R outcome to CONDITIONAL PASS with documented limitations for 6P/6P-R prerequisite purposes. This is NOT a true CONDITIONAL PASS — it is a documented exception to the 6R FAIL blocking behavior, applied only when all remediation cycles are exhausted and remaining issues are documented as limitations. The 6R report MUST explicitly note when max-cycle exhaustion has occurred: '6R FAIL (max-cycle exhaustion — proceeding as CONDITIONAL PASS with documented limitations).'
+**Prerequisite**: If Stage 6V found issues, Stage 6R must PASS or CONDITIONAL PASS before running 6P. If 6V passed with no issues, 6P can run directly after 6V. If 6R has unresolved critical functional issues, do NOT run 6P. **Exception**: If 6R FAIL persists after the maximum 2 outer 6V→6R cycles, document remaining issues as known limitations and proceed to 6P/6P-R. The 6R report MUST note: '6R FAIL (max-cycle exhaustion — proceeding with documented limitations).' This exception applies only when all remediation cycles are exhausted.
 
 **Gate decision** (see § "Gate Decision Outcomes" → "Post-6P / 6P-R routing"):
 - **PASS**: All Category O fixed, Category E applied, no regressions → proceed to Stage 7 (Deploy)
@@ -1315,6 +1314,8 @@ claude --dangerously-skip-permissions
 
 Paste the contents of **`prompt_production_smoke_verification.md`**. Provide the production URL.
 
+**Prerequisite**: `./plancasting/transmute-framework/feature_scenario_generation.md` must exist (same file used by 6V — should already be present if 6V was run).
+
 **Output**: `./plancasting/_audits/production-smoke/report.md` with infrastructure checks, public utility route verification, 6R fix verification (if 6R was run), 6P/6P-R visual polish spot-check, navigation smoke test, critical page loads, user flow results, visual comparison against 6V, and third-party integration status.
 
 **IMPORTANT**: This is a LIGHTER check than 6V — focused on deployment-specific issues, not full spec compliance. Should complete in 25–45 minutes. Includes 6R fix verification (confirms remediation fixes survived deployment) and a navigation smoke test (catches CSS purge and middleware issues in production).
@@ -1375,13 +1376,13 @@ Monitoring and error tracking should be configured during Stage 6H (Pre-Launch V
 
 ## Stage 8: User Feedback → Specification Reflection Loop
 
-**Prerequisite**: Stage 7V PASS or CONDITIONAL PASS (product deployed and verified in production). If Stage 7D was run, it must be PASS or WARN (FAIL blocks Stage 8 until resolved). If 7D returned FAIL, re-run Stage 7D to resolve documentation issues before starting Stage 8. If 7D was skipped, this gate does not apply.
+**Prerequisite**: Stage 7V PASS or CONDITIONAL PASS (product deployed and verified in production). If Stage 7D was run, it must be PASS or WARN (non-blocking issues documented but not gate-failing; FAIL blocks Stage 8 until resolved). If 7D returned FAIL, re-run Stage 7D to resolve documentation issues before starting Stage 8. If 7D was skipped, this gate does not apply.
 
 **Goal**: Continuously improve the product by processing user feedback into specification changes, code updates, and documentation updates — keeping BRD/PRD as living documents.
 
 ### 8.1 Prepare Feedback Input
 
-Create `./feedback/input.md` with structured user feedback collected since the last feedback batch. Include support tickets, analytics data, survey results, and stakeholder requests. Follow the format specified in the prompt.
+Create `./feedback/input.md` with structured user feedback collected since the last feedback batch. Include support tickets, analytics data, survey results, and stakeholder requests. Follow the format specified in the prompt. **Batch limit**: Limit each feedback batch to the feedback batch limit defined in `tech-stack.md` § Model Specifications (default: 10 items if not specified). If you have more items, split into multiple batches and run Stage 8 once per batch.
 
 ### 8.2 Execute
 
@@ -1497,7 +1498,7 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 
 ### Gate Outcomes by Stage
 
-> **Note**: Stages 0, 1, 2, and 4 rely on human review checkpoints — no formal PASS/FAIL gate. Stage 5 has an implicit completion gate: ALL features must show `✅ Done` in `_progress.md`, `_implementation-report.md` must be generated, and all tests must pass (`npm run test`, `npm run typecheck`, and `npm run lint` (adapt to your package manager)). Stage 5 does NOT declare PASS/FAIL; the independent quality audit is performed by Stage 5B.
+> **Note**: Stages 0, 2, and 4 rely on human review checkpoints — no formal PASS/FAIL gate. Stage 1 has a lightweight gate (PASS/CONDITIONAL PASS/FAIL based on file completeness and assumption volume — see `prompt_generate_brd.md` § Gate Decision). Stage 5 has an implicit completion gate: ALL features must show `✅ Done` in `_progress.md`, `_implementation-report.md` must be generated, and all tests must pass (`npm run test`, `npm run typecheck`, and `npm run lint` (adapt to your package manager)). Stage 5 does NOT declare PASS/FAIL; the independent quality audit is performed by Stage 5B.
 
 **Stage 2B**: PASS / CONDITIONAL PASS / FAIL — coverage-based with P0 coverage as binding constraint. PASS requires 0 CRITICAL, 0 HIGH, ≥95% overall coverage. CONDITIONAL PASS allows ≤3 HIGH (no P0-blockers), ≥90% overall coverage — also possible when BRD assumption volume ≥30% but operator has confirmed review. FAIL if any unresolved CRITICAL, P0 coverage <95%, overall coverage <90%, or BRD assumption volume ≥30% not operator-reviewed. Full decision tree with 8 rules in `prompt_validate_specs.md`.
 
@@ -1509,8 +1510,8 @@ Four distinct classification systems are used across the pipeline (6V and 6R sha
 |---|---|---|---|
 | PASS | 0 | 0 | → Stage 6 (all audits). Requires: zero remaining issues AND all tests pass (no regressions from 5B fixes). |
 | CONDITIONAL PASS | ≤3 (each with workaround) | ≤3 (each documented with workaround) | → Stage 6 (known issues tracked in report). All tests must pass. Three paths evaluated in order (a → b → c; first match wins): (a) 0 A/B + 1–3 C, all with workaround, (b) 1–3 A/B documented with workaround + 0 C, (c) A/B ≥1 AND C ≥1 with A/B ≤3 AND C ≤3 AND total (A/B + C) ≤5, ALL issues (both A/B and C) must have documented workarounds |
-| FAIL-RETRY | 4–5 | OR 4+ A/B unfixed, OR total unfixed 4–5, OR test failures from 5B fixes | Re-run 5B only (max 3 total 5B runs: Run 1 = initial, Run 2–3 = re-runs; Run 4+ auto-escalates all remaining issues to FAIL-ESCALATE). Applies only to issues WITHOUT documented workarounds — issues with workarounds are evaluated under CONDITIONAL PASS first (priority order). |
-| FAIL-ESCALATE | 6+ | OR 6+ total unfixed issues globally (across all features and categories) | Set `🔄` on affected features in `_progress.md`, re-run Stage 5, then re-run 5B |
+| FAIL-RETRY | 4–5 (without workaround) | OR 4+ A/B unfixed (without workaround), OR total unfixed 4–5, OR test failures from 5B fixes | Re-run 5B only (max 3 total 5B runs: Run 1 = initial, Run 2–3 = re-runs; Run 4+ auto-escalates all remaining issues to FAIL-ESCALATE). Applies only to issues WITHOUT documented workarounds — issues with workarounds are evaluated under CONDITIONAL PASS first (priority order). |
+| FAIL-ESCALATE | 6+ (without workaround) | OR 6+ total unfixed issues (without workaround) globally (across all features and categories) | Set `🔄` on affected features in `_progress.md`, re-run Stage 5, then re-run 5B |
 
 Note: CONDITIONAL PASS requires ALL listed issues to have documented workarounds. Issues without workarounds are evaluated under FAIL-RETRY/FAIL-ESCALATE. **Priority-order evaluation**: CONDITIONAL PASS is evaluated first. Issues WITH documented workarounds are counted under CONDITIONAL PASS; issues WITHOUT workarounds are counted under FAIL-RETRY/FAIL-ESCALATE. The same total count can yield different outcomes depending on workaround coverage.
 
@@ -1533,7 +1534,7 @@ Note: CONDITIONAL PASS requires ALL listed issues to have documented workarounds
 
 **CONDITIONAL PASS cascading**: If any Stage 6[A–G] shows CONDITIONAL PASS, the 6H lead must evaluate each condition: (a) documented workarounds that don't block core functionality → proceed as READY, list under "Non-Critical Issues"; (b) unresolved blockers awaiting human decision → NOT READY unless operator explicitly accepts risk. **Operator override**: If 6H returns NOT READY but the operator decides to launch despite blockers, document the override in the readiness report with: reason, accepted blockers, risk assessment, and mitigation plan.
 
-**6V gate system**: The 6V gate uses a dual system — the outcome is the WORSE of: (1) percentage-based (PASS: ≥90%, CONDITIONAL PASS: ≥80% and <90%, FAIL: <80% acceptance criteria pass rate) AND (2) fixability-based categories (A = auto-fixable, B = moderate, C = human-judgment). Use `6V-` prefix in reports (e.g., "6V-A") to distinguish from 5B categories. Components with mixed categories are classified by most severe issue — if fixing a B issue requires architectural changes (e.g., changing state management pattern), escalate to C. All acceptance criteria count in the pass-rate denominator regardless of issue category (6V-A/B/C). The category classification affects routing (6R vs. skip), not the pass-rate calculation.
+**6V gate system**: The 6V gate uses a dual system: (1) percentage-based pass rate determines the gate outcome (PASS: ≥90%, CONDITIONAL PASS: ≥80% and <90%, FAIL: <80% acceptance criteria pass rate), and (2) fixability-based categories (A = auto-fixable, B = moderate, C = human-judgment) determine post-gate routing (6R vs. skip). The pass rate is the sole gate determinant; categories affect routing only. Use `6V-` prefix in reports (e.g., "6V-A") to distinguish from 5B categories. Components with mixed categories are classified by most severe issue — if fixing a B issue requires architectural changes (e.g., changing state management pattern), escalate to C. All acceptance criteria count in the pass-rate denominator regardless of issue category (6V-A/B/C).
 
 #### Post-6V Routing
 
@@ -1544,7 +1545,7 @@ Note: CONDITIONAL PASS requires ALL listed issues to have documented workarounds
 | CONDITIONAL PASS (only 6V-C) | Skip 6R → 6P or 6P-R |
 | FAIL | Fix manually, re-run 6V |
 
-**6V flaky scenario handling**: A **flaky scenario** is a test that fails on the first run but passes on a subsequent re-run without code changes, typically caused by timing issues or external service latency. For both 6V and 7V: The verification agent automatically re-runs each failing scenario once before classifying it as a failure. If it passes on re-run, mark as flaky. **6V treatment**: flaky scenarios are excluded from both the pass-rate numerator and denominator (e.g., 18 pass + 1 fail + 1 flaky = 18/19 = 94.7%, not 18/20). Flaky scenarios do not block the 6V gate but must be documented for investigation. **7V treatment**: flaky = FAIL. Production flakiness is unacceptable — a flaky scenario in 7V counts as a failure in the pass-rate denominator (e.g., 13 pass + 1 flaky + 1 fail = 13/15 = FAIL). The entire 7V gate becomes FAIL if any scenario is flaky.
+**6V flaky scenario handling**: A **flaky scenario** is a test that fails on the first run but passes on a subsequent re-run without code changes, typically caused by timing issues or external service latency. For both 6V and 7V: The verification agent automatically re-runs each failing scenario once before classifying it as a failure. If it passes on re-run, mark as flaky. **6V treatment**: flaky scenarios are excluded from both the pass-rate numerator and denominator (e.g., 18 pass + 1 fail + 1 flaky = 18/19 = 94.7%, not 18/20). Flaky scenarios do not block the 6V gate but must be documented for investigation. **Flaky threshold**: if more than 10% of total scenarios are flaky, the 6V gate returns CONDITIONAL PASS at best (not PASS), regardless of the adjusted pass rate, and all flaky scenarios must be investigated before proceeding to 6R. **7V treatment**: flaky = FAIL. Production flakiness is unacceptable — a flaky scenario in 7V counts as a failure in the pass-rate denominator (e.g., 13 pass + 1 flaky + 1 fail = 13/15 = FAIL). The entire 7V gate becomes FAIL if any scenario is flaky.
 
 #### Post-6R Routing
 
@@ -1554,7 +1555,7 @@ Note: CONDITIONAL PASS requires ALL listed issues to have documented workarounds
 |---|---|
 | PASS | → 6P or 6P-R |
 | CONDITIONAL PASS | Human reviews, then 6P or 6P-R |
-| FAIL | Fix 6V-C manually, re-run 6V, then 6R if needed. **Cycle limits**: max 3 internal fix-verify cycles per 6R run (counter resets only after a full 6V re-run — re-pasting the 6R prompt without 6V does NOT reset it). **Max 2 outer 6V→6R cycles** — an outer cycle = one full 6V run followed by one 6R run. Cycle 1: 6V → 6R. Cycle 2: 6V → 6R. After Cycle 2 completes, document remaining issues as known limitations and proceed to 6P/6P-R. Track outer cycle count by noting "Outer Cycle: 1/2" or "2/2" in 6R report headers. |
+| FAIL | Fix unresolved 6V-A/B issues manually, re-run 6V, then 6R if needed. **Cycle limits**: max 3 internal fix-verify cycles per 6R run (counter resets only after a full 6V re-run — re-pasting the 6R prompt without 6V does NOT reset it). **Max 2 outer 6V→6R cycles** — an outer cycle = one full 6V run followed by one 6R run. Cycle 1: 6V → 6R. Cycle 2: 6V → 6R. After Cycle 2 completes, document remaining issues as known limitations and proceed to 6P/6P-R. Track outer cycle count by noting "Outer Cycle: 1/2" or "2/2" in 6R report headers. |
 
 **Note**: After 3 internal fix-verify cycles within a single 6R run, any remaining 6V-A/B issues are reclassified as 6V-C (requires human judgment). This prevents infinite automated fix attempts on issues that resist auto-remediation.
 
@@ -1603,7 +1604,7 @@ Some stages can be skipped based on upstream gate results:
 
 | Upstream Stage | Gate Result | Skip? | Reason |
 |---|---|---|---|
-| 6V | PASS (0 failures) | Skip 6R | No failures to remediate |
+| 6V | PASS (0 actionable failures) | Skip 6R | No failures to remediate |
 | 6V | CONDITIONAL PASS (A/B issues) | Run 6R | Auto-fixable issues need remediation |
 | 6V | CONDITIONAL PASS (6V-C only) | Skip 6R | 6R cannot fix human-judgment issues |
 | 6V | FAIL | N/A — 6R not reached | Manual fixes required first, then re-run 6V |

@@ -11,7 +11,7 @@ You are a senior performance engineer acting as the TEAM LEAD for a multi-agent 
 
 This stage runs AFTER Stage 5B (Implementation Completeness Audit). Before beginning:
 1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6 audits." (Override: if the operator explicitly confirms 5B was intentionally skipped, proceed with a WARN in the report noting unverified implementation completeness.)
-2. If 5B shows FAIL, STOP — the codebase has unresolved implementation gaps that must be fixed before performance optimization. If CONDITIONAL PASS, note the documented Category C issues — skip performance optimization for those incomplete features.
+2. If 5B shows FAIL (FAIL-RETRY or FAIL-ESCALATE — see execution-guide.md § "Gate Decision Outcomes" for definitions), STOP — re-run Stage 5/5B until PASS or CONDITIONAL PASS before performance optimization. If CONDITIONAL PASS, note the documented Category C issues — skip performance optimization for those incomplete features.
 3. If `./plancasting/_audits/security/report.md` (6A) exists, read it to understand security changes that should not be undone during optimization (e.g., added validation, CSP headers, rate limiting).
 4. If `./plancasting/_audits/accessibility/report.md` (6B) exists, read it to understand accessibility patterns (e.g., focus ring styles, semantic HTML changes, `prefers-reduced-motion` support) that should not be regressed by performance optimizations.
 5. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
@@ -93,7 +93,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    - Bundle size budgets
    - Lighthouse score targets
    - Core Web Vitals targets (LCP, INP, CLS)
-5. Create `./plancasting/_audits/performance/targets.md` with the extracted targets. If the PRD does not specify performance budgets, use web.dev defaults: LCP < 2.5s, INP < 200ms, CLS < 0.1, Lighthouse Performance score > 90. Document the source (PRD vs defaults) in `targets.md`.
+5. Create `./plancasting/_audits/performance/targets.md` with the extracted targets. If PRD does not specify performance budgets, use these defaults: LCP < 2.5s, INP < 200ms, CLS < 0.1, bundle size < 200KB (initial JS). Document the source of each budget (PRD reference or default) in the baseline report. Also use web.dev default Lighthouse Performance score > 90. Document the source (PRD vs defaults) in `targets.md`.
 6. Create a task list for all teammates with dependency tracking.
 
 ### Phase 2: Spawn Optimization Teammates
@@ -280,9 +280,9 @@ After all teammates complete:
    - **Measurement Standards**:
      - **Network throttling**: Use Lighthouse default throttling (simulated 4G) for consistency
      - **Cache state**: Always measure on cold cache (clear browser cache between runs)
-     - **Baseline Preservation**: On first 6C run, create baseline. On subsequent 6C re-runs, do NOT recreate baseline — always measure against the ORIGINAL baseline. If baseline is accidentally overwritten, restore from git history.
+     - **Baseline Preservation**: On first 6C run, create baseline. On subsequent 6C re-runs, do NOT recreate baseline — always measure against the ORIGINAL baseline. If baseline is accidentally overwritten, restore from git history. Note: If 6A or 6B modified code before 6C starts (parallel execution), 6C's baseline captures the post-6A/6B state, not the original post-5B state. This is expected — the baseline reflects the current code at 6C start time.
      - **Parallel execution note**: If 6A or 6B completed and modified code before 6C started (because all three ran in parallel), 6C's baseline captures the post-6A/6B state. Document this in the baseline file and attribute performance deltas accordingly.
-     - **Baseline**: Compare against the baseline in `./plancasting/_audits/performance/baseline.md`. **Baseline timing**: The performance baseline MUST be created as the FIRST action in Phase 1 step 2, before any code changes, capturing the post-5B state. **Parallel 6A/6B/6C**: If all three start simultaneously, all baselines capture the same starting state. If 6A or 6B complete and modify code before 6C starts, 6C's baseline captures the post-6A/6B state — document this and attribute deltas accordingly. **Re-runs**: If the baseline already exists from a prior run, use it as the primary reference. Do NOT re-generate the baseline after 6A/6B changes — that would mask the performance cost of security/accessibility fixes. Measure post-6C metrics against the ORIGINAL baseline and document any performance delta attributable to 6A/6B changes separately (e.g., "Auth rate limiting added +15ms to login endpoint — expected and acceptable"). After optimizations, record new metrics as "post-Stage-6C" in the report for future reference
+     - **Baseline**: Compare against the baseline in `./plancasting/_audits/performance/baseline.md`. **Baseline timing**: The performance baseline MUST be created as the FIRST action in Phase 1 step 3, before any code changes, capturing the post-5B state. **Parallel 6A/6B/6C**: If all three start simultaneously, all baselines capture the same starting state. If 6A or 6B complete and modify code before 6C starts, 6C's baseline captures the post-6A/6B state — document this and attribute deltas accordingly. **Re-runs**: If the baseline already exists from a prior run, use it as the primary reference. Do NOT re-generate the baseline after 6A/6B changes — that would mask the performance cost of security/accessibility fixes. Measure post-6C metrics against the ORIGINAL baseline and document any performance delta attributable to 6A/6B changes separately (e.g., "Auth rate limiting added +15ms to login endpoint — expected and acceptable"). After optimizations, record new metrics as "post-Stage-6C" in the report for future reference
      - **Core Web Vitals targets**: Read performance targets from `./plancasting/prd/15-non-functional-specifications.md` first. Use these web.dev Good thresholds as defaults only if the PRD does not specify targets: LCP < 2.5s, INP < 200ms, CLS < 0.1 (Good rating per web.dev)
      - **Reporting**: Include both raw numbers and pass/fail against targets
 
@@ -308,8 +308,9 @@ After all teammates complete:
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
+1. Commit all changes: `git add -A && git commit -m 'perf: Stage 6C performance optimization'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
 
 ## Critical Rules
 
@@ -322,5 +323,5 @@ After all teammates complete:
 7. Use the commands from CLAUDE.md for testing (e.g., `bun run test`).
 8. Reference Stage 5B output to avoid optimizing incomplete features.
 9. INP replaces FID (deprecated). Use TBT as lab proxy for INP. See Measurement Standards section above for details.
-10. **Parallel execution**: This stage may run concurrently with 6A and 6B. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit. If a Core Web Vitals critical fix MUST modify a shared config file immediately (e.g., `next.config` image optimization settings), commit the change immediately and note it prominently in the report under `## Pending Config Changes`.
+10. **Parallel execution**: This stage may run concurrently with 6A and 6B. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`, `globals.css`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit. If a Core Web Vitals critical fix MUST modify a shared config file immediately (e.g., `next.config` image optimization settings), commit the change immediately and note it prominently in the report under `## Pending Config Changes`.
 ````

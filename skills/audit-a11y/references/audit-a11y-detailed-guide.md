@@ -11,7 +11,7 @@ You are a senior accessibility specialist acting as the TEAM LEAD for a multi-ag
 
 This stage runs AFTER Stage 5B (Implementation Completeness Audit). Before beginning:
 1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6 audits." (Override: if the operator explicitly confirms 5B was intentionally skipped, proceed with a WARN in the report noting unverified implementation completeness.)
-2. If 5B shows FAIL, STOP — the codebase has unresolved implementation gaps that must be fixed before accessibility auditing. If CONDITIONAL PASS, note the documented Category C issues — skip accessibility auditing for those incomplete features.
+2. If 5B shows FAIL (FAIL-RETRY or FAIL-ESCALATE — see execution-guide.md § "Gate Decision Outcomes" for definitions), STOP — re-run Stage 5/5B until PASS or CONDITIONAL PASS before accessibility auditing. If CONDITIONAL PASS, note the documented Category C issues — skip accessibility auditing for those incomplete features.
 3. If `./plancasting/_audits/security/report.md` (6A) exists, read it to understand security changes that should not be undone during accessibility fixes (e.g., CSP headers, CORS configuration).
 4. If `./plancasting/_audits/performance/report.md` (6C) exists, read it to understand performance optimizations (e.g., font loading strategies, animation patterns, lazy loading) that should not be regressed by accessibility fixes.
 5. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
@@ -66,13 +66,14 @@ Based on observed audit outcomes:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and BRD/PRD accessibility requirements. Check BOTH `./plancasting/brd/08-non-functional-requirements.md` (or grep `grep -rlE "WCAG|accessibility" ./plancasting/brd/` if not found at that path) AND `prd/15-non-functional-specifications.md` for the target WCAG version and conformance level. If both specify WCAG requirements and they conflict, PRD specifications take precedence. Determine:
+1. Ensure output directory exists: `mkdir -p ./plancasting/_audits/accessibility`
+2. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and BRD/PRD accessibility requirements. Check BOTH `./plancasting/brd/08-non-functional-requirements.md` (or grep `grep -rlE "WCAG|accessibility" ./plancasting/brd/` if not found at that path) AND `./plancasting/prd/15-non-functional-specifications.md` for the target WCAG version and conformance level. If both specify WCAG requirements and they conflict, the more stringent requirement takes precedence (e.g., if BRD says AA and PRD says AAA, use AAA). Determine:
    - **WCAG version**: 2.2 (preferred, released Oct 2023), 2.1, or 2.0 (only if legacy compatibility required per BRD). If not specified, default to WCAG 2.2.
    - **Conformance level**: A, AA, or AAA. If not specified, default to AA.
    If targeting 2.1 for legacy reasons, still audit 2.2 criteria (e.g., 2.5.8 Target Size Minimum) as forward-looking best practices and document them as recommendations.
-2. Build an **Accessibility Checklist** organized by WCAG principle (Perceivable, Operable, Understandable, Robust).
-3. Create `./plancasting/_audits/accessibility/checklist.md` with the full checklist.
-4. Create a task list for all teammates with dependency tracking.
+3. Build an **Accessibility Checklist** organized by WCAG principle (Perceivable, Operable, Understandable, Robust).
+4. Create `./plancasting/_audits/accessibility/checklist.md` with the full checklist.
+5. Create a task list for all teammates with dependency tracking.
 
 ### Phase 2: Spawn Audit Teammates
 
@@ -183,7 +184,7 @@ Your tasks:
    - Identify text-on-background color combinations.
    - For CSS variable-based colors and dark mode palettes, extract the actual hex/RGB values from `design-tokens.ts` or CSS variable definitions before calculating contrast ratios — static Tailwind class analysis alone is insufficient for computed colors.
    - Use automated contrast checking tools (axe-core, wcag-contrast-verifier) as the primary method. Rely on axe-core automated testing in Phase 4 to confirm violations found here. Manual calculation (when automated tools cannot resolve CSS variable values): relative luminance L = 0.2126R + 0.7152G + 0.0722B (after sRGB linearization); contrast ratio = (L1 + 0.05) / (L2 + 0.05). Target: >= 4.5:1 for normal text, >= 3:1 for large text (WCAG AA).
-   - If the application supports dark mode (indicated by a theme toggle, `prefers-color-scheme` media query, or configured in tech-stack.md), verify all contrast ratios pass in BOTH light and dark themes. Verify the dark mode toggle code respects `prefers-color-scheme` for initial state by reviewing the theme initialization logic in the codebase (check CSS `prefers-color-scheme` media queries and JS theme initialization code). Runtime verification of actual toggle behavior is performed in Stage 6V.
+   - If the application supports dark mode (indicated by a theme toggle, `prefers-color-scheme` media query, or configured in tech-stack.md), verify all contrast ratios pass in BOTH light and dark themes. Verify the dark mode toggle code respects `prefers-color-scheme` for initial state by reviewing the theme initialization logic in the codebase (check CSS `prefers-color-scheme` media queries and JS theme initialization code). Runtime verification of actual toggle behavior is performed in Stage 6V. If the project does not implement dark mode (check `plancasting/tech-stack.md` and design token file), skip dark-mode contrast verification. Do not treat the absence of dark mode as a failure.
    - Verify information is not conveyed by color alone (error states, status indicators must have icons or text in addition to color).
    Output: List of potential contrast violations and color-only information.
 
@@ -246,7 +247,7 @@ After all teammates complete:
    bun add -D @axe-core/playwright
    ~~~
    Install axe-core for your E2E framework: `@axe-core/playwright` for Playwright, `cypress-axe` for Cypress, or `@axe-core/webdriverio` for WebdriverIO. Check `plancasting/tech-stack.md` and `CLAUDE.md` for the project's E2E testing framework. Replace `bun add -D` with your package manager's equivalent if needed (e.g., `npm install --save-dev`).
-   If axe-core cannot be installed (e.g., version conflict), proceed with manual accessibility review using browser DevTools accessibility panel and document the installation failure in the report.
+   If axe-core cannot be installed (e.g., version conflict), proceed with manual accessibility review using browser DevTools accessibility panel and document the installation failure in the report. If axe-core cannot be installed, proceed with manual accessibility review. For the gate decision, manual review findings carry the same weight as automated findings — document the review method used.
 
    Before creating the test file, check if an accessibility test already exists (e.g., `e2e/accessibility.spec.ts` or similar). If one exists, add new tests to it rather than creating a duplicate.
    If no existing accessibility test file is found, create `e2e/accessibility.spec.ts`. Otherwise, update the existing file. Run axe on every page and report violations.
@@ -287,8 +288,9 @@ After all teammates complete:
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
+1. Commit all changes: `git add -A && git commit -m 'feat(a11y): Stage 6B accessibility audit fixes'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
 
 ## Critical Rules
 

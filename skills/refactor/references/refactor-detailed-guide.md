@@ -35,7 +35,7 @@ Based on observed refactoring outcomes:
 ## Prerequisites
 
 This stage runs AFTER Stages 6A (Security), 6B (Accessibility), and 6C (Performance) and BEFORE Stages 6F (Seed Data), 6G (Error Resilience Hardening), and 6D (Documentation) — per CLAUDE.md Stage 6 ordering. Refactoring follows audits that modify code (6A-6C) and precedes resilience hardening (6G), which may modify error handling patterns. Before beginning:
-1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows PASS or CONDITIONAL PASS. If missing, STOP — Stage 5B must complete before Stage 6E. If the gate shows FAIL-RETRY or FAIL-ESCALATE, STOP — re-run Stage 5/5B until PASS or CONDITIONAL PASS before proceeding.
+1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows PASS or CONDITIONAL PASS. If missing, STOP — Stage 5B must complete before Stage 6E. If the gate shows FAIL-RETRY or FAIL-ESCALATE (see execution-guide.md § "Gate Decision Outcomes" for definitions), STOP — re-run Stage 5/5B until PASS or CONDITIONAL PASS before proceeding.
 2. If 5B shows CONDITIONAL PASS, review the documented Category C issues — proceed with awareness of known gaps. Do NOT refactor Category C features (see item 5 below).
 3. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
 4. Verify `./plancasting/_audits/security/report.md` (6A), `./plancasting/_audits/accessibility/report.md` (6B), and `./plancasting/_audits/performance/report.md` (6C) exist. If any are missing, WARN: "Stage 6[A/B/C] has not completed. Refactoring may conflict with pending audit changes. Proceed with caution and document this in the report." If present, read them and note which files/sections were modified by 6A/6B/6C — during refactoring, avoid moving, renaming, or restructuring these sections without verifying the original intent is preserved (e.g., don't rename a security error handler that 6A added, don't restructure semantic HTML that 6B changed, don't undo lazy-loading that 6C added).
@@ -53,15 +53,19 @@ This stage runs AFTER Stages 6A (Security), 6B (Accessibility), and 6C (Performa
 ## Output
 
 Stage 6E generates:
-- `./plancasting/_audits/refactoring/plan.md` — refactoring plan and task assignments
-- `./plancasting/_audits/refactoring/baseline-test-results.md` — pre-refactoring test results
-- `./plancasting/_audits/refactoring/report.md` — refactoring report with gate decision
+- `./plancasting/_audits/refactoring/plan.md` — refactoring plan: what the lead analyzed (duplication, coupling, dead code, etc.), categorized opportunities by impact, and how tasks were assigned to teammates
+- `./plancasting/_audits/refactoring/baseline-test-results.md` — full test suite state before changes: pass/fail counts per suite (backend, frontend, E2E), total test count, and any pre-existing failures
+- `./plancasting/_audits/refactoring/report.md` — refactoring report including the gate decision (PASS/CONDITIONAL PASS/FAIL), metrics (test count before/after, duplications eliminated, shared modules created, dead code removed), and remaining technical debt
 - `./plancasting/_audits/refactoring/unfixable-violations.md` (if applicable) — deferred architectural improvements
 - Modified source files with refactoring improvements (including extracted shared patterns for downstream stages — see 'Stage 6F Handoff' and 'Stage 6G Handoff' sections)
 
 ## Cardinal Rule
 
 **NO BEHAVIORAL CHANGES.** Refactoring changes the internal structure of the code without altering its external behavior. Every test that validates user-facing behavior must pass after refactoring. If a refactoring would require changes to tests that validate external behavior (e.g., acceptance criteria, API contracts), that means the behavior is changing — stop and reconsider. Note: Tests that only validated implementation details (private functions, internal state shape) may be restructured during refactoring without indicating a behavioral change.
+
+Test classification during refactoring:
+- Tests validating **implementation details** (private functions, internal state shape) MAY be restructured or removed without indicating a behavioral change.
+- Tests validating **user-facing behavior** (API contracts, acceptance criteria from PRD) MUST NOT be changed. If refactoring requires changing such a test, the refactoring introduces a behavioral change and must be reconsidered.
 
 **Scope clarification**: 'No behavioral changes' means no changes to external APIs or user-facing behavior. Internal function signatures MAY change if all call sites are updated atomically in the same commit.
 
@@ -93,8 +97,9 @@ See Prerequisites above for audit report locations. Additional notes for re-runs
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./ARCHITECTURE.md` (if it exists), and `./plancasting/_audits/implementation-completeness/report.md`.
-2. Perform a **Codebase Health Scan**:
+1. Ensure output directory exists: `mkdir -p ./plancasting/_audits/refactoring`
+2. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./ARCHITECTURE.md` (if it exists), and `./plancasting/_audits/implementation-completeness/report.md`.
+3. Perform a **Codebase Health Scan**:
    - Run the full test suite and record the baseline:
      ~~~bash
      bun run typecheck
@@ -110,7 +115,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    - Identify the largest files (likely candidates for splitting).
    - Identify files with the most cross-references (high coupling candidates).
 
-3. Analyze the codebase for refactoring opportunities. Categorize findings:
+4. Analyze the codebase for refactoring opportunities. Categorize findings:
 
    | Category | What to look for |
    |---|---|
@@ -122,11 +127,11 @@ As the team lead, complete the following BEFORE spawning any teammates:
    | Dead code | Unused exports, unreachable branches, commented-out code |
    | File structure | Files exceeding 300 lines, unclear module boundaries |
 
-4. Create `./plancasting/_audits/refactoring/plan.md` containing:
+5. Create `./plancasting/_audits/refactoring/plan.md` containing:
    - Refactoring opportunities found, categorized and prioritized by impact
    - For each opportunity: description, affected files, estimated risk (Low/Medium/High), approach
    - Grouping into parallelizable work packages for teammates
-5. Create a task list for all teammates with dependency tracking.
+6. Create a task list for all teammates with dependency tracking.
 
 ### Phase 2: Spawn Refactoring Teammates
 
@@ -148,6 +153,7 @@ Your tasks:
 
 1. FUNCTION DEDUPLICATION: Scan all files in your backend directory (e.g., `convex/`).
    - Identify functions across different domain files that perform similar logic (e.g., two different "getByUserId" patterns, similar validation helpers, duplicated permission checks).
+   - **Extraction thresholds** (extract when ANY is met): (a) identical function appears 3+ times, (b) function appears 2+ times with >90% code similarity, or (c) extracting would reduce total lines in the affected files by >15%.
    - Extract shared logic into a shared helpers module (e.g., `convex/_internal/helpers.ts` for Convex, or domain-appropriate shared files).
    - Update all call sites to use the shared function.
    - Maintain JSDoc traceability on the shared functions.
@@ -174,6 +180,7 @@ Your tasks:
    - Search for string-based references across the codebase using code search tools (or `grep -r` as fallback, excluding `node_modules/`, `.next/`, `dist/`). Also search for dynamic imports and bracket notation access patterns.
    - Search config files (next.config.ts, vite.config.ts, tsconfig.json) for references
    - Search route-based code splitting patterns
+   - Before deleting any export, also check for module-level side effects: bare imports (`import './setup'`), middleware registration patterns (`app.use(middleware)`), and configuration effects (`register()`). These are NEVER dead code even if no named exports are referenced.
    **Warning**: grep patterns may miss dynamic imports, config file references, and bracket notation access (e.g., `obj["functionName"]`). If any doubt remains about usage, mark as a dead code candidate for manual review rather than deleting.
    Only delete if zero references found across all search methods.
 
@@ -424,14 +431,15 @@ If a refactoring improvement requires architectural changes beyond the scope of 
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
+1. Commit all changes: `git add -A && git commit -m 'refactor: Stage 6E code quality refinement'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
 
 ## Critical Rules
 
 1. NEVER refactor and add features in the same change — refactoring must preserve behavior.
 2. NEVER delete a public export without verifying zero external consumers.
-3. NEVER refactor code that lacks test coverage for its external behavior — add tests first, then refactor. If only partial test coverage exists, see Phase 1 step 2 for the limited-scope approach.
+3. NEVER refactor code that lacks test coverage for its external behavior — add tests first, then refactor. If only partial test coverage exists, see Phase 1 step 3 for the limited-scope approach.
 4. NEVER remove database indexes without verifying all query patterns (including production query logs).
 5. ALWAYS commit after each logical refactoring unit for granular rollback.
 6. ALWAYS run the full test suite after every refactoring step, not just at the end.

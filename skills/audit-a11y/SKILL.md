@@ -12,7 +12,7 @@ version: 1.0.0
 
 # Accessibility Audit — Stage 6B
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/a11y-detailed-guide.md` for the complete audit procedures, teammate spawn prompts, WCAG checklist patterns, and report templates.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-a11y-detailed-guide.md` for the complete audit procedures, teammate spawn prompts, WCAG checklist patterns, and report templates.
 
 Lead a multi-agent accessibility audit of the complete frontend codebase against BRD/PRD WCAG requirements. Identify violations and fix them.
 

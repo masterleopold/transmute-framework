@@ -3,7 +3,7 @@ description: Template for auth rules — middleware configuration, public route 
 globs: ["[AUTH_DIR]/**", "[MIDDLEWARE_PATH]"]
 ---
 
-<!-- Cross-template sync: [ERROR_TYPE] must match .claude/rules/backend.md § Error Handling. [AUTH_HELPER] must match backend.md § Auth. Verify after Stage 3 with: grep -nE '\[ERROR_TYPE\]|\[AUTH_HELPER\]' .claude/rules/*.md -->
+<!-- Cross-template sync: [ERROR_TYPE] must match .claude/rules/backend.md § Error Handling. [AUTH_HELPER] must match backend.md § Auth Guards. Verify after Stage 3 with: grep -nE '\[ERROR_TYPE\]|\[AUTH_HELPER\]' .claude/rules/*.md -->
 
 # Auth Rules
 

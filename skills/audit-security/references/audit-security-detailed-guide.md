@@ -11,7 +11,7 @@ You are a senior security engineer acting as the TEAM LEAD for a multi-agent sec
 
 This stage runs AFTER Stage 5B (Implementation Completeness Audit). Before beginning:
 1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: 'Stage 5B report not found — run Stage 5B before starting Stage 6 audits. Proceeding without 5B wastes effort on incomplete code.' (Override: if the operator explicitly confirms 5B was intentionally skipped, proceed with a WARN in the report noting unverified implementation completeness.)
-2. If 5B shows FAIL, STOP — the codebase has unresolved implementation gaps that must be fixed before security auditing. If CONDITIONAL PASS, note the documented Category C issues — skip security auditing for those incomplete features.
+2. If 5B shows FAIL (FAIL-RETRY or FAIL-ESCALATE — see execution-guide.md § "Gate Decision Outcomes" for definitions), STOP — re-run Stage 5/5B until PASS or CONDITIONAL PASS before security auditing. If CONDITIONAL PASS, note the documented Category C issues — skip security auditing for those incomplete features.
 3. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
 4. Read the relevant PRD sections for context on what was implemented.
 
@@ -58,7 +58,7 @@ Based on observed audit outcomes:
 4. **Skipping generated files' consumers**: Agent correctly skips `_generated/` but also skips files that import from `_generated/` — these may contain security-relevant code.
 5. **Missing CORS/CSP checks**: Focusing only on code-level auth while ignoring HTTP-level security headers.
 6. **Blind framework trust**: Agent assumes a framework handles security correctly without verification (e.g., 'Next.js handles CSRF'). ALWAYS verify framework security defaults are actually enabled in configuration.
-7. **Zero-day normalization**: Agent marks an unpatched CVE as 'acceptable risk' without documenting threat model justification. ALWAYS document: 'We accept this risk because [mitigation] is in place.' CVEs with CVSS score ≥ 9.0 or 'Known Exploited' status (per CISA KEV catalog) MUST NOT be accepted as risk — they require immediate remediation or a documented compensating control verified by the security audit.
+7. **Zero-day normalization**: Agent marks an unpatched CVE as 'acceptable risk' without documenting threat model justification. ALWAYS document: 'We accept this risk because [mitigation] is in place.' CVEs with CVSS score ≥ 9.0 or 'Known Exploited' status (per CISA KEV catalog) MUST NOT be accepted as risk — they require immediate remediation or a documented compensating control verified by the security audit. CVSS thresholds: CRITICAL ≥ 9.0, HIGH 7.0–8.9, MEDIUM 4.0–6.9, LOW 0.1–3.9.
 
 ## Agent Team Architecture
 
@@ -66,10 +66,11 @@ Based on observed audit outcomes:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and all security/compliance requirements from BRD/PRD.
-2. Build a **Security Checklist** mapping each BRD security requirement (SR-xxx) to specific code patterns to verify. For each SR-xxx entry, include: (a) Scope — which files/functions are affected, (b) Check — what to verify (e.g., "every function returning user data calls `requireAuth(ctx)`"), (c) Code pattern — example of correct implementation, (d) Status — "Not checked yet" (teammates update this as they verify).
-3. Create `./plancasting/_audits/security/checklist.md` with the full checklist.
-4. Create a task list for all teammates with dependency tracking.
+1. Ensure output directory exists: `mkdir -p ./plancasting/_audits/security`
+2. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and all security/compliance requirements from BRD/PRD.
+3. Build a **Security Checklist** mapping each BRD security requirement (SR-xxx) to specific code patterns to verify. For each SR-xxx entry, include: (a) Scope — which files/functions are affected, (b) Check — what to verify (e.g., "every function returning user data calls `requireAuth(ctx)`"), (c) Code pattern — example of correct implementation, (d) Status — "Not checked yet" (teammates update this as they verify).
+4. Create `./plancasting/_audits/security/checklist.md` with the full checklist.
+5. Create a task list for all teammates with dependency tracking.
 
 **Scope Boundary — Rate Limiting**: 6A scope: config-level rate-limit middleware (e.g., express-rate-limit setup, Vercel rate-limit headers, API gateway config). 6G scope: application-level retry/backoff logic and circuit breakers. See Teammate 4 Task 4 for the full 6A/6G rate limiting scope boundary.
 
@@ -257,7 +258,7 @@ When done, message the lead with: issue count by severity, fix count, remaining 
 
 If a violation cannot be fixed without architectural changes or would break another feature:
 1. Document the full conflict with evidence (what the violation is, what fixing it would break)
-2. Mark as **"REQUIRES HUMAN DECISION"** in the report — do NOT attempt a fix that creates regressions
+2. Mark as **"REQUIRES HUMAN DECISION"** in the report — do NOT attempt a fix that creates regressions. Escalate to the project operator (the person running the pipeline). Document the violation in `./plancasting/_audits/security/unfixable-violations.md` with the finding, risk level, and recommended mitigations. The operator must respond before Stage 6H can issue a READY verdict.
 3. Include a recommended approach and estimated effort in the report
 4. If the unfixable violation is CRITICAL severity (e.g., architectural security flaw, missing encryption at rest, broken auth model), the audit MUST recommend NOT LAUNCHING until the violation is resolved. Document the required architectural changes and estimated remediation scope. Record in `./plancasting/_audits/security/unfixable-violations.md` (separate file from `report.md`) AND summarize in the main `report.md` under a "Blocking Issues" section — critical violations block Stage 6H (Pre-Launch Gate, see `prompt_prelaunch_verification.md`). Use these headings in the unfixable violations file: `### [Issue ID]`, `**Severity**: [CRITICAL/HIGH]`, `**Description**: [what the issue is]`, `**Evidence**: [code location and proof]`, `**Recommended Approach**: [how to fix with architectural changes]`, `**Estimated Effort**: [hours/days]`.
 5. Continue with remaining fixable violations — do not block the entire audit on one decision
@@ -304,7 +305,7 @@ After all teammates complete:
    ## Gate Decision
    [PASS | CONDITIONAL PASS | FAIL]
    - **PASS**: All Critical and High severity vulnerabilities fixed; all tests pass; no unfixable blocking issues
-   - **CONDITIONAL PASS**: All Critical fixed; remaining High issues documented with mitigations; Stage 6H review required
+   - **CONDITIONAL PASS**: All Critical fixed; remaining High issues documented with mitigations; proceed to next stage per pipeline ordering (6A/6B/6C → 6E; 6H aggregates all Stage 6 audit gates later)
    - **FAIL**: Critical vulnerabilities remain unresolved; blocks Stage 6H. Automatic FAIL triggers: secrets detected in git history (requires key rotation — see Critical Rule 6), or any Critical-severity vulnerability that cannot be fixed within this stage.
    Rationale: [brief explanation]
 
@@ -314,8 +315,9 @@ After all teammates complete:
 
 ### Phase 5: Shutdown
 
-1. Request shutdown for all teammates.
-2. Verify all file modifications are saved.
+1. Commit all changes: `git add -A && git commit -m 'feat(security): Stage 6A security audit fixes'` per CLAUDE.md git conventions.
+2. Request shutdown for all teammates.
+3. Verify all file modifications are saved.
 
 ## Critical Rules
 
@@ -330,5 +332,5 @@ After all teammates complete:
 9. Use the commands from CLAUDE.md for running tests (e.g., `bun run test` not `npm run test`).
 10. Reference Stage 5B output (`./plancasting/_audits/implementation-completeness/report.md`) to avoid auditing features that are still stub/incomplete.
 11. See Teammate 4 Task 4 for the 6A/6G scope boundary. In summary: 6A = authentication endpoint rate limiting (login, signup, password reset, MFA, session management); 6G = data-mutation endpoint rate limiting (create, update, delete, uploads). Do NOT implement data-mutation rate limiting in Stage 6A.
-12. **Parallel execution**: This stage may run concurrently with 6B and 6C. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit. If a security fix MUST modify a shared config file immediately (e.g., CSP headers for a critical vulnerability), commit the change immediately and note it prominently in the report.
+12. **Parallel execution**: This stage may run concurrently with 6B and 6C. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`, `globals.css`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit. If a security fix MUST modify a shared config file immediately (e.g., CSP headers for a critical vulnerability), commit the change immediately and note it prominently in the report.
 ````

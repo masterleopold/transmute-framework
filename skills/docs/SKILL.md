@@ -1,7 +1,7 @@
 ---
 name: docs
 description: >-
-  Generates internal developer documentation including help docs, API reference, and onboarding guide.
+  Generates developer documentation (API reference, developer guide) and user-facing help docs organized by user journey.
   This skill should be used when the user asks to "generate documentation",
   "create API docs", "write developer guide", "generate help docs",
   "create onboarding docs", "document the codebase", or "write a changelog",

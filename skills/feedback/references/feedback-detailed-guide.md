@@ -9,6 +9,8 @@ You are a product manager and engineer acting as the TEAM LEAD for a feedback-dr
 
 **Prerequisites**: Stage 7V PASS or CONDITIONAL PASS (product deployed and running in production). If Stage 7D was run, verify it achieved PASS or WARN (check `./plancasting/_audits/user-guide/report.md` § `## Gate Decision`). 7D FAIL blocks Stage 8 until documentation issues are resolved. If 7D was skipped, this condition does not apply. Feedback input file `./feedback/input.md` must be prepared with the current feedback batch before starting this stage. See `execution-guide.md` § Stage 8 for skip conditions and recovery procedures.
 
+**CRITICAL prerequisite — Stage 8/9 mutual exclusion**: Before proceeding, verify that Stage 9 (Dependency Maintenance) is NOT currently in progress. Check: (a) `git branch | grep 'chore/dependency-update'` — if a branch exists and is not yet merged, Stage 9 may still be in progress. (b) If Stage 9 is in progress, STOP — do not run Stage 8 until Stage 9 is committed and merged. Both stages modify `package.json`, lock files, and source code; concurrent execution causes merge conflicts and silent overwrites.
+
 ## Critical Concept: Living Documents
 
 The BRD and PRD are NOT frozen artifacts. They are living documents that evolve with the product. This prompt maintains the chain: Feedback → Spec Update → Code Change → Test Update → Doc Update, ensuring every layer stays consistent.
@@ -21,7 +23,7 @@ The BRD and PRD are NOT frozen artifacts. They are living documents that evolve 
 - **Existing Codebase**: Your backend directory (e.g., `./convex/`), frontend directory (e.g., `./src/`), and `./e2e/` — adapt paths per `plancasting/tech-stack.md`
 - **Project Rules**: `./CLAUDE.md`
 - **Progress Tracker**: `./plancasting/_progress.md` (if it does not exist, skip progress tracking updates in Phase 4 step 2)
-- **User Guide** (if exists): `./user-guide/` — Mintlify documentation site (Stage 7D output). If this directory exists, documentation updates must also update the corresponding MDX pages here. If `./user-guide/` does NOT exist (Stage 7D was not run), Teammate 3 skips the "UPDATE USER GUIDE" task and focuses on developer documentation (`./docs/` from Stage 6D) and test updates only.
+- **User Guide** (if exists): `./user-guide/` — documentation site (Stage 7D output, e.g., Mintlify — adapt to your docs framework per tech-stack.md). If this directory exists, documentation updates must also update the corresponding MDX pages here. If `./user-guide/` does NOT exist (Stage 7D was not run), Teammate 3 skips the "UPDATE USER GUIDE" task and focuses on developer documentation (`./docs/` from Stage 6D) and test updates only.
 
 ## Preparing the Feedback Input
 
@@ -90,10 +92,11 @@ Based on observed feedback loop outcomes:
 
 If this stage is interrupted mid-execution:
 1. Check if `./feedback/analysis.md` exists — if so, Phase 1 (triage) completed. Skip to Phase 2.
-2. Check if `./feedback/change-plan.md` exists — if so, Phase 1 (triage) completed and the change plan is ready. Skip to spawning Teammate 1 (Phase 2 — spec updates).
-3. Check if code changes exist beyond spec updates — if Teammate 2 was mid-implementation, review `git diff` to understand what was changed, then re-spawn Teammate 2 with instructions to complete remaining items from the change plan.
-4. If `./feedback/resolution.md` exists with a complete summary — Phase 4 completed. The stage is done.
-5. If none of the above files exist, restart from Phase 1.
+2. Check if `./feedback/change-plan.md` exists — if so, Phase 1 (triage) completed and the change plan is ready.
+3. Check if BRD/PRD files were modified since the change plan was created (e.g., `git log --oneline -- plancasting/brd/ plancasting/prd/`). If spec files were modified, Teammate 1 (spec-updater) likely completed — skip to spawning Teammate 2 (Phase 3 — code implementation).
+4. Check if code changes exist beyond spec updates — if Teammate 2 was mid-implementation, review `git diff` to understand what was changed, then re-spawn Teammate 2 with instructions to complete remaining items from the change plan.
+5. If `./feedback/resolution.md` exists with a complete summary — Phase 4 completed. The stage is done.
+6. If none of the above files exist, restart from Phase 1.
 
 **Warning**: Partial spec updates without corresponding code changes leave the project in an inconsistent state. If Phase 2 (spec-updater) completed but Phase 3 (code-implementer) did not, the BRD/PRD may reference features or changes that the code does not yet reflect. MUST complete Phase 3 before ending the recovery session — do not leave specs and code out of sync.
 
@@ -101,7 +104,7 @@ If this stage is interrupted mid-execution:
 
 ### Phase 1: Lead Analysis — Feedback Triage
 
-**Pre-flight Concurrency Check**: Before proceeding, verify that Stage 9 (Dependency Maintenance) is not currently in progress. Check both: (1) `git log --oneline -5 | grep -i 'chore.*depend'` — if the most recent commit is an in-progress dependency update from the current day, STOP; (2) `git branch --list 'chore/dependency-update-*'` — if a maintenance branch exists, Stage 9 may be active. Do not run Stage 8 concurrently with Stage 9 (both modify `package.json` and lock files). Wait for Stage 9 to complete and commit before starting Stage 8.
+**Pre-flight Concurrency Check** (see also the top-level "CRITICAL prerequisite — Stage 8/9 mutual exclusion" above): Before proceeding, verify that Stage 9 (Dependency Maintenance) is not currently in progress. Check both: (1) `git log --oneline -5 | grep -i 'chore.*depend'` — if the most recent commit is an in-progress dependency update from the current day, STOP; (2) `git branch --list 'chore/dependency-update-*'` — if a maintenance branch exists, Stage 9 may be active. Do not run Stage 8 concurrently with Stage 9 (both modify `package.json` and lock files). Wait for Stage 9 to complete and commit before starting Stage 8.
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
@@ -113,7 +116,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
 
    **Input Validation**: Verify `./feedback/input.md` follows the markdown structure defined in the Preparing the Feedback Input section. If the format is unclear or missing required fields, STOP and ask the operator to reformat before proceeding.
 
-   **Required fields per feedback item**: (1) ID (TICKET-001, etc.), (2) Category (Bug / UX Issue / Missing Feature / Enhancement / Performance / Documentation), (3) Description, (4) Affected Feature ID (FEAT-XXX or NEW). Optional: Frequency, User Quote, Source. If required fields are missing, ask operator to provide them before Phase 1 begins.
+   **Required fields per feedback item**: (1) ID (TICKET-001, etc.), (2) Category (Bug / UX Issue / Missing Feature / Enhancement / Performance / Documentation), (3) Description, (4) Affected Feature ID (FEAT-XXX or NEW). Optional: Frequency, User Quote, Source. Category must be one of: `Bug`, `UX Issue`, `Missing Feature`, `Enhancement`, `Performance`, `Documentation`. Reject unrecognized categories — ask operator to reclassify. If required fields are missing, ask operator to provide them before Phase 1 begins.
 
 **Branch safety**: Verify `git status` shows a clean working directory before creating the branch — commit or stash uncommitted changes first. Then create a dedicated branch: `git checkout -b feedback/batch-$(date +%Y-%m-%d-%H%M%S)`. The HMS suffix avoids same-day collisions. CLAUDE.md shows the shorter `feedback/batch-YYYY-MM-DD` format — either is acceptable. Merge into main after the Gate Decision is PASS or CONDITIONAL PASS.
 
@@ -171,9 +174,9 @@ Before creating the change plan, scan for conflicting feedback items:
    - `APPROVED` — no conflicts, ready to implement
    - `STAKEHOLDER_DECISION_REQUIRED` — conflicts with another feedback item or BRD rule, deferred until stakeholder resolves
    - `DEFERRED` — requires architectural changes or is out of scope for this cycle
-   Include these status markers in the change plan and in the context passed to all teammates. Each entry in `change-plan.md` MUST include a `Status:` field with one of these markers so teammates can check it before starting work on that entry — teammates skip any entry marked `STAKEHOLDER_DECISION_REQUIRED` or `DEFERRED`. Set a 48-hour deadline for stakeholder decisions (document the deadline timestamp in `change-plan.md`). If no decision is received by deadline, set status to `DEFERRED — Next batch [DATE]` and document: "Awaiting stakeholder decision since [date]. Deadline passed — deferring to next batch." Continue processing APPROVED items without waiting.
+   Include these status markers in the change plan and in the context passed to all teammates. Each entry in `change-plan.md` MUST include a `Status:` field with one of these markers so teammates can check it before starting work on that entry — teammates skip any entry marked `STAKEHOLDER_DECISION_REQUIRED` or `DEFERRED`. Set a 48-hour deadline for stakeholder decisions (document the deadline timestamp in `change-plan.md`). At the start of triage, record the deadline timestamp in `change-plan.md`. If no decision is received by the deadline, automatically change the status to `DEFERRED — Next batch [DATE]` and continue processing APPROVED items only. Document: "Awaiting stakeholder decision since [date]. Deadline passed — deferring to next batch." Do not block Stage 8 execution waiting for decisions beyond the deadline.
 
-8. Before creating the new `change-plan.md`, read the existing `./feedback/change-plan.md` (if it exists) and extract any items still marked `DEFERRED`. Include these carried-over items in the new change plan.
+8. Before creating the new `change-plan.md`, read the existing `./feedback/change-plan.md` (if it exists) and extract any items still marked `DEFERRED`. Include these carried-over items in the new change plan. Merge procedure: (1) Load new feedback from `input.md`. (2) Load previous `change-plan.md`. (3) Extract items still marked DEFERRED (excluding permanently deferred items). (4) Append carried-over items to the new change plan with prefix `[CARRYOVER]` and their original feedback ID.
 
    Create `./feedback/change-plan.md`:
    - Ordered list of changes to make (highest impact + lowest effort first)
@@ -220,7 +223,7 @@ Your tasks — for each change in the change plan that requires spec updates:
 
 3. VERSION TRACKING:
    - Update `./plancasting/brd/00-cover-and-metadata.md` revision history table.
-   - Update `./plancasting/prd/README.md` version.
+   - Update `./plancasting/prd/01-product-overview.md` version.
    - Add changelog entries describing what changed and why.
 
 4. CONSISTENCY CHECK: After all updates:
@@ -258,7 +261,7 @@ For each change in the change plan that requires code updates:
 3. MISSING FEATURES (new spec was added):
    - Read the NEW spec entries.
    - Implement following the same patterns as existing features.
-   - Add schema changes if needed (additive only).
+   - Add schema changes if needed (additive only). If schema changes are made, run the backend's code generation step (e.g., `bunx convex codegen` for Convex, `npx prisma generate` for Prisma) before proceeding.
    - If codegen fails after schema changes: (1) revert the schema change (`git checkout -- <schema-file>`), (2) report the failure to the lead with the error output, (3) mark the feedback item as DEFERRED with reason 'schema migration requires dedicated session.' Do NOT proceed with broken generated files.
    - Add hooks, components, pages as needed.
 
@@ -373,8 +376,18 @@ After all teammates complete:
 
 ## Gate Decision
 
-- **PASS**: All APPROVED feedback items resolved, tests pass, specs consistent, documentation updated. Merge the feedback branch into main before proceeding to Stage 7 (Deploy). **Before redeployment**: If UI changes were made, MUST re-run Stage 6V using `prompt_visual_functional_verification.md` (before the 6V re-run, verify the dev server port is available: `lsof -i :3000` — the 6V prompt starts the dev server internally; paste the prompt with `MODE: diff | SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]` on the first line) against the local dev server to catch visual regressions — do NOT deploy without this check. `MODE: diff` tells 6V to compare against the previous baseline rather than generating a new full baseline; `SCOPE:` filters to only affected features. If the 6V re-run finds 6V-A/B issues, follow the standard 6V→6R→6P/6P-R chain before re-deploying. If the standard 6V→6R chain resolves all issues and the product was already polished via 6P/6P-R in the main pipeline, 6P/6P-R does NOT need to re-run after the feedback loop's 6V re-verification — unless the feedback changes introduce significant new visual content (new pages, major layout changes). If the 6V re-run returns FAIL, the feedback changes must be fixed or reverted before re-deploying — do NOT deploy with a 6V FAIL. Then proceed to Stage 7 (Deploy) → Stage 7V (Production Smoke).
-- **CONDITIONAL PASS**: Some items deferred due to complexity but all attempted items resolved, tests pass. Document deferred items in `change-plan.md` with `Status: DEFERRED — Next batch [DATE]`. If any resolved items include UI changes, re-run Stage 6V (MODE: diff) before deploying, per the same procedure described in the PASS outcome. Merge the feedback branch into main before proceeding to Stage 7 (see Branch Safety above). Proceed to Stage 7 for resolved items. Schedule a follow-up Stage 8 session for deferred items. **Deferred item carryover**: Before each new Stage 8 run, read `./feedback/change-plan.md` from the previous run. Any items still marked `DEFERRED` that no longer have a `STAKEHOLDER_DECISION_REQUIRED` blocker are automatically re-introduced into the new batch's Phase 1 triage (the operator does NOT need to re-add them to `input.md` — the lead reads both `input.md` and prior `change-plan.md`). Items still marked `STAKEHOLDER_DECISION_REQUIRED` remain deferred until the operator resolves them.
+- **PASS**: All APPROVED feedback items resolved, tests pass, specs consistent, documentation updated.
+  1. **Merge**: Merge the feedback branch into main before proceeding to Stage 7 (Deploy).
+  2. **6V re-run (if UI changes)**: If UI changes were made, MUST re-run Stage 6V using `prompt_visual_functional_verification.md`. Before the 6V re-run, verify the dev server port is available: `lsof -i :<PORT>` (where `<PORT>` is the dev server port from CLAUDE.md Part 2 or `plancasting/tech-stack.md`) — the 6V prompt starts the dev server internally. Paste the prompt with `MODE: diff | SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]` on the first line. `MODE: diff` tells 6V to compare against the previous baseline rather than generating a new full baseline; `SCOPE:` filters to only affected features.
+  3. **6V issue chain**: If the 6V re-run finds 6V-A/B issues, follow the standard 6V→6R→6P/6P-R chain before re-deploying. 6P/6P-R re-run is required if feedback changes introduce new pages/screens or modify >5 components' visual design. Otherwise, previous 6P/6P-R output remains valid.
+  4. **6V FAIL**: If the 6V re-run returns FAIL, the feedback changes must be fixed or reverted before re-deploying — do NOT deploy with a 6V FAIL.
+  5. **Deploy workflow**: Complete 6V re-run on the feedback branch → if 6V passes, merge to main → deploy (Stage 7) → run 7V (Production Smoke).
+- **CONDITIONAL PASS**: Some items deferred due to complexity but all attempted items resolved, tests pass.
+  1. Document deferred items in `change-plan.md` with `Status: DEFERRED — Next batch [DATE]`.
+  2. If any resolved items include UI changes, re-run Stage 6V (MODE: diff) before deploying — if 6V finds issues, follow the same 6V→6R→6P/6P-R chain as the PASS outcome. 6P/6P-R re-run is required if feedback changes introduce new pages/screens or modify >5 components' visual design. Otherwise, previous 6P/6P-R output remains valid.
+  3. Merge the feedback branch into main before proceeding to Stage 7 (see Branch Safety above).
+  4. Proceed to Stage 7 for resolved items. Schedule a follow-up Stage 8 session for deferred items.
+  5. **Deferred item carryover**: Before each new Stage 8 run, read `./feedback/change-plan.md` from the previous run. Any items still marked `DEFERRED` that no longer have a `STAKEHOLDER_DECISION_REQUIRED` blocker are automatically re-introduced into the new batch's Phase 1 triage (the operator does NOT need to re-add them to `input.md` — the lead reads both `input.md` and prior `change-plan.md`). Items still marked `STAKEHOLDER_DECISION_REQUIRED` remain deferred until the operator resolves them.
 - **FAIL**: Test suite fails after changes, or spec inconsistency detected, or APPROVED items left unresolved. Review test failures with Teammate 2. For spec inconsistencies, re-run Teammate 1 to clarify. Do NOT proceed to Stage 7 until PASS or CONDITIONAL PASS.
 
 ### Phase 5: Shutdown
@@ -400,7 +413,7 @@ Over time, `./feedback/archive/` builds a history of all feedback processed and 
 
 - If feedback requires dependency updates, defer to **Stage 9** (Dependency Maintenance) for safe, batched updates.
 - After implementing UI changes, re-run **Stage 6V** (Visual & Functional Verification) to verify visual correctness.
-- After implementing code changes from feedback, deploy via Stage 7 and verify with Stage 7V. If user guide content was also updated, the Mintlify site (`./user-guide/`, Stage 7D) auto-deploys via GitHub on push (if Mintlify GitHub App was configured per Stage 7D deployment instructions). Stage 8 runs in a continuous loop: collect feedback → update specs → implement fixes → update docs → deploy (Stage 7) → verify (Stage 7V) → collect more feedback → repeat.
+- After implementing code changes from feedback, deploy via Stage 7 and verify with Stage 7V. If user guide content was also updated, the documentation site (`./user-guide/`, Stage 7D) auto-deploys via GitHub on push (if the docs framework's GitHub App was configured per Stage 7D deployment instructions). Stage 8 runs in a continuous loop: collect feedback → update specs → implement fixes → update docs → deploy (Stage 7) → verify (Stage 7V) → collect more feedback → repeat.
 - If feedback reveals that the user guide is fundamentally outdated or missing major journeys, consider re-running **Stage 7D** instead of patching individual pages — it is idempotent and regenerates from current PRD state.
 
 ## Critical Rules
@@ -416,5 +429,5 @@ Over time, `./feedback/archive/` builds a history of all feedback processed and 
 9. NEVER skip the traceability chain — every code change must trace to a spec change or an existing spec.
 10. If conflicting feedback items are found, resolve the conflict BEFORE implementing either side.
 11. If deploying feedback-driven changes causes production failures, revert the commit (using `git revert`, not `git reset --hard`) and re-run Stage 7V to verify the rollback. Investigate the failure before re-attempting.
-12. NEVER run Stage 8 and Stage 9 concurrently. Complete one and commit before starting the other. Both stages modify `package.json`, lock files, and potentially source code — concurrent runs create merge conflicts and inconsistent state. The `/` in the pipeline diagram means 'either/or': run Stage 8 first, commit all changes, then run Stage 9 (or vice versa). They share the codebase and could create merge conflicts if run simultaneously.
+12. NEVER run Stage 8 and Stage 9 concurrently. Complete one and commit before starting the other. Both stages modify `package.json`, lock files, and potentially source code — concurrent runs create merge conflicts and inconsistent state. The `/` in the pipeline diagram means 'run both, but one at a time, never concurrently': run Stage 8 first, commit all changes, then run Stage 9 (or vice versa). They share the codebase and could create merge conflicts if run simultaneously.
 ````

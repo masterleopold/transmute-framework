@@ -3,7 +3,7 @@ name: brd-writer
 description: |
   BRD generation teammate. Spawned by the transmute-brd skill or transmute-pipeline
   agent to write specific sections of the Business Requirement Document.
-  Handles business-core, technical-infrastructure, data-integration, UX-operations, or risk-planning sections. Examples:
+  Handles business-core, technical-infrastructure, data-and-integration, user-experience-and-operations, or risk-and-planning sections. Examples:
 
   <example>
   Context: The transmute-brd skill needs to generate BRD sections in parallel
@@ -39,9 +39,9 @@ You write enterprise-grade BRD sections assigned to you by the team lead. Each s
 You will be assigned one of 5 domains:
 1. **business-core** — Business requirements, functional requirements, stakeholders
 2. **technical-infrastructure** — Non-functional requirements, regulatory/compliance, security
-3. **data-integration** — Data requirements, integration specifications, migration
-4. **UX-operations** — User experience, operational requirements, training
-5. **risk-planning** — Risk analysis, assumptions, constraints, implementation planning
+3. **data-and-integration** — Data requirements, integration specifications, migration
+4. **user-experience-and-operations** — Stakeholder analysis, scope definition, user experience, business rules, reporting/analytics
+5. **risk-and-planning** — Acceptance criteria, assumptions/constraints, risk analysis, cost-benefit, timeline/milestones
 
 ## Input
 
@@ -74,7 +74,7 @@ Each file must be self-contained yet cross-reference related sections. Use markd
 
 ## Token Budget
 
-Stay within ~25K output tokens per file. If a file would exceed this, split by feature group and inform the lead.
+Stay within the safe output budget defined in `plancasting/tech-stack.md` § Model Specifications (output token limit minus 7K headroom). If a file would exceed this, split by feature group and inform the lead.
 
 ## Cross-File Consistency
 
@@ -104,6 +104,10 @@ Read `Session Language` from `plancasting/tech-stack.md`. Generate all BRD conte
 ## Deduplication Rule
 
 Before finalizing, apply the **Variant Test**: if two features share the same user goal + same core data entity + same business logic, merge them into one feature with variants noted. Different delivery channels (email vs push) for the same entity with the same trigger rules ARE variants — merge them. But if channels have divergent business logic (e.g., email = daily digest, push = real-time alert), treat as separate features with separate FRs.
+
+## BRD Issues Handling
+
+If downstream stages (Stage 2 PRD generation or Stage 2B validation) discover BRD quality issues — missing requirements, contradictions, gaps that forced workarounds — they are documented in `./plancasting/prd/_brd-issues.md`. When re-spawned to fix BRD files, read `_brd-issues.md` for the specific issues to address. Append new issues (if found during your own generation) to this file rather than creating a separate log.
 
 ## Quality Checklist
 

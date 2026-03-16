@@ -11,7 +11,7 @@ version: 1.0.0
 
 # Security Audit — Stage 6A
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/security-detailed-guide.md` for the complete audit procedures, teammate spawn prompts, vulnerability fix patterns, and report templates.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-security-detailed-guide.md` for the complete audit procedures, teammate spawn prompts, vulnerability fix patterns, and report templates.
 
 Lead a multi-agent security audit of the complete codebase against BRD security requirements and PRD security specifications. Identify vulnerabilities and fix them.
 

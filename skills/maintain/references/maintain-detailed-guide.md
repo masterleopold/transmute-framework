@@ -7,6 +7,8 @@ You are a senior DevOps engineer acting as the TEAM LEAD for a multi-agent depen
 
 **Stage Sequence**: ... → 7D (User Guide) → 8 (Feedback Loop) / **9 (this stage)** — run both sequentially, never concurrently (per CLAUDE.md notation). Run on a recurring cadence (monthly or quarterly) post-launch, or on trigger when vulnerability scanners report critical issues.
 
+**CRITICAL prerequisite — Stage 8/9 mutual exclusion**: Before proceeding, verify that Stage 8 (Feedback Loop) is NOT currently in progress. Pre-flight check: Verify no Stage 8 branch is active: `git branch | grep 'feedback/' && echo 'WARNING: Stage 8 branch exists — complete and merge Stage 8 before starting Stage 9'`. Check: (a) `git branch | grep 'feedback/batch'` — if a branch exists and is not yet merged, Stage 8 may still be in progress. (b) If Stage 8 is in progress, STOP — do not run Stage 9 until Stage 8 is committed and merged. Both stages modify `package.json`, lock files, and source code; concurrent execution causes merge conflicts and silent overwrites.
+
 ## Context
 
 This prompt is designed to be run on a regular cadence (monthly or quarterly) to keep the codebase healthy. Outdated dependencies accumulate security vulnerabilities, miss performance improvements, and eventually create painful migration cliffs.
@@ -61,7 +63,7 @@ To verify bun.lockb integrity:
 ## Session Recovery
 
 If this stage is interrupted mid-execution:
-1. Check if `./plancasting/_maintenance/report-YYYY-MM-DD.md` exists (with today's date). If it contains a `## Gate Decision` section, the stage completed — no action needed.
+1. Check if `./plancasting/_maintenance/report-YYYY-MM-DD*.md` exists (with today's date — the filename may include an HMS suffix, e.g., `report-2026-03-17-143022.md`). If it contains a `## Gate Decision` section, the stage completed — no action needed.
 2. Check if `./plancasting/_maintenance/baseline-YYYY-MM-DD.md` exists. If so, Phase 1 completed. Check git log to determine which teammate was last active:
    - If only security/patch updates were committed → re-spawn Teammate 2 (minor updates), then Teammate 3
    - If minor updates were also committed → re-spawn Teammate 3 (major updates)
@@ -76,15 +78,16 @@ If this stage is interrupted mid-execution:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-**Pre-flight Concurrency Check**: Before proceeding, verify that Stage 8 (Feedback Loop) is not currently in progress. Check: (1) `git branch --list 'feedback/batch-*'` — if a `feedback/batch-*` branch exists, Stage 8 may be active (STOP and verify with the operator); (2) `git log --oneline -5 | grep -E 'feedback/batch|Merge.*feedback'` — if the most recent commit references a feedback batch branch, Stage 8 may still be in progress. Do not run Stage 9 concurrently with Stage 8 (both modify `package.json`, lock files, and source code). Wait for Stage 8 to complete and merge before starting Stage 9.
+**Pre-flight Concurrency Check** (see also the top-level "CRITICAL prerequisite — Stage 8/9 mutual exclusion" above): Before proceeding, verify that Stage 8 (Feedback Loop) is not currently in progress. Check: (1) `git branch --list 'feedback/batch-*'` — if a `feedback/batch-*` branch exists, Stage 8 may be active (STOP and verify with the operator); (2) `git log --oneline -5 | grep -E 'feedback/batch|Merge.*feedback'` — if the most recent commit references a feedback batch branch, Stage 8 may still be in progress. Do not run Stage 9 concurrently with Stage 8 (both modify `package.json`, lock files, and source code). Wait for Stage 8 to complete and merge before starting Stage 9.
 
 **Prerequisites**: Read `CLAUDE.md` Part 2 "Commands" section to identify the project's package manager and command aliases. If CLAUDE.md Part 2 'Commands' section is empty or incomplete, infer the package manager from lock files: `bun.lockb` → bun, `package-lock.json` → npm, `pnpm-lock.yaml` → pnpm. Log the inferred package manager in the report. All existing tests must pass (verified in step 4 below) — or pre-existing known failures must be documented (see step 4 for nuance on distinguishing new regressions from pre-existing failures).
 
-**Note**: Stage 9 does not require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies. Stage 9 must NOT run concurrently with Stage 8.
+**Note**: Stage 9 does not require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies. Stage 9 must NOT run concurrently with Stage 8. If `./plancasting/_audits/implementation-completeness/report.md` exists, read it for context on known implementation gaps that may affect dependency compatibility.
 
 **Branch safety**: Create a dedicated branch with a unique name (e.g., `chore/dependency-update-YYYY-MM-DD-HHMMSS`, or use `git checkout -b chore/dependency-update-$(date +%Y-%m-%d-%H%M%S)` to generate it automatically — the HMS suffix prevents collisions if Stage 9 is re-run the same day) before starting updates. Do NOT commit directly to the main branch. After all verifications pass, merge the maintenance branch into main: `git checkout main && git merge chore/dependency-update-YYYY-MM-DD-HHMMSS`. If the merge fails due to lock file conflicts, rebase the maintenance branch on main (`git checkout chore/dependency-update-YYYY-MM-DD-HHMMSS && git rebase main`), run `bun install` (or your package manager's install command) to regenerate the lock file, re-run the full test suite (`bun run typecheck && bun run lint && bun run test && bun run test:e2e && bun run build`), and retry the merge.
 
 1. Read `./CLAUDE.md` and `./plancasting/tech-stack.md`.
+   If a prior Stage 9 report exists (check `./plancasting/_maintenance/` for prior `report-*.md` files), read the 'Deferred Updates' section. Re-attempt deferred major version updates if the surrounding ecosystem has stabilized since the last run.
 2. **Pre-check**: Ensure `git status` shows a clean working directory. Commit or stash all uncommitted changes before proceeding — the baseline must reflect a known-good state.
 3. Create the maintenance directory: `mkdir -p ./plancasting/_maintenance`
 4. Record the current baseline:
@@ -101,7 +104,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
 5. Analyze current dependencies:
    ~~~bash
    # Step 1: Check outdated packages
-   bunx npm-check-updates > ./plancasting/_maintenance/outdated.txt  # (For npm: use `npx npm-check-updates`. Bun has no built-in `outdated` command.)
+   bunx npm-check-updates > ./plancasting/_maintenance/outdated.txt  # (For npm: use `npx npm-check-updates`. Bun v1.2+: `bun outdated` works natively. If npm-check-updates is unavailable, use `npm outdated` or `pnpm outdated` as alternatives.)
 
    # Step 2: Security audit (Bun has no built-in audit — choose based on lock file)
    if [ -f bun.lockb ]; then
@@ -113,7 +116,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    fi
    # Document which audit tool was used in the final report.
    ~~~
-   If no outdated dependencies are found and no security vulnerabilities exist, skip Phases 2–4 and generate a brief all-clear report to `./plancasting/_maintenance/report-$(date +%Y-%m-%d).md`. Stage 9 completes with PASS gate.
+   If no outdated dependencies are found and no security vulnerabilities exist, skip Phases 2–4 and generate a brief all-clear report to `./plancasting/_maintenance/report-$(date +%Y-%m-%d-%H%M%S).md`. Stage 9 completes with PASS gate.
 
 6. Categorize updates:
    - **Security patches**: MUST update. Sub-classify by CVSS severity if available: CRITICAL (9–10) = patch immediately, can trigger emergency Stage 9 outside normal cadence; HIGH (7–8) = patch within 24–48 hours; MEDIUM (4–6) = patch in current Stage 9 run; LOW (0–3) = patch in next planned run. Process CRITICAL patches in a dedicated fast-tracked batch before other updates.
@@ -126,6 +129,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    - For major version updates, search the web for migration guides and breaking change notes. If web search is unavailable, check the package's CHANGELOG.md or GitHub releases in the `node_modules/<package>/` directory.
    - Risk assessment per update (scale 1–5): 1 = security patch, zero API changes; 2 = patch version, safe; 3 = minor version, minor API changes or deprecations; 4 = major version, breaking changes, migration needed; 5 = major version with significant architectural changes, needs extensive testing
    - Group updates into parallelizable batches
+   - **Important**: Backend codegen is a GATE. If codegen fails after `bun install`, the entire Stage 9 update must be reverted for that package. Plan for this contingency in Phase 1.
 
 8. Create a task list for all teammates.
 
@@ -203,7 +207,9 @@ Your tasks:
    bun run typecheck
    bun run test
    bun run lint
+   bun run build
    ~~~
+   If updates touched UI component libraries, CSS frameworks, or auth libraries, also run `bun run test:e2e`.
    If tests fail:
    - Check the changelog for the breaking change.
    - Fix the code to match the new API.
@@ -295,7 +301,6 @@ After all teammates complete:
    bun run build
    ~~~
    Compare results to the baseline. All tests must pass.
-   If updates touched UI component libraries, CSS frameworks, or auth libraries, also run `bun run test:e2e`.
 
 2. **Runtime version check**: If any major version updates changed `engines` requirements in `package.json`, verify the current Node.js/Bun version satisfies them (`node --version`, `bun --version`). If Stage 7D requires Node.js v20.17.0+ for Mintlify CLI, ensure that constraint is still met. If the runtime does NOT satisfy the new requirement: (a) update your local runtime (via `nvm`, Homebrew, or official installer), (b) update your CI/CD pipeline runtime requirements, (c) if the new requirement is a blocker, revert the dependency update and document as a deferred major update, (d) re-run the full test suite after runtime update.
 
@@ -307,7 +312,7 @@ After all teammates complete:
      - Patch updates: count
      - Minor updates: count, deprecations resolved
      - Major updates: count, migration steps taken
-   - **Deferred Updates**: Major updates that couldn't be applied, with rationale
+   - **Deferred Updates**: Major updates that couldn't be applied, with rationale. For each deferred major version, document: (1) package name and current version, (2) target version that was attempted, (3) reason for deferral, (4) suggested retry condition (e.g., 'after framework releases compatibility fix'). The lead of the next Stage 9 run reads this section at Phase 1 startup and can re-attempt deferred items if conditions have changed. Document deferred updates in `./plancasting/_maintenance/deferred.md` (same directory as the main report) using this format per entry: `### [package-name] | Current: [version] → Target: [version] | Reason: [explanation] | Retry when: [condition]`
    - **Test Results**: Baseline vs post-update comparison
    - **Security Audit**: Before vs after vulnerability count
    - **Recommendations**: Any architectural changes needed for future updates
@@ -347,6 +352,7 @@ After all teammates complete:
 ### Phase 5: Shutdown
 
 1. Verify all teammates have sent their completion messages. No further cleanup is needed — teammates terminate automatically after completing their tasks.
+2. Verify all file modifications are saved and committed to the maintenance branch.
 
 ---
 

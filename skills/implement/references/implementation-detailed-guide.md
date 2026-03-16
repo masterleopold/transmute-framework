@@ -7,13 +7,13 @@
 ````text
 You are a tech lead orchestrating the implementation of a COMPLETE product using Claude Code Agent Teams. Your job is to read the PRD, identify ALL features, and systematically implement every one of them — including backend, frontend, and tests — with quality gates between features and a final full-product integration verification.
 
-**Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → **5 (this stage)** → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
+**Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → **5 (this stage)** → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → [6R — only if 6V finds 6V-A/B issues] → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
 
 ## Critical Framing: Full-Build Approach
 
 You are building the COMPLETE product. Every feature in the PRD is implemented in this run — no MVP gate, no phased delivery, no feature deferral. The goal is a fully functional product with ALL features working, tested, and integrated.
 
-Features are implemented in dependency order (P0 → P1 → P2 → P3), but ALL priority levels are built. P0–P3 determines the build ORDER, not the build SCOPE — all features are built to completion in this session. If Stage 5B audit later identifies systemic gaps (6+ Category C issues, OR 6+ total unfixed issues across all categories combined, OR any single feature reports FAIL-RETRY three consecutive times across separate 5B runs, triggering automatic per-feature escalation to FAIL-ESCALATE — see Stage 5B prompt for the full threshold table), the lead must re-run Stage 5 for those specific features — but features are never skipped, only reworked. When you reach the end of the queue, the product is complete.
+Features are implemented in dependency order (P0 → P1 → P2 → P3), but ALL priority levels are built. P0–P3 determines the build ORDER, not the build SCOPE — all features are built to completion across one or more Stage 5 sessions. If Stage 5B audit later identifies systemic gaps (6+ Category C issues, OR 6+ total unfixed issues across all categories combined, OR any single feature reports FAIL-RETRY three consecutive times across separate 5B runs, triggering automatic per-feature escalation to FAIL-ESCALATE — see Stage 5B prompt for the full threshold table), the lead must re-run Stage 5 for those specific features — but features are never skipped, only reworked. When you reach the end of the queue, the product is complete.
 
 ## Post-Implementation Quality Gate
 
@@ -40,7 +40,7 @@ Based on observed Plan Cast outcomes:
 1. **Frontend stubs surviving quality gates**: As the session progresses and context window fills, frontend components become progressively shallower. The last 5-10 features are most at risk. ALWAYS apply the anti-stub quality gates even when fatigued. **Quality gate criteria**: (1) Zero `⚠️ STUB:` markers or TODO comments in new code, (2) all components have loading/error/empty states, (3) all hooks are used (no orphans), (4) all tests pass, (5) no TypeScript or linter errors. Document the gate result (PASS/FAIL) in the feature brief before marking feature done.
 2. **Hook data shape mismatch**: Frontend hook expects `{ organizations: [] }` but backend returns `{ items: [] }`. ALWAYS verify the hook's return type matches the actual backend response.
 3. **Missing empty/error states**: Agent implements the happy-path render but skips loading, empty, and error states. The quality gate at Step 5 MUST catch these BEFORE marking the feature done — do NOT defer to Stage 5B.
-4. **Context window degradation**: Degradation onset occurs around the session feature limit (see tech-stack.md § Model Specifications). Monitor quality gate pass rates — if the last 3+ features show increasing stub rates or missing states, end the session and resume fresh. **Quality degradation threshold**: If 3+ consecutive features have >5 stub/TODO markers each, or if quality gate FAIL occurs twice in sequence, end the session. Start a fresh session and re-paste the prompt — the orchestrator will resume from `_progress.md`. **Session recovery**: The orchestrator maintains `./plancasting/_progress.md` with feature status. When starting a new session, it reads this file, skips ✅ Done features, and resumes from the first incomplete feature. Commit `_progress.md` after each feature completion for clean recovery.
+4. **Context window degradation**: Degradation onset occurs around the session feature limit (see tech-stack.md § Model Specifications). Monitor quality gate pass rates — if the last 3+ features show increasing stub rates or missing states, end the session and resume fresh. **Quality degradation threshold**: If 3+ consecutive features have >5 stub/TODO markers each, or if quality gate FAIL occurs twice in sequence, end the session. Degradation threshold: a feature exceeds this if it has >5 stub/TODO markers, >2 missing component states (loading/error/empty), or test failure rate >10%. Start a fresh session and re-paste the prompt — the orchestrator will resume from `_progress.md`. **Session recovery**: The orchestrator maintains `./plancasting/_progress.md` with feature status. When starting a new session, it reads this file, skips ✅ Done features, and resumes from the first incomplete feature. Commit `_progress.md` after each feature completion for clean recovery.
 5. **Inline page code instead of component composition**: Frontend teammate writes all UI directly in page.tsx instead of importing scaffold components. ALWAYS check scaffold files before writing new code.
 6. **Orphan scaffold components**: Frontend teammate creates new inline components in page files instead of implementing existing scaffold components (see `plancasting/_scaffold-manifest.md` if it exists, otherwise refer to the scaffold directory listing). Result: duplicate UI code and orphan files that Stage 5B must detect.
 7. **Backend function signature mismatch**: Backend teammate implements a mutation with different argument names than what the PRD API spec defines — frontend teammate then writes hooks using the PRD names, causing runtime type errors.
@@ -79,7 +79,7 @@ Based on observed Plan Cast outcomes:
 Stage 5 generates the following artifacts:
 - **Updated `./plancasting/_progress.md`**: Feature status table updated after each feature completes (⬜ → 🔧 → ✅)
 - **Git commits**: One commit per completed feature (type: `feat`)
-- **`./plancasting/_implementation-report.md`** (optional but recommended): Summary of implementation decisions, assumptions made, and deviations from PRD — consumed by Stage 5B as input
+- **`./plancasting/_implementation-report.md`** (generated by Full-Product Completion Sequence; may be absent if session was interrupted before completion): Summary of implementation decisions, assumptions made, and deviations from PRD — consumed by Stage 5B as input
 - **Source code**: All feature implementation files per PRD specifications
 
 ### Session Recovery
@@ -122,17 +122,15 @@ Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project'
 
    **5B Re-run Detection**: If `plancasting/_audits/implementation-completeness/report.md` exists (indicating this is a Stage 5 RE-RUN after 5B), scan `_progress.md` for features marked `🔄 Needs Re-implementation`. These are the ONLY features to work on in this session. Skip all `✅ Done` features.
 
-   **Session Recovery Check** — evaluate `plancasting/_progress.md` status using this table (evaluate top to bottom, take the first match):
+   **Session Startup Triage** — determine the session's starting MODE using this table (evaluate top to bottom, take the first match). Once the mode is determined, features are processed using **positional scan** (top-to-bottom in `_progress.md`, as described in Session Recovery above):
 
    | Condition | Action |
    |---|---|
-   | Any feature is `🔧 In Progress` | Resume that feature from its first incomplete layer (crashed session recovery) |
-   | Any feature is `🔄 Needs Re-implementation` | Resume from that feature (post-5B re-implementation) |
-   | Any feature is `⏸ Blocked` | Check if blocker is now `✅ Done` — if yes, change to `🔧 In Progress` and resume; if still blocked, skip and continue to next actionable feature |
    | All features `✅ Done` AND valid report exists | Run Full-Product Completion Sequence |
    | All features `✅ Done` AND report is truncated | Regenerate report, then Full-Product Completion Sequence |
    | All features `✅ Done` AND no report exists | Generate report from scratch, then Full-Product Completion Sequence |
-   | Mixed `✅`/`⬜` state | Resume from first `⬜ Not Started` feature |
+   | Any feature is `⏸ Blocked` | Check if blocker is now `✅ Done` — if yes, change to `🔧 In Progress`; if still blocked, skip |
+   | Mixed statuses (`🔧`/`🔄`/`⬜`) | Use positional scan: process features top-to-bottom — `🔧` = resume from incomplete layer, `🔄` = rebuild from scratch, `⬜` = start fresh. Skip `✅` and `⏸` |
 
    **Details**: "Valid report" = `plancasting/_implementation-report.md` contains a 'Launch Readiness Assessment' section. "Truncated" = file exists but lacks that section. For `⏸ Blocked` features, check if the blocker (noted in 'Notes' column) is now `✅ Done` — if yes, change status to `🔧 In Progress`. When all features are `✅ Done` and a valid report exists, output: 'Stage 5 is complete — all features implemented and implementation report generated. Proceed to Stage 5B (Implementation Completeness Audit).' and terminate.
 8. Read `./plancasting/_scaffold-manifest.md` (if it exists) — understand the scaffold's file structure, component-to-page mapping, and hook-to-component mapping. This informs feature briefs and prevents duplicate file creation.
@@ -537,7 +535,7 @@ Your tasks:
    - These cross-feature tests are critical for the full-build approach.
 
 3. REGRESSION CHECK: Run ALL existing E2E tests to verify no regressions:
-   - PREREQUISITE: E2E tests require a running dev server. First check if one is already running (`lsof -ti:<port>` where port is from CLAUDE.md). If not, start it (`bun run dev &` or equivalent per CLAUDE.md). Wait for the dev server to be ready (check for 'ready' or 'started' message). After ALL tests complete, stop the dev server (`lsof -ti:<port> | xargs kill 2>/dev/null`).
+   - PREREQUISITE: E2E tests require a running dev server. First check if one is already running (`lsof -ti:<port>` where port is from CLAUDE.md). If not, start it (`bun run dev &` or equivalent per CLAUDE.md). Wait for the dev server to be ready (check for 'ready' or 'started' message). After ALL tests complete, stop the dev server (verify the PID belongs to the dev server before killing: `DEV_PID=$(lsof -ti:<port>); ps -p $DEV_PID -o command= | grep -q 'dev' && kill $DEV_PID`).
    - `bun run test:e2e` (adapt to your package manager per CLAUDE.md)
    - If existing tests fail, categorize each failure:
      a. Intentional behavior change due to new feature → update the test
@@ -793,7 +791,7 @@ Before marking ANY feature as ✅ Done, the lead MUST verify the following for e
    - `pending feature build`
    - `// ⚠️ STUB`
    - `// TODO [Stage 5]`
-   - `Coming soon` (only acceptable as a user-facing UI label in components that the PRD explicitly defines as showing a "coming soon" state. It is NOT acceptable as a placeholder for unimplemented functionality)
+   - `Coming soon` (only acceptable as a user-facing UI label in components that the PRD explicitly defines as showing a "coming soon" state. It is NOT acceptable as a placeholder for unimplemented functionality). Verify by grepping PRD files: `grep -ri 'coming soon\|planned\|future phase' ./plancasting/prd/`. If no match, the "Coming soon" label is a stub — fix it.
    - `Not yet implemented`
    - `PLACEHOLDER` (excluding HTML placeholder attributes like `placeholder="Enter name"`)
    - Components that return only a single trivial element (e.g., a heading or paragraph with just a name/description string) with no interactive elements or real UI structure
@@ -854,4 +852,13 @@ After this stage completes, Stage 5B will run a FRESH full-codebase audit specif
 2. **Duplication pattern**: Frontend teammate builds UI inline in page files instead of implementing inside existing scaffold component files — creating orphan components that are never imported. This is caused by the teammate not inventorying scaffold files before writing code.
 
 This audit is NOT a reason to relax quality gates — it is a safety net. The mandatory SCAFFOLD INVENTORY step (Step 0 in frontend/backend teammate instructions) is the PRIMARY defense against both patterns. If you detect your context window is becoming saturated (late in a long feature queue), end the session and resume fresh rather than degrading quality. If a session must end before all features complete, prioritize BACKEND completeness — backend stubs are harder to fix in 5B. Frontend stubs are addressed by Stage 5B's dedicated frontend-stub-fixer — but this is a last-resort triage, not a reason to deprioritize frontend completeness during Stage 5.
+
+## Gate Decision
+
+Evaluate after all features are processed or session ends:
+
+- **PASS**: All features marked ✅ Done in `_progress.md`, zero stubs detected (grep confirms no `TODO [Stage 5]`, `PLACEHOLDER`, or `implementation pending` markers in source code), all tests pass (`bun run test` and `bun run test:e2e` exit 0).
+- **CONDITIONAL PASS**: All P0 features ✅ Done with passing tests. P1–P3 features may be 🔧 In Progress if session limit reached — document remaining features for the next session.
+- **FAIL-RETRY**: Session degradation detected (3+ consecutive features with increasing stub rates). End session, commit progress, document degradation pattern in `_progress.md` Notes column, and schedule a new session.
+- **FAIL-ESCALATE**: Structural blockers prevent feature implementation (e.g., missing backend infrastructure, broken scaffold, unresolvable dependency conflicts). Document blockers and escalate to operator.
 ````

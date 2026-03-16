@@ -12,7 +12,7 @@ globs: ["[FRONTEND_DIR]/**"]
 <!-- TODO: Stage 3 — replace with actual component state pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #1, every component must handle all five states (default, loading, empty, error, disabled). For data-fetching components, use `[LOADING_COMPONENT]` for loading states and `[ERROR_COMPONENT]` for error states (include a retry action where appropriate); never render a blank screen.
-<!-- If [EMPTY_COMPONENT] does not exist in the scaffold, Stage 3 creates it at [COMPONENT_DIR]/EmptyState.tsx -->
+<!-- Stage 3: If [EMPTY_COMPONENT] does not exist in the scaffold, create it in the shared components directory (e.g., src/components/EmptyState.tsx) -->
 - Additionally: empty states must use `[EMPTY_COMPONENT]` (a shared component or layout pattern for empty-state messaging — if none exists, Stage 3 should create one during scaffold generation) with a descriptive message and, where applicable, a call-to-action (stack-specific enhancement beyond Part 1).
 
 ```typescript

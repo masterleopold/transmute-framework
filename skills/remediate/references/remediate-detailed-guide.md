@@ -22,13 +22,13 @@ This is slow and error-prone. Stage 6R automates the mechanical fixes (which are
 
 **Prerequisite**: Verify `./plancasting/_audits/visual-verification/report.md` exists and contains 6V-A or 6V-B categorized issues. If the report does not exist, STOP — Stage 6V is a prerequisite. If the report exists but contains only 6V-C issues (or PASS with zero issues), STOP — 6R is not needed, proceed directly to 6P or 6P-R. Stage 6R only runs when 6V-A or 6V-B issues exist.
 
-**Cycle tracking**: 6R supports a maximum of 3 completed fix-verify cycles. To determine which cycle this is, check `./plancasting/_audits/runtime-remediation/report.md`:
+**Cycle tracking**: 6R supports a maximum of 3 fix-verify cycles. To determine which cycle this is, check `./plancasting/_audits/runtime-remediation/report.md`:
 - If the file does not exist → this is **Cycle 1/3**
-- If the file exists and its `## Cycle Tracking` section shows "Current cycle: 1" → this is **Cycle 2/3**
-- If the file exists and shows "Current cycle: 2" → this is **Cycle 3/3** (final attempt)
-- If the file shows "Current cycle: 3" → **STOP** — max cycles reached. Escalate remaining 6V-A/B issues to 6V-C and proceed to 6P/6P-R.
+- If the file exists and its `## Cycle Tracking` section shows "Completed cycles: 1" → this is **Cycle 2/3**
+- If the file exists and shows "Completed cycles: 2" → this is **Cycle 3/3** (final attempt)
+- If the file shows "Completed cycles: 3" → **STOP** — max cycles reached. Escalate remaining 6V-A/B issues to 6V-C and proceed to 6P/6P-R.
 
-Update the `## Cycle Tracking` section in the report after each completed cycle.
+After each cycle completes, update the `## Cycle Tracking` section: increment `Completed cycles:` by 1 and record `Last completed phase:` for crash recovery.
 
 > ⚠️ **Category System Note**: This stage uses the same **fixability-based** category system as Stage 6V — DIFFERENT from Stage 5B's size-based categories:
 > - **5B Categories** (size-based): A = small, B = moderate, C = large/architectural
@@ -152,9 +152,9 @@ As the team lead, complete the following BEFORE spawning any teammates:
 1. **Check run counter** (prevents infinite remediation cycles):
    Read `./plancasting/_audits/runtime-remediation/report.md` and extract the `## Cycle Tracking` section.
    - If the report does not exist → this is **Cycle 1/3** — proceed with remediation.
-   - If the report exists and shows `Current cycle: 1` → this is **Cycle 2/3** — proceed.
-   - If the report exists and shows `Current cycle: 2` → this is **Cycle 3/3** (final attempt) — proceed.
-   - If the report exists and shows `Current cycle: 3` (or higher) → **STOP immediately**. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` listing all unresolved issues from the most recent 6V report. This file consolidates all unresolved issues, including those previously documented in `category-c-escalations.md`. It is the authoritative list of issues requiring human intervention. Report: "Stage 6R exhausted 3 attempts — remaining issues are 6V-C requiring manual intervention." The operator must either: (a) manually resolve remaining issues, re-run 6V to verify fixes, then re-run 6R (which will see a fresh report), OR (b) document remaining issues as known limitations and proceed directly to 6P.
+   - If the report exists and shows `Completed cycles: 1` → this is **Cycle 2/3** — proceed.
+   - If the report exists and shows `Completed cycles: 2` → this is **Cycle 3/3** (final attempt) — proceed.
+   - If the report exists and shows `Completed cycles: 3` (or higher) → **STOP immediately**. Create `./plancasting/_audits/runtime-remediation/remaining-blockers.md` listing all unresolved issues from the most recent 6V report. This file consolidates all unresolved issues, including those previously documented in `category-c-escalations.md`. It is the authoritative list of issues requiring human intervention. Report: "Stage 6R exhausted 3 attempts — remaining issues are 6V-C requiring manual intervention." The operator must either: (a) manually resolve remaining issues and re-run 6V to verify fixes — if this is within the 2-outer-cycle limit (see execution-guide.md § "Gate Decision Outcomes (Universal)"), re-run 6R (which will see a fresh report with reset cycle counter); if the 2-outer-cycle limit is already reached, proceed to 6P/6P-R with remaining issues documented as known limitations, OR (b) document remaining issues as known limitations and proceed directly to 6P/6P-R.
    - **Counter source of truth**: The `## Cycle Tracking` section in the report is the ONLY counter. It is updated at the END of Phase 4 (after verification completes) to track completed runs, not started runs.
 
 2. **Read project context**:
@@ -170,7 +170,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
    - For 6V-B: identify the likely fix and what to verify
    - For 6V-C: document why it needs human judgment and what decision is needed
 
-   **Quick triage rule**: If the fix requires editing only one file, adding a route, or wiring an existing function → 6V-A (auto-fix). If the fix requires understanding multiple files or pattern-matching across the codebase → 6V-B (semi-auto). If the fix requires implementing new business logic, making architecture decisions, or weighing trade-offs → 6V-C (needs human).
+   **Quick triage rule**: If the fix requires editing only one file, adding a route, or wiring an existing function → 6V-A (auto-fix). If the fix requires understanding multiple files or pattern-matching across the codebase → 6V-B (semi-auto). If the fix requires implementing new business logic, making architecture decisions, or weighing trade-offs → 6V-C (needs human). A fix is "mechanical" (auto-fixable by 6R) if: (a) the root cause is clear from the 6V report, (b) the fix is ≤ 10 lines of code, (c) the fix does not require API contract changes or new dependencies, and (d) the fix has a known pattern (e.g., missing null check, incorrect selector, wrong import path). All other fixes are non-mechanical and go to the human-review TODO list.
 
    **Early exit**: If triage results in zero 6V-A and zero 6V-B issues (all are 6V-C): Generate the Phase 4 report noting 'No mechanical fixes applied — all issues are 6V-C requiring human judgment.' Do NOT spawn Teammates 1-3. Proceed directly to Stage 6P/6P-R decision.
 
@@ -474,6 +474,7 @@ After all teammates complete:
    - If the server still fails to start, mark ALL fixes as "unverifiable" and proceed to report. Note: unlike 6V/6P which ABORT on server failure, 6R proceeds because fixes have already been applied to code and should be documented even if runtime verification fails
 
 3. **Targeted re-verification of fixed issues**:
+   Re-verification scope: re-run ONLY the 6V scenarios that were categorized as 6V-A or 6V-B (the ones 6R attempted to fix), plus any scenarios that depend on modified files. Do not re-run the full 6V scenario matrix.
    Verify the fixed issues using Playwright browser tools for spot-checks (dev server is already running from step 2):
    - For each 6V-A fix: use `browser_navigate` to go to the affected page/route, `browser_take_screenshot` to capture evidence, and `browser_console_messages` to check for console errors — verify the issue is resolved
    - For each 6V-B fix: use Playwright browser tools (`browser_navigate`, `browser_click`, `browser_fill_form`, `browser_take_screenshot`, `browser_console_messages`) to execute the specific acceptance criterion that was failing
@@ -517,6 +518,12 @@ After all teammates complete:
    |---|--------|----------|-------|-----------------|-----------------|
    | 1 | FEAT-NNN | Critical | Pipeline stage missing | Business logic not implemented | Implement or defer? |
    | ... |
+
+   ## Post-Remediation Gate Update
+   - **Updated Gate**: [PASS / CONDITIONAL PASS (6V-C remaining — requires human judgment)]
+   - **Update Date**: [date]
+   - **6V-A/B resolved**: [N] / [total]
+   - **6V-C remaining**: [N] (see table above for details)
    ~~~
 
 5. **Generate the remediation report** at `./plancasting/_audits/runtime-remediation/report.md`:
@@ -560,11 +567,12 @@ After all teammates complete:
    [List]
 
    ## Cycle Tracking
-   - **Current cycle**: [N] / 3 (max 3 completed fix-verify cycles)
+   - **Completed cycles**: [N] / 3 (max 3 completed fix-verify cycles)
+   - **Last completed phase**: [Phase N — for crash recovery]
    - **Previous cycle report**: [path or "N/A — first cycle"]
 
    ## Gate Decision
-   - **PASS**: All 6V-A and 6V-B issues resolved. Remaining 6V-C issues documented with rationale.
+   - **PASS**: All 6V-A and 6V-B issues resolved. (6V-C issues, if any, are documented with rationale but do not affect the 6R gate — they require human judgment.)
    - **CONDITIONAL PASS**: Some 6V-B issues remain with workarounds documented. All 6V-A issues resolved.
    - **FAIL**: 6V-A or 6V-B issues remain unresolved without workarounds.
 
@@ -578,7 +586,7 @@ After all teammates complete:
 
    ## Next Steps
    - If PASS: proceed to Stage 6P/6P-R → 7 (Deploy) → Stage 7V → Stage 7D (User Guide)
-   - If CONDITIONAL PASS: human reviews remaining issues. Proceed to Stage 6P or 6P-R (one always runs), then Stage 7 if human accepts remaining issues.
+   - If CONDITIONAL PASS: human reviews remaining issues. The human-review TODO list is in `./plancasting/_audits/runtime-remediation/human-review.md` with columns: Issue ID, 6V Category, Description, Affected File(s), Suggested Approach. Proceed to Stage 6P or 6P-R (one always runs), then Stage 7 if human accepts remaining issues.
    - If FAIL: human resolves 6V-C critical issues, then re-run 6V → 6R
    ~~~
 
@@ -633,7 +641,7 @@ If a runtime issue requires architectural changes beyond this stage's scope (e.g
 
 1. Request shutdown for all teammates.
 2. Verify all file modifications are saved and committed.
-3. **Update cycle counter**: After all verification is complete and changes are committed, update the `## Cycle Tracking` section in `./plancasting/_audits/runtime-remediation/report.md`. Set `Current cycle:` to the current cycle number (1, 2, or 3). This ensures the counter tracks COMPLETED runs (not started runs), so a crash mid-run does not consume a run attempt. Update ONLY after Phase 3 verification fully completes (even if issues remain unresolved). If Phase 3 is interrupted before completion, do NOT update — the incomplete run does not count toward the 3-cycle maximum. The 6R report MUST include a `Last completed phase:` field alongside `Current cycle:` so crash recovery can determine where to resume without cross-referencing the 6V report. **Crash recovery**: On session start, check two files: (1) the 6R report (`./plancasting/_audits/runtime-remediation/report.md`) for the `Current cycle: N` counter and `Last completed phase:` field in `## Cycle Tracking`, and (2) the 6V report (`./plancasting/_audits/visual-verification/report.md`) for the `## Stage 6R Remediation Results` subsections (each delimited by `---`) that 6R appends after each cycle. If `Current cycle: N` in the 6R report but fewer than N remediation sections exist in the 6V report, the most recent cycle was interrupted — resume from Phase 2 without incrementing the counter. If exactly N sections exist, the cycle completed successfully. The cycle counter only reflects fully completed cycles.
+3. **Update cycle counter**: After all verification is complete and changes are committed, update the `## Cycle Tracking` section in `./plancasting/_audits/runtime-remediation/report.md`. Set `Completed cycles:` to the current cycle number (1, 2, or 3). This ensures the counter tracks COMPLETED runs (not started runs), so a crash mid-run does not consume a run attempt. Update ONLY after Phase 3 verification fully completes (even if issues remain unresolved). If Phase 3 is interrupted before completion, do NOT update — the incomplete run does not count toward the 3-cycle maximum. The 6R report MUST include a `Last completed phase:` field alongside `Completed cycles:` so crash recovery can determine where to resume without cross-referencing the 6V report. **Crash recovery**: On session start, check two files: (1) the 6R report (`./plancasting/_audits/runtime-remediation/report.md`) for the `Completed cycles: N` counter and `Last completed phase:` field in `## Cycle Tracking`, and (2) the 6V report (`./plancasting/_audits/visual-verification/report.md`) for the `## Stage 6R Remediation Results` subsections (each delimited by `---`) that 6R appends after each cycle. If `Completed cycles: N` in the 6R report but fewer than N remediation sections exist in the 6V report, the most recent cycle was interrupted — resume from Phase 2 without incrementing the counter. If exactly N sections exist, the cycle completed successfully. The cycle counter only reflects fully completed cycles.
 4. Leave the dev server running if Stage 6P will be run immediately in the same session. If following the recommended practice of using a fresh Claude Code session for each stage, the dev server will terminate when this session ends — Stage 6P handles startup independently.
 
 ## Critical Rules
@@ -652,10 +660,10 @@ If a runtime issue requires architectural changes beyond this stage's scope (e.g
 12. For stub pages created to fix dead links: ALWAYS include proper auth guards, loading states, and error handling — never create a bare `page.tsx` that exports just a `<div>`.
 13. If the 6V report has zero failures, output a clean report and exit. Don't invent issues to fix.
 14. Maximum 3 remediation runs. The counter in the report's `## Cycle Tracking` section tracks completed runs:
-    - After 1st 6R session completes → `Current cycle: 1`
-    - After 2nd 6R session completes → `Current cycle: 2`
-    - After 3rd 6R session completes → `Current cycle: 3`
-    - When you read `Current cycle: 3` at the start of a new session → STOP immediately. All remaining issues become 6V-C requiring manual intervention. Output `./plancasting/_audits/runtime-remediation/remaining-blockers.md` listing all unresolved issues. The operator must resolve 6V-C issues, re-run 6V, then re-run 6R (which will see a fresh report with no cycle tracking).
+    - After 1st 6R session completes → `Completed cycles: 1`
+    - After 2nd 6R session completes → `Completed cycles: 2`
+    - After 3rd 6R session completes → `Completed cycles: 3`
+    - When you read `Completed cycles: 3` at the start of a new session → STOP immediately. All remaining issues become 6V-C requiring manual intervention. Output `./plancasting/_audits/runtime-remediation/remaining-blockers.md` listing all unresolved issues. The operator must resolve 6V-C issues, re-run 6V, then re-run 6R (which will see a fresh report with no cycle tracking).
     Note: This 3-cycle maximum applies to a single 6R run. Across the entire pipeline, there is also a maximum of 2 outer 6V→6R cycles (see execution-guide.md § "Gate Decision Outcomes (Universal)"). If the second outer 6V→6R cycle still has issues, document as known limitations and proceed to 6P/6P-R.
 15. ALWAYS respect the project's file organization conventions. New files go in the correct directory following the established patterns (read `CLAUDE.md` and existing code structure).
 ````

@@ -606,7 +606,7 @@ Based on the selected stack, generate a checklist of required credentials. Categ
 
 ### ⚙️ Pipeline Infrastructure (required only if the product uses the Transmuter platform — skip for standalone projects)
 These credentials power the Transmute pipeline itself. If your product uses Transmuter as its backend orchestration layer, all three are required. For standalone products that do not use E2B sandboxes, skip items 2 and 3. For standalone products that do not use the Transmuter platform at all, skip all three items — the Anthropic API key for Claude Code itself is separate from `TRANSMUTER_ANTHROPIC_API_KEY`.
-> **Note**: If skipped, Stage 3's credential gate must also be configured to skip these checks. See `prompt_generate_scaffolding.md` § "Pre-Scaffold Credential Gate (MUST verify before proceeding)" for the standalone-project exception.
+> **Note**: If skipped, Stage 3's credential gate must also be configured to skip these checks. See `execution-guide.md` § "3.1 Credential Validation Gate" for the standalone-project exception.
 1. Anthropic API Key (`TRANSMUTER_ANTHROPIC_API_KEY`) — Get it at: https://console.anthropic.com/
    This is the AI that powers the Transmuter platform's backend pipeline stages (not Claude Code itself). MUST be set on the backend deployment if using Transmuter. Skip for standalone projects.
 2. E2B API Key (`E2B_API_KEY`) — Get it at: https://e2b.dev/dashboard (skip if not using E2B sandboxes)
@@ -939,7 +939,8 @@ These values govern session limits, token budgets, and splitting thresholds acro
 | Safe output budget | [Output limit minus 7K — e.g., 25,000 tokens] | Output limit minus 7K headroom for formatting/error recovery |
 | Session feature limit | [e.g., 25–30 features] | Quality degrades beyond this in Stage 5 |
 | Feedback batch limit | [e.g., 10 items] | Per Stage 8 session (~3–5 hours work) |
-| Verification scenario cap | [e.g., 150 scenarios] | Per 6V/7V session |
+| Verification scenario cap (6V) | [e.g., 150 scenarios] | Per 6V session (full verification) |
+| Verification scenario cap (7V) | [e.g., 15 scenarios] | Per 7V session (SMOKE scope — P0+P1 only) |
 | Large product threshold | [e.g., >500K tokens or >100 files] | When to split validation by feature group |
 ~~~
 
@@ -1118,6 +1119,8 @@ This prompt handles diverse product types by adapting its behavior:
 17. When the user provides a product logo (PNG or SVG), extract the dominant colors from it. For SVG, parse the markup for fill/stroke colors. For PNG, describe the visual colors. Record these colors in the `plancasting/tech-stack.md` "Product logo" section — they should inform the brand palette and aesthetic direction suggestions.
 
 ## Output
+
+**Re-run behavior**: If Stage 0 is re-run, overwrite `tech-stack.md` in place (do not version as `_v2`). The tech stack is a living document updated during the pipeline, not an immutable artifact.
 
 Generate the following files:
 - `./plancasting/tech-stack.md`: Complete technology stack configuration with rationale for each choice

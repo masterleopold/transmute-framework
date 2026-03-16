@@ -14,7 +14,7 @@ version: 1.0.0
 
 Read the Stage 6V verification report, categorize every failure by fixability, auto-fix all mechanical issues, and produce a human-review TODO list for issues requiring judgment — then re-verify to confirm fixes work. Lead a multi-agent runtime remediation project using Claude Code Agent Teams.
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/remediation-detailed-guide.md` for full fixability taxonomy, teammate prompts, safety rules, and report templates.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/remediate-detailed-guide.md` for full fixability taxonomy, teammate prompts, safety rules, and report templates.
 
 ## Prerequisites
 
