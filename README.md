@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.4.0** — Comprehensive template sync, agent hardening, prerequisite hook fix
+> **v2.5.0** — 7th-pass audit sync: gate edge cases, parallel safety, B-category fixability, agent hardening
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -145,7 +145,7 @@ Stages **4** and **7** are manual and cannot be invoked via commands.
 
 The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are checked before each stage runs. If a stage fails, fix the issue and run `/transmute:cast resume`.
 
-### Gate Logic (v2.4.0)
+### Gate Logic (v2.5.0)
 
 - **5B**: PASS requires zero issues + all tests pass; FAIL triggers RETRY (4-5 Category C, 3+ A/B unfixed, or test failures) or ESCALATE (6+ Category C); per-feature consecutive FAIL-RETRY tracking (3x → auto-escalate)
 - **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
@@ -249,6 +249,23 @@ transmute-framework/
 - A business plan (markdown or PDF files)
 
 ## Changelog
+
+### v2.5.0
+
+**7th-Pass Audit Sync: Gate Edge Cases, Parallel Safety, Template Precision**
+
+**Templates** (synced from canonical Transmute Framework Template — 5th through 7th pass audits)
+- **CLAUDE.md**: Recovery procedure cross-references expanded with specific section examples; staleness policy wording clarified ("whichever comes first"); added `style` commit type
+- **execution-guide.md**: Assumption volume calculation formula added; 6V/6R B-category fixability criteria (what B can/cannot fix, escalation to C); CONDITIONAL PASS path evaluation order explicitly stated (a→b→c); flaky scenario definition expanded with root cause context; 6D skip condition now references specific `tech-stack.md` field
+- **feature_scenario_generation.md**: Step 5 restructured with 6V-only qualifier on step header; estimation time breakdown added (≤50 scenarios vs 50-150); personas scoring phrasing aligned ("cap: 5 points")
+- **_rules-candidates.md**: Restored missing `Date Added` field in candidate format and example (breaking fix — staleness policy requires this field)
+- **rules-templates**: `_frontend-template.md` restored "Additionally:" prefix with stack-specific context; `_testing-template.md` comment metadata format aligned
+
+**Skills**
+- **verify/SKILL.md**: B-category fixability criteria added; flaky scenario definition expanded
+- **verify/references/verification-detailed-guide.md**: B-category fixability criteria added (2 locations — gate section + report template)
+- **remediate/references/remediation-detailed-guide.md**: B-category fixability criteria added to category system note
+- **maintain/SKILL.md**: Staleness review policy updated — "60 days without promotion or re-trigger, or 2+ cycles — whichever comes first"
 
 ### v2.4.0
 

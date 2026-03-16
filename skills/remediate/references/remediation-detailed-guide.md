@@ -18,7 +18,7 @@ This is slow and error-prone. Stage 6R automates the mechanical fixes (typically
 
 > **Category System Note**: This stage uses a DIFFERENT category system than Stage 5B:
 > - **5B Categories** (size-based): A = <30 lines per file, B = 30-100 lines AND <150 total, C = >=100 lines or unbuilt features
-> - **6V/6R Categories** (fixability-based): 6V-A = auto-fixable code issue, 6V-B = semi-auto fixable, 6V-C = needs human judgment
+> - **6V/6R Categories** (fixability-based): 6V-A = auto-fixable code issue, 6V-B = semi-auto fixable (fixable by adding component logic/local state, wiring hooks, adding handlers; escalate to C if it requires restructuring state management, creating new hooks, changing API contracts, or modifying schema), 6V-C = needs human judgment
 > Classify based on FIXABILITY, not severity. A critical bug that's easy to fix is 6V-A; a minor issue requiring architectural change is 6V-C.
 
 ## Fixability Taxonomy

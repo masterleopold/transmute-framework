@@ -134,7 +134,7 @@ The gate uses TWO systems -- the final gate is the WORSE of the two:
 
 **Fixability-based category system** (uses `6V-` prefix to distinguish from 5B):
 - **6V-A** (auto-fixable): broken links, dead code, incorrect imports -- 6R fixes automatically
-- **6V-B** (semi-auto): stub components, missing loading states -- 6R fixes with effort
+- **6V-B** (semi-auto): stub components, missing loading states -- 6R fixes with effort. Fixable by: adding component logic + local state, wiring existing hooks to components, adding inline handlers. NOT fixable (escalate to C) if it requires: restructuring state management, creating new hooks, changing API contracts, or modifying database schema.
 - **6V-C** (human judgment): architectural issues, design decisions -- 6R cannot fix
 
 **Dual-system decision matrix**:
@@ -151,7 +151,7 @@ The gate uses TWO systems -- the final gate is the WORSE of the two:
 
 ## Flaky Scenario Handling
 
-A flaky scenario fails inconsistently (fails once, passes on retest). Retest a failing scenario once. If it passes on retest: mark as "FLAKY -- cause TBD" in the Issues table. In 6V, flaky scenarios are informational (do not count toward gate failure). In 7V (production), flaky scenarios count as FAIL.
+A **flaky scenario** is a test that fails on the first run but passes on a subsequent re-run without code changes, typically caused by timing issues or external service latency. Retest a failing scenario once. If it passes on retest: mark as "FLAKY -- cause TBD" in the Issues table. In 6V, flaky scenarios are informational (do not count toward gate failure). In 7V (production), flaky scenarios count as FAIL.
 
 ## Next Steps
 

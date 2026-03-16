@@ -285,16 +285,15 @@ Example: If 6V generates FS-001, FS-003, FS-007, FS-012 for P0 features, 7V renu
   2. Remove P2 negative variants for non-critical features (error paths are important but less critical than happy paths; keep P0/P1 negative scenarios)
   3. Remove P2 Entity State and Role Permission scenarios, keeping only Feature Scenarios for P2 (ES/RS are detailed behavior tests; FS are end-to-end workflows with higher signal-to-noise ratio)
   4. Consolidate related Feature Scenarios that share the same feature into multi-step test scenarios (reduces redundancy without reducing feature coverage)
-  5. Split the test execution across multiple teammates rather than reducing coverage further — parallelism before cutting tests.
-     - **6V only** — 7V is single-agent and cannot split.
-     - **7V note**: 7V uses a 15-scenario cap. Trimming beyond step 1 (remove P3) is rarely needed. If the count is already ≤15 after step 1, no further trimming is needed — proceed directly to execution.
+  5. **6V only** (does NOT reduce count — skip to step 6 for 7V): Split the test execution across additional teammates rather than reducing coverage further — parallelism before cutting tests. If teammate capacity is exhausted and count still exceeds the cap, proceed to step 6.
+     - **7V note**: 7V is single-agent and cannot split. If the count is already ≤15 after step 1 (remove P3), no further trimming is needed — proceed directly to execution. Otherwise, continue to step 6.
   6. **Terminal condition** (use only if product scope is extremely large and timeline is constrained): If count still exceeds the verification scenario cap after all steps, cap at the limit by keeping ONLY Feature Scenarios (P0+P1+P2) + Auth Context (P0+P1) + Negative Scenarios for P0 features only. Remove all Role Permission and Entity State scenarios entirely. Document in the scenario matrix: "Coverage is intentionally limited due to scope — full E2E test suite recommended post-launch."
 
 Apply trimming steps sequentially — check count after each step. **STOP** applying steps as soon as count is within the cap. This ensures maximal coverage retention.
 
 **6V vs 7V trimming**: For 6V, PREFER splitting scenarios across more teammates (parallelism) over cutting scenarios. For 7V (single-agent), trimming is the only option — apply the steps above.
 
-- Estimated time: 30-60 minutes
+- Estimated time: 30–60 minutes for ≤50 scenarios; 60–120 minutes for 50–150 scenarios (scenarios split across 3–4 teammates in parallel)
 
 **For 6V MODE: critical (P0+P1 Focus)**:
 - Generate Feature Scenarios for P0 and P1 features only (skip P2/P3)
@@ -306,7 +305,7 @@ Apply trimming steps sequentially — check count after each step. **STOP** appl
 
 **For 7V (Smoke — Quick Production Validation)**:
 - Generate Feature Scenarios for P0 features (all scenarios) + P1 features (top 5 by user impact) + any P2 features in the critical path (a P2 feature is "in the critical path" if it is a transitive prerequisite of any P0/P1 feature in the Feature Dependency Graph — e.g., a P2 feature that blocks P0/P1 flows). If a feature has no existing Feature Scenario, create a minimal happy-path scenario. **User impact scoring**: Assign points to each P1 feature and select the top 5 by score:
-  - **Personas affected**: +1 per persona that has a user story referencing this feature (1–5 points)
+  - **Personas affected**: +1 per persona that has a user story referencing this feature (cap: 5 points)
   - **Flow frequency**: +1 if the feature appears in ≥3 user flows (UF-NNN), +0 otherwise
   - **Business criticality**: +2 if revenue-impacting (payments, billing, subscriptions), +0 otherwise
   - Total: 0–8 points. Select the top 5 P1 features by score. Ties broken by earlier position in PRD feature map.

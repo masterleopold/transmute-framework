@@ -28,6 +28,7 @@ Each candidate follows this structure:
 ```markdown
 ### [Descriptive Title]
 - **Source Stage**: 5B / 6R
+- **Date Added**: [YYYY-MM-DD — required for staleness policy's 60-day check]
 - **Evidence**: [issue ID, commit hash, or PRD ref]
 - **Trigger**: [what situation triggers this rule]
 - **Rule Text**: [the actual rule to add to .claude/rules/]
@@ -53,6 +54,7 @@ See also CLAUDE.md Part 1 § 'Path-Scoped Rules (`.claude/rules/`)' for the full
 >
 > ### Convex Query Requires Index for Pagination
 > - **Source Stage**: 5B
+> - **Date Added**: 2026-03-01
 > - **Evidence**: FEAT-002 (task list)
 > - **Trigger**: Any paginated query using `.paginate()` on a Convex table
 > - **Rule Text**: Every `.paginate()` call must use an indexed query — unindexed pagination silently falls back to full table scan, causing timeouts on tables with 1000+ rows.

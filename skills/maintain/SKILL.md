@@ -163,7 +163,7 @@ During each maintenance run, review all path-scoped rules for staleness:
 1. Read all rule files in `.claude/rules/`.
 2. For each rule, check: deprecated API reference? Removed package? Renamed function? Non-existent file paths? Tech stack changed since rule was generated? Issue structurally resolved by framework upgrade?
 3. Remove or update stale rules. Log changes in the report.
-4. Review `plancasting/_rules-candidates.md`: Remove candidates pending 2+ maintenance cycles without promotion.
+4. Review `plancasting/_rules-candidates.md`: Remove candidates >60 calendar days old without promotion or re-trigger, or pending 2+ maintenance cycles without promotion — whichever comes first.
 
 ## Monorepo Adaptation
 

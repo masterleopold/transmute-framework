@@ -70,5 +70,5 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 - For E2E tests, use the project's seed commands (`[SEED_COMMAND]` — see CLAUDE.md Part 2 § Commands for actual command) to set up baseline data.
 
 ## Test Count Preservation
-<!-- TODO: Stage 3 — no replacement needed; copy as-is. Source: CLAUDE.md Part 1 § Test Count Preservation | Confidence: HIGH -->
+<!-- Source: Stage 3 | Evidence: CLAUDE.md Part 1 § Test Count Preservation | Confidence: HIGH -->
 - Test count must never decrease during refactoring — if a refactoring reduces test count, it is a regression. Restructure implementation-detail tests, but preserve all user-facing behavior tests.

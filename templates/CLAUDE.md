@@ -43,7 +43,7 @@ All stages follow the **Transmute Full-Build Approach**: every feature in the Bu
 | CLI workflow, per-stage setup | execution-guide.md § per-stage sections |
 | Per-stage warnings (0–9) | execution-guide.md § per-stage sections |
 | Gate definitions, thresholds, routing | execution-guide.md § "Gate Decision Outcomes (Universal)" |
-| Recovery procedures | execution-guide.md § per-stage "Recovery" |
+| Recovery procedures | execution-guide.md § per-stage sections (e.g., "5B.5 If FAIL", "7.1.2 Deployment Failure Recovery") and § "Troubleshooting" |
 | Stage skip conditions | execution-guide.md § "Stage Skip Logic" |
 | Tips, troubleshooting, project structure | execution-guide.md § "Tips for Successful Plan Casting", "Safety Rules", "Troubleshooting" |
 
@@ -242,7 +242,7 @@ Claude Code natively reads `.claude/rules/` files and applies matching rules bas
 - Maximum **8 rule files** total — consolidate related rules if exceeded
 - Each individual rule (bullet point) must be ≤ 3 sentences (directive, not explanation). A section may contain multiple rules as separate bullets.
 
-**Staleness review**: During Stage 9 (Dependency Maintenance), review all rules for staleness. Remove rules that reference deprecated APIs, outdated patterns, or resolved issues. Update rules that reference changed file paths or renamed functions. Also review `plancasting/_rules-candidates.md` for stale candidates (see the file's Staleness Policy: 60 calendar days or 2+ maintenance cycles without promotion).
+**Staleness review**: During Stage 9 (Dependency Maintenance), review all rules for staleness. Remove rules that reference deprecated APIs, outdated patterns, or resolved issues. Update rules that reference changed file paths or renamed functions. Also review `plancasting/_rules-candidates.md` for stale candidates (see the file's Staleness Policy: 60 calendar days without promotion or re-trigger, or 2+ maintenance cycles without promotion — whichever comes first).
 
 **Rule file format** (`.claude/rules/*.md`):
 ```markdown
@@ -278,7 +278,7 @@ Examples:
 - `fix(auth): handle expired token in middleware [SR-003]`
 - `test(tasks): add E2E test for task creation flow [US-005]`
 
-Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`
+Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `style`
 
 ### Universal Prohibitions
 

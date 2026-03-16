@@ -12,7 +12,7 @@ globs: ["[FRONTEND_DIR]/**"]
 <!-- TODO: Stage 3 — replace with actual component state pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #1, every component must handle all five states (default, loading, empty, error, disabled). For data-fetching components, use `[LOADING_COMPONENT]` for loading states and `[ERROR_COMPONENT]` for error states (include a retry action where appropriate); never render a blank screen.
-- Empty states must have a descriptive message and, where applicable, a call-to-action.
+- Additionally: empty states must have a descriptive message and, where applicable, a call-to-action (stack-specific enhancement beyond Part 1).
 
 ```typescript
 // TODO: Replace with actual state handling pattern for [FRONTEND_FRAMEWORK]

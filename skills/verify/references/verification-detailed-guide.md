@@ -184,7 +184,7 @@ The gate uses TWO systems -- the final gate is the WORSE of the two:
 
 **Fixability-based category system** (uses `6V-` prefix):
 - **6V-A** (auto-fixable): broken links, dead code, incorrect imports
-- **6V-B** (semi-auto): stub components, missing loading states
+- **6V-B** (semi-auto): stub components, missing loading states. Fixable by: adding component logic + local state, wiring existing hooks to components, adding inline handlers. NOT fixable (escalate to C) if it requires: restructuring state management, creating new hooks, changing API contracts, or modifying database schema.
 - **6V-C** (human judgment): architectural issues, design decisions
 
 These categories classify *fixability*, not severity. A critical bug that's easy to fix is 6V-A; a minor issue requiring architectural change is 6V-C. Components with mixed categories are classified by most severe issue.
@@ -297,7 +297,7 @@ A flaky scenario fails inconsistently (fails once, passes on retest).
 
 **Category definitions** (for 6R routing):
 - **6V-A** (auto-fixable): broken links, dead code, incorrect imports -- 6R fixes automatically
-- **6V-B** (semi-auto): stub components, missing loading states -- 6R fixes with effort
+- **6V-B** (semi-auto): stub components, missing loading states -- 6R fixes with effort. Fixable by: adding component logic + local state, wiring existing hooks to components, adding inline handlers. NOT fixable (escalate to C) if it requires: restructuring state management, creating new hooks, changing API contracts, or modifying database schema.
 - **6V-C** (human judgment): architectural issues, design decisions -- 6R cannot fix
 
 | # | Ref | Issue | Category | Rationale |
