@@ -58,7 +58,7 @@ This stage runs AFTER Stage 6E (Code Refactoring) — per CLAUDE.md Stage 6 orde
 1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6 audits. Do not harden code with unverified implementation completeness."
 2. If 5B shows FAIL, STOP — run Stage 5B remediation first. Do not harden code that has unresolved implementation gaps. If CONDITIONAL PASS, review the documented Category C issues — proceed with awareness of known gaps. Do NOT harden features with Category C status — their implementation may change during re-implementation.
 3. Verify `./plancasting/_audits/refactoring/report.md` exists (Stage 6E output). If missing, STOP: "Stage 6E (Code Refactoring) has not been completed. Stage 6G MUST run after 6E per CLAUDE.md mandatory ordering. Run 6E first, then restart 6G." If it exists, read it — especially the "Extracted Error Handling Patterns for Stage 6G" section (if present) — to reuse extracted error handling utilities rather than creating new ones.
-4. Verify `./plancasting/_audits/performance/report.md` exists (Stage 6C output — per CLAUDE.md ordering, 6C runs before 6G). If missing, WARN and use generic timeout baselines from `plancasting/brd/08-non-functional-requirements.md` (file number may vary — if not found, use: `grep -rl 'availability\|reliability\|non-functional' ./plancasting/brd/`).
+4. Verify `./plancasting/_audits/performance/report.md` exists (Stage 6C output — per CLAUDE.md ordering, 6C runs before 6G). If missing, WARN and use generic timeout baselines from the relevant BRD file. Search with `grep -rl 'availability\|reliability\|non-functional' ./plancasting/brd/` to find the relevant BRD file. Common location: `08-non-functional-requirements.md` (file number may vary by project).
 5. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions
 6. Read `./plancasting/_audits/security/report.md` — 6A SHOULD be complete before 6G starts (6A runs in parallel with 6B/6C, all before 6E/6F/6G). Include the 6A report in all teammate spawn prompts so teammates can verify rate limiting scope boundaries and avoid duplicating 6A's auth-endpoint rate limiting. If the report is missing, WARN: "Stage 6A not completed — rate limiting scope boundaries cannot be verified. Proceed with caution: Teammate 1 should implement rate limiting for data-mutation endpoints only, assuming 6A will handle auth endpoints." Include this warning in the final report.
 
@@ -93,7 +93,7 @@ Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project'
 Stage 6G generates:
 - `./plancasting/_audits/resilience/report.md` — resilience audit report with gate decision
 - `./plancasting/_audits/resilience/plan.md` — lead's analysis and task assignments
-- `./plancasting/_audits/resilience/unfixable-violations.md` — merged from per-teammate unfixable violation files
+- `./plancasting/_audits/resilience/unfixable-violations.md` — merged from per-teammate unfixable violation files. Note: Per-teammate unfixable violation files (e.g., `unfixable-violations-backend.md`, `unfixable-violations-frontend.md`) are merged by the lead in Phase 3 into the single file above.
 - Modified source files with error handling, retry logic, and edge case coverage
 
 ## Agent Team Architecture
@@ -102,7 +102,7 @@ Stage 6G generates:
 
 As the team lead, complete the following BEFORE spawning any teammates:
 
-1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/brd/08-non-functional-requirements.md` (availability, reliability) (file number may vary by project — check your BRD directory for the non-functional requirements file), and `./plancasting/prd/15-non-functional-specifications.md`. Read `./plancasting/_audits/performance/report.md` if it exists — use identified performance characteristics to inform timeout values and retry configurations.
+1. Read `./CLAUDE.md`, `./plancasting/tech-stack.md`, and `./plancasting/prd/15-non-functional-specifications.md`. Search with `grep -rl 'availability\|reliability\|non-functional' ./plancasting/brd/` to find the relevant BRD file. Common location: `08-non-functional-requirements.md` (file number may vary by project). Read the BRD file for availability and reliability requirements. Read `./plancasting/_audits/performance/report.md` if it exists — use identified performance characteristics to inform timeout values and retry configurations.
 2. **Rate limiting scope verification**: If `./plancasting/_audits/security/report.md` exists (Stage 6A output), read its rate limiting section and create a scope boundary table in `./plancasting/_audits/resilience/plan.md` listing: (a) all endpoints already rate-limited by 6A (auth-tier), (b) all data-mutation endpoints where 6G will add rate limiting. **Additionally, perform an independent scan** of all data-mutation endpoints in the codebase to verify 6A identified all gaps — do NOT rely solely on 6A's flagged gaps. If the independent scan finds endpoints 6A missed, add them to the resilience plan. Flag any overlaps or gaps for resolution before spawning teammates.
 3. Map all external dependencies:
    - Third-party APIs called by your backend actions/functions (e.g., Convex actions, API routes, serverless functions)

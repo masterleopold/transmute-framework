@@ -117,7 +117,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
 
 **Branch safety**: Verify `git status` shows a clean working directory before creating the branch — commit or stash uncommitted changes first. Then create a dedicated branch: `git checkout -b feedback/batch-$(date +%Y-%m-%d-%H%M%S)`. The HMS suffix avoids same-day collisions. CLAUDE.md shows the shorter `feedback/batch-YYYY-MM-DD` format — either is acceptable. Merge into main after the Gate Decision is PASS or CONDITIONAL PASS.
 
-3. Read `./plancasting/prd/_context.md` (if it exists; otherwise `prd/README.md`) and `./plancasting/brd/_context.md` (if it exists; otherwise `brd/00-cover-and-metadata.md`) for existing feature inventory and requirement IDs. Extract the maximum existing requirement IDs (max FR-NNN, max US-NNN, max SC-NNN, etc.) and include them in `change-plan.md` so Teammate 1 knows the starting point for new IDs.
+3. Read `./plancasting/prd/01-product-overview.md` and `./plancasting/brd/00-cover-and-metadata.md` (or `_context.md` if it exists in either directory) for existing feature inventory and requirement IDs. Extract the maximum existing requirement IDs (max FR-NNN, max US-NNN, max SC-NNN, etc.) and include them in `change-plan.md` so Teammate 1 knows the starting point for new IDs.
 4. **Categorize each feedback item**:
 
    | Category | Description | Action |
@@ -259,6 +259,7 @@ For each change in the change plan that requires code updates:
    - Read the NEW spec entries.
    - Implement following the same patterns as existing features.
    - Add schema changes if needed (additive only).
+   - If codegen fails after schema changes: (1) revert the schema change (`git checkout -- <schema-file>`), (2) report the failure to the lead with the error output, (3) mark the feedback item as DEFERRED with reason 'schema migration requires dedicated session.' Do NOT proceed with broken generated files.
    - Add hooks, components, pages as needed.
 
 4. For every code change:
@@ -303,6 +304,7 @@ Your tasks:
    - Add entries to docs/changelog.md.
 
 4. UPDATE USER GUIDE (SKIP this task entirely if `./user-guide/` directory does NOT exist — Stage 7D may not have been run. Also skip if `./plancasting/tech-stack.md` states documentation is "not needed"):
+   Before modifying `./user-guide/`, verify `docs.json` exists and is valid JSON. If `docs.json` is missing or invalid, skip this task and note in the report: 'User guide site appears incomplete — recommend re-running Stage 7D.'
    - Update journey guide pages affected by UX changes (MDX files in user-guide/en/journeys/ for multi-language setups, or user-guide/journeys/ for single-language).
    - Update FAQ if new common questions emerged from feedback.
    - Update troubleshooting if new issues were resolved.
@@ -371,7 +373,7 @@ After all teammates complete:
 
 ## Gate Decision
 
-- **PASS**: All APPROVED feedback items resolved, tests pass, specs consistent, documentation updated. Merge the feedback branch into main before proceeding to Stage 7 (Deploy). **Before redeployment**: If UI changes were made, MUST re-run Stage 6V using `prompt_visual_functional_verification.md` (before the 6V re-run, verify the dev server port is available: `lsof -i :3000` — the 6V prompt starts the dev server internally; paste the prompt with `MODE: diff | SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]` on the first line) against the local dev server to catch visual regressions — do NOT deploy without this check. `MODE: diff` tells 6V to compare against the previous baseline rather than generating a new full baseline; `SCOPE:` filters to only affected features. If the 6V re-run finds 6V-A/B issues, follow the standard 6V→6R→6P/6P-R chain before re-deploying. If the 6V re-run returns FAIL, the feedback changes must be fixed or reverted before re-deploying — do NOT deploy with a 6V FAIL. Then proceed to Stage 7 (Deploy) → Stage 7V (Production Smoke).
+- **PASS**: All APPROVED feedback items resolved, tests pass, specs consistent, documentation updated. Merge the feedback branch into main before proceeding to Stage 7 (Deploy). **Before redeployment**: If UI changes were made, MUST re-run Stage 6V using `prompt_visual_functional_verification.md` (before the 6V re-run, verify the dev server port is available: `lsof -i :3000` — the 6V prompt starts the dev server internally; paste the prompt with `MODE: diff | SCOPE: Re-verify only scenarios for features [FEAT-IDs] modified by feedback batch [date]` on the first line) against the local dev server to catch visual regressions — do NOT deploy without this check. `MODE: diff` tells 6V to compare against the previous baseline rather than generating a new full baseline; `SCOPE:` filters to only affected features. If the 6V re-run finds 6V-A/B issues, follow the standard 6V→6R→6P/6P-R chain before re-deploying. If the standard 6V→6R chain resolves all issues and the product was already polished via 6P/6P-R in the main pipeline, 6P/6P-R does NOT need to re-run after the feedback loop's 6V re-verification — unless the feedback changes introduce significant new visual content (new pages, major layout changes). If the 6V re-run returns FAIL, the feedback changes must be fixed or reverted before re-deploying — do NOT deploy with a 6V FAIL. Then proceed to Stage 7 (Deploy) → Stage 7V (Production Smoke).
 - **CONDITIONAL PASS**: Some items deferred due to complexity but all attempted items resolved, tests pass. Document deferred items in `change-plan.md` with `Status: DEFERRED — Next batch [DATE]`. If any resolved items include UI changes, re-run Stage 6V (MODE: diff) before deploying, per the same procedure described in the PASS outcome. Merge the feedback branch into main before proceeding to Stage 7 (see Branch Safety above). Proceed to Stage 7 for resolved items. Schedule a follow-up Stage 8 session for deferred items. **Deferred item carryover**: Before each new Stage 8 run, read `./feedback/change-plan.md` from the previous run. Any items still marked `DEFERRED` that no longer have a `STAKEHOLDER_DECISION_REQUIRED` blocker are automatically re-introduced into the new batch's Phase 1 triage (the operator does NOT need to re-add them to `input.md` — the lead reads both `input.md` and prior `change-plan.md`). Items still marked `STAKEHOLDER_DECISION_REQUIRED` remain deferred until the operator resolves them.
 - **FAIL**: Test suite fails after changes, or spec inconsistency detected, or APPROVED items left unresolved. Review test failures with Teammate 2. For spec inconsistencies, re-run Teammate 1 to clarify. Do NOT proceed to Stage 7 until PASS or CONDITIONAL PASS.
 

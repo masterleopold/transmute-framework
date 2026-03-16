@@ -97,6 +97,13 @@ If this stage is interrupted:
 
 > **Dual escalation summary**: Two independent escalation mechanisms exist: (1) Global Run 4+ escalates ALL remaining issues to FAIL-ESCALATE. (2) Per-feature 3 consecutive FAIL-RETRY cycles escalate that specific feature. Either can trigger FAIL-ESCALATE independently.
 
+| Condition | Action |
+|---|---|
+| No prior 5B report exists | This is Run 1. Start fresh. |
+| Prior report exists, Run Number < 3 | This is a re-run. Increment Run Number. Resume from last incomplete feature. |
+| Prior report exists, Run Number = 3 | Maximum retries reached. FAIL-ESCALATE to operator. |
+| Per-feature FAIL-RETRY history shows 2+ attempts on same feature | FAIL-ESCALATE that specific feature. Continue with remaining features. |
+
 ## Stack Adaptation
 
 Before running any scan scripts, read `plancasting/tech-stack.md` to determine your actual directory structure. Replace all placeholder paths (`[backend-dir]`, `[frontend-dir]`, `[pages-dir]`, `[components-dir]`, `[hooks-dir]`) with your project's actual paths. The scripts below use Convex + Next.js App Router paths as examples.

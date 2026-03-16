@@ -588,7 +588,7 @@ Read the route constants file (e.g., `src/lib/constants.ts` `ROUTES` object) pro
   ~~~
 
 ### 6. Auth Redirect Verification
-**Conditional**: If the lead's Phase 1 Step 4 and Teammate 1's Task 0 found no auth redirect issues, skip this task. Otherwise, verify the specific issues they flagged are resolved.
+**Conditional**: If BOTH the lead's Phase 1 Step 4 AND Teammate 1's Task 0 found zero auth redirect issues, skip this task. If EITHER found issues, verify the specific issues they flagged.
 
 Test the middleware/auth layer's redirect behavior explicitly. **IMPORTANT**: The unauthenticated tests below MUST use a FRESH browser context with NO cookies/localStorage/session. For Mode A: use `browser.newContext()` in Playwright test code. For Mode B: use `browser_close` then `browser_navigate` to start a fresh MCP session. Do NOT test "unauthenticated" by merely logging out in the same context, as stale cookies or localStorage tokens may still be present.
 
@@ -1032,7 +1032,7 @@ After all teammates complete:
    ~~~bash
    git rev-parse HEAD > ./plancasting/_audits/visual-verification/last-verified-commit.txt
    ~~~
-   This enables `diff` scope mode on subsequent runs. This file remains uncommitted. It persists locally for `diff` mode in subsequent 6V runs. If lost (e.g., `git clean`), `diff` mode silently falls back to `full` mode.
+   This enables `diff` scope mode on subsequent runs. This file remains uncommitted. It persists locally for `diff` mode in subsequent 6V runs. If lost (e.g., `git clean`), `diff` mode silently falls back to `full` mode. Add `plancasting/_audits/visual-verification/last-verified-commit.txt` to `.gitignore` to prevent accidental commits.
 
 6. **Output summary**: gate decision, critical failure count, acceptance criteria pass rate.
 
@@ -1046,7 +1046,7 @@ After all teammates complete:
 
 1. ALWAYS start the dev server and verify it's accessible before spawning teammates. If the server doesn't start within 60 seconds, ABORT the stage.
 2. NEVER skip the AI vision review (Teammate 3) — it catches spec mismatches that DOM assertions miss.
-3. NEVER mark a page as PASS if it has console ERRORS (Error level) — even if the page renders. Console WARNINGS from third-party libraries or framework dev-mode messages (e.g., React strict mode, Convex dev warnings) should be noted but do not constitute a FAIL. Filter by `console.error` severity, not all console output.
+3. NEVER mark a page as PASS if it has console ERRORS (Error level) — even if the page renders. Console WARNINGS from known framework development modes (React strict mode double-render, Convex dev logging, Next.js fast-refresh) should be noted but do not constitute a FAIL. However, warnings about deprecated APIs, missing keys, or unhandled promises SHOULD be investigated even if they originate from framework code. Filter by `console.error` severity, not all console output.
 4. ALWAYS test with seeded data — empty-database verification is separate from the empty-state check.
 5. ALWAYS take screenshots on failure — they are the primary debugging artifact. Name screenshots consistently: `sc-{nnn}-{state}-{breakpoint}.png`.
 6. ALWAYS map findings back to PRD identifiers (SC-NNN, US-NNN, FEAT-NNN) for traceability.

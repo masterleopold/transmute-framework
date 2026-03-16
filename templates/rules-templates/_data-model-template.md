@@ -31,6 +31,7 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 - Admin/audit views may include soft-deleted records — mark these queries explicitly.
 - Retention policy: soft-deleted records are permanently purged after `[RETENTION_PERIOD]`.
 - When soft-deleting a parent entity, apply the documented child strategy: cascade soft-delete (mark children too) or orphan (children remain active but lose parent reference). Document the chosen pattern in CLAUDE.md Part 2 § Architecture.
+- Stage 3 MUST also update CLAUDE.md Part 2 Architecture section with the chosen retention period and child entity strategy — ensures CLAUDE.md and `.claude/rules/data-model.md` are synchronized.
 <!-- Stage 3: Determine the child entity strategy based on BRD data integrity requirements. Default if BRD doesn't specify: cascade soft-delete for owned entities (e.g., tasks owned by a project), orphan for shared entities (e.g., users referenced by multiple orgs). -->
 <!-- Stage 3: Fill [RETENTION_PERIOD] based on BRD data retention requirements. Default if BRD doesn't specify: 90 days (allows GDPR 30-day erasure grace period + buffer). Document the chosen value in CLAUDE.md Part 2. Source: BRD data retention | Confidence: HIGH -->
 

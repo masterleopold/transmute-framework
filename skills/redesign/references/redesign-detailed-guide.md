@@ -720,6 +720,7 @@ Install and configure the approved font pairing:
    - Check if the font is available on Google Fonts (works with `next/font/google`)
    - If NOT on Google Fonts (e.g., Satoshi, Cabinet Grotesk, General Sans from Fontshare), download `.woff2` files and use `next/font/local`
    - If font files cannot be obtained, inform the user and suggest an available alternative
+   - **Font fallback mapping**: If Fontshare fonts cannot be downloaded during the session (site blocked, download fails), use Google Fonts alternatives. Fallback mapping: Satoshi → DM Sans, Cabinet Grotesk → Work Sans, General Sans → Source Sans 3, Switzer → Inter, Clash Display → Rubik.
    - NEVER configure a font import that will fail at build time
 
 2. **Package installation** (if using `next/font` or local files):
@@ -1172,7 +1173,9 @@ Update `plancasting/tech-stack.md` with the new design direction (if this sectio
 - New design style
 - New animation approach
 
-### Step 7.3 — Stage 7D Re-Run Trigger
+### Step 7.3 — Documentation Config & Screenshot Preparation
+
+This updates docs.json brand colors and existing screenshots — it is NOT a full 7D re-run. A full 7D re-run from scratch is RECOMMENDED after merging to main (see Phase 9 Shutdown).
 
 If the project has a documentation site (Mintlify, Docusaurus, etc.):
 

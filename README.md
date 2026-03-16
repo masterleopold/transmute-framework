@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.7.0** — 12th-pass audit sync: 7V CONDITIONAL PASS gate, safety rule refinements, prerequisite alignment, expanded testing/frontend templates
+> **v2.8.0** — 14th-pass audit sync: gate precision, BRD file robustness, crash recovery, framework agnosticism, edge case handling
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -245,10 +245,42 @@ transmute-framework/
 ## Prerequisites
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
-- Node.js v18+ (v20.17.0+ for Stage 7D)
+- Node.js v20.17+ (required by Stage 7D Mintlify CLI; v18+ sufficient for earlier stages)
 - A business plan (markdown or PDF files)
 
 ## Changelog
+
+### v2.8.0
+
+**14th-Pass Audit Sync: Gate Precision, BRD File Robustness, Crash Recovery, Framework Agnosticism**
+
+**Templates** (synced from canonical Transmute Framework Template — 13th and 14th pass audits)
+- **CLAUDE.md**: "Never skip" list now includes 6P/6P-R explicitly with "(default: 6P)"; Stage 7 prerequisites tightened from "6V complete" to "6V PASS or CONDITIONAL PASS"; 6R skip conditions add 6V FAIL handling; Stage 8 prerequisite clarifies 7D FAIL blocks; Stage 5 resumption positional scan now includes `🔧 In Progress`; added Pipeline Execution Guide lifecycle note
+- **execution-guide.md**: 6F output column adds `package.json` with seed scripts; Node.js prerequisite updated to v20.17+; 6V routing clarified for mixed 6V-A/B/C issues; 6R max-cycle exhaustion requires explicit report annotation; Stage 7 prerequisites use "6V PASS or CONDITIONAL PASS"; PRODUCTION_TEST_USERS note added before 7V; 7D lead reads 7V "PASS or CONDITIONAL PASS"; 5B category prefix changed to 5B-A/5B-B/5B-C; Stage 5 completion gate expanded with `typecheck` command
+- **rules-templates/_api-contracts-template.md**: Added REST/GraphQL vs reactive backend choice comment for Stage 3
+- **rules-templates/_data-model-template.md**: Added CLAUDE.md Part 2 sync requirement for retention period and child entity strategy
+- **rules-templates/_testing-template.md**: Added explicit default timeout values (10s cloud, 5s local)
+
+**Skills** (19 skill reference files updated)
+- **audit-a11y**: BRD file references use grep-based search with common locations; Level A WCAG exception for shared config files
+- **audit-security**: Rate limiting scope boundary expanded with inline 6A/6G scope summary
+- **implement**: Steps 4-5 split (spec validation gate + scaffold validation); steps renumbered 4-11; design token path parameterized; E2E scaffold inventory checks `_scaffold-manifest.md`
+- **feedback**: Context file reading updated (prd/01-product-overview.md primary); codegen failure protocol added; user-guide `docs.json` validation; 6P/6P-R re-run skip logic after feedback
+- **redesign**: Font fallback mapping (Fontshare → Google Fonts alternatives); Step 7.3 heading clarified as "not a full 7D re-run"
+- **brd**: Language directive now STOPs if Session Language section missing
+- **docs**: 5B report missing now STOPs instead of WARNing; 25% threshold examples expanded; `_doc-context.md` preserved for session recovery
+- **prd**: Spawn prompt includes preliminary data entity list; retry limit: "Do NOT retry the same scope more than once"
+- **scaffold**: Auth file disambiguation rule; CSS framework adaptation note; design token path parameterized (2 locations); Next.js config heading conditional
+- **harden**: BRD file references use grep-based search; unfixable violations merge note expanded; teammate read instructions use grep
+- **audit-completeness**: Retry tracking decision table added (Run 1/re-run/max retries/per-feature escalation)
+- **maintain**: Bun v1.2+ native `outdated` noted; E2E test trigger for UI-affecting updates; exact version numbers in tech-stack.md; rule count update instructions; staleness conditions use OR (60 days or 2 cycles)
+- **optimize**: Step renumbering (6A/6B reads as separate steps 3-4); Core Web Vitals critical fix exception for shared configs
+- **smoke**: 6P/6P-R report check split for distinct report file paths
+- **remediate**: `Last completed phase:` field added to crash recovery protocol
+- **tech-stack**: Red-tier credential WARNING added; skip condition describes typical red-tier credentials
+- **validate-specs**: Critical rules must be included in all teammate spawn prompts; new rule 7 (HIGH 4-5 CONDITIONAL PASS); rules renumbered 7→8, 8→9; cross-references updated
+- **verify**: Auth redirect conditional clarified (BOTH must find zero issues); `.gitignore` for `last-verified-commit.txt`; console warning filtering expanded
+- **polish**: Interrupted 6P-R detection check added
 
 ### v2.6.0
 

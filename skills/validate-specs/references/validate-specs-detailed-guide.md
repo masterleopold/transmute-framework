@@ -85,6 +85,8 @@ As the team lead, complete the following BEFORE spawning any teammates:
 
 Spawn the following 3 teammates. They work in parallel since they validate different aspects.
 
+Include ALL Critical Rules (numbered 1-12) from this prompt in each teammate's spawn prompt — these rules apply to all teammates during validation.
+
 #### Teammate 1: "requirements-coverage-validator"
 **Scope**: Verify every BRD requirement is fully covered by PRD specifications
 
@@ -299,16 +301,17 @@ After all teammates complete:
 
    **Quick Decision Tree** (evaluate top to bottom, take the first match):
 
-   > **IMPORTANT — Rule evaluation order**: Rules 1–4 are **blocking gates** evaluated first. Rules 5–8 are evaluated ONLY if rules 1–4 all pass. Do not skip to rule 5+ if any of rules 1–4 match.
+   > **IMPORTANT — Rule evaluation order**: Rules 1–4 are **blocking gates** evaluated first. Rules 5–9 are evaluated ONLY if rules 1–4 all pass. Do not skip to rule 5+ if any of rules 1–4 match.
 
    1. Any unresolved CRITICAL issues? → FAIL
-   2. BRD assumption volume ≥ 30% AND operator has NOT confirmed review? Check `./plancasting/brd/_review-log.md` for an "Assumption Review Status" section with `Operator reviewed: YES`. If this marker is missing or set to `NO` → FAIL. (Evaluation note: this rule only fires when the operator has NOT reviewed. If `Operator reviewed: YES` IS present, this rule does not match — evaluation continues to rules 3+, and the confirmed-assumption case is handled by rule 7.) Remediation: remediate Business Plan, re-run Stage 1, then re-run 2B.
+   2. BRD assumption volume ≥ 30% AND operator has NOT confirmed review? Check `./plancasting/brd/_review-log.md` for an "Assumption Review Status" section with `Operator reviewed: YES`. If this marker is missing or set to `NO` → FAIL. (Evaluation note: this rule only fires when the operator has NOT reviewed. If `Operator reviewed: YES` IS present, this rule does not match — evaluation continues to rules 3+, and the confirmed-assumption case is handled by rule 8.) (The operator is instructed to set this marker during Stage 1's human review checkpoint — see execution-guide.md, the operator review checkpoint between Stage 1 and Stage 2. If the marker is missing, this gate FAILS; the operator must review assumptions in the BRD and set the marker before re-running Stage 2B.) Remediation: remediate Business Plan, re-run Stage 1, then re-run 2B.
    3. P0 feature coverage < 95%? → FAIL — P0 coverage is an independent gate checked separately from overall coverage.
    4. Overall coverage < 90%? → FAIL
    5. CRITICAL = 0 AND HIGH = 0 AND overall coverage ≥ 95%? → PASS
    6. CRITICAL = 0 AND HIGH ≤ 3 AND no P0 blockers AND overall coverage ≥ 90% AND (assumption volume < 30% OR operator confirmed)? → CONDITIONAL PASS (document each HIGH issue with root cause + remediation plan; if HIGH = 0, the coverage gap between 90–94% is the documented exception). Note: P0 ≥ 95% is guaranteed by this point because rules 3–4 are evaluated first (priority order) and catch P0 < 95% as FAIL.
-   7. BRD assumption volume ≥ 30% AND HIGH ≤ 3 AND operator confirmed assumptions (`_review-log.md` contains `Operator reviewed: YES`)? → CONDITIONAL PASS (with caveat: "BRD assumptions exceed 30% — operator has reviewed and confirmed")
-   8. No rule matched? → FAIL (edge case — e.g., CRITICAL=0 but HIGH>3 with ≥95% coverage, or other metric combinations not covered above. Document the specific combination of metrics and escalate to operator for manual gate decision)
+   7. CRITICAL = 0 AND HIGH 4-5 AND overall coverage ≥ 95% AND P0 coverage ≥ 95%? → CONDITIONAL PASS with mandatory remediation plan for each HIGH issue.
+   8. BRD assumption volume ≥ 30% AND HIGH ≤ 3 AND operator confirmed assumptions (`_review-log.md` contains `Operator reviewed: YES`)? → CONDITIONAL PASS (with caveat: "BRD assumptions exceed 30% — operator has reviewed and confirmed")
+   9. No rule matched? → FAIL (edge case — e.g., CRITICAL=0 but HIGH>3 with ≥95% coverage, or other metric combinations not covered above. Document the specific combination of metrics and escalate to operator for manual gate decision)
 
    **Coverage definitions** (note: "coverage" in this stage means BRD→PRD requirement traceability — each FR has US + SC + API. This differs from Stage 3's "scaffold coverage" which measures PRD→file mapping):
    - **Complete coverage** for an FR = FR has at least one US AND at least one SC AND (at least one API endpoint/query/mutation function OR documented as frontend-only without backend interaction). For BaaS architectures (Convex, Supabase, Firebase), query/mutation functions count as "API" — adapt per `tech-stack.md`.

@@ -322,7 +322,7 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
   - Logging and observability for the complete system
   - ALL technical specs across ALL features — nothing deferred
 
-**Spawn prompt must emphasize**: The data model must be COMPLETE from the start — designed for all features simultaneously, not an incremental schema. API specs must cover EVERY endpoint for EVERY feature. The architecture must be sized for the full product's load and complexity from day one. Pay attention to cross-feature API dependencies.
+**Spawn prompt must emphasize**: The data model must be COMPLETE from the start — designed for all features simultaneously, not an incremental schema. API specs must cover EVERY endpoint for EVERY feature. The architecture must be sized for the full product's load and complexity from day one. Pay attention to cross-feature API dependencies. Include the preliminary data entity list extracted from BRD data requirements (Phase 1 step 5) — this resolves the screen-to-API bidirectional dependency.
 
 ---
 
@@ -413,7 +413,7 @@ If a teammate fails (crashes, times out, or produces truncated output):
 1. Check which files were successfully written to `./plancasting/prd/`.
 2. For missing files: re-spawn with the same context and file assignments.
 3. For truncated files: re-spawn, instructing the agent to complete from the last complete section.
-4. If a re-spawned teammate's output is still truncated after reducing scope, split further per the Split Spawn Protocol above.
+4. If a re-spawned teammate's output is still truncated after reducing scope, split further per the Split Spawn Protocol above. Do NOT retry the same scope more than once.
 5. Do NOT proceed to Phase 4 until all teammates have completed.
 
 #### Known Heavy Files (likely to need splitting)

@@ -113,10 +113,11 @@ Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project'
 1. Read `./CLAUDE.md` — internalize all conventions, naming rules, and patterns.
 2. Read `./plancasting/tech-stack.md` — understand the technology stack and its constraints. Check the `Session Language` setting — use this language for all user-facing output (progress summaries, review checkpoint messages, implementation reports). Code and code comments remain in English.
 3. **Credential validation**: Check `.env.local` for any remaining placeholder values (`YOUR_*_HERE`, `TODO_*`, `CHANGE_ME`, `PLACEHOLDER`). If ANY placeholder credentials exist, STOP immediately and list which credentials are missing. Do NOT proceed with feature implementation until all credentials are real values — features that connect to external services (auth, database, email, payments, AI) will fail with placeholders.
-4. **Scaffold validation**: Verify `./plancasting/_scaffold-manifest.md` exists (created by Stage 3). If missing, STOP: "Stage 3 scaffold not found — run Stage 3 before Stage 5." Also verify `./plancasting/_audits/spec-validation/report.md` exists and shows PASS or CONDITIONAL PASS (Stage 2B gate). If missing or FAIL, STOP: "Stage 2B must pass before implementation."
+4. **Spec validation gate**: Verify `./plancasting/_audits/spec-validation/report.md` exists and shows PASS or CONDITIONAL PASS (Stage 2B gate). If missing or FAIL, STOP: "Stage 2B must pass before implementation."
+5. **Scaffold validation**: Verify `./plancasting/_scaffold-manifest.md` exists (created by Stage 3). If missing, STOP: "Stage 3 scaffold not found — run Stage 3 before Stage 5."
    Verify `./plancasting/_briefs/` directory exists. If missing, create it: `mkdir -p ./plancasting/_briefs/`.
-5. Read `./plancasting/prd/02-feature-map-and-prioritization.md` — build the complete feature queue.
-6. Read `./plancasting/_progress.md` — determine which features are done, in-progress, or pending.
+6. Read `./plancasting/prd/02-feature-map-and-prioritization.md` — build the complete feature queue.
+7. Read `./plancasting/_progress.md` — determine which features are done, in-progress, or pending.
    **CLAUDE.md Part 2 Validation**: Before evaluating feature status, verify CLAUDE.md Part 2 (Project-Specific Configuration) is fully populated — no `[PLACEHOLDER]`, `[N]`, or `[e.g.,` markers remain. If unfilled markers found, STOP: 'Run Stage 4 (CLAUDE.md Verification) to populate Part 2 before starting Stage 5.'
 
    **5B Re-run Detection**: If `plancasting/_audits/implementation-completeness/report.md` exists (indicating this is a Stage 5 RE-RUN after 5B), scan `_progress.md` for features marked `🔄 Needs Re-implementation`. These are the ONLY features to work on in this session. Skip all `✅ Done` features.
@@ -134,17 +135,17 @@ Always read `CLAUDE.md` Part 2 (Backend Rules, Frontend Rules) for your project'
    | Mixed `✅`/`⬜` state | Resume from first `⬜ Not Started` feature |
 
    **Details**: "Valid report" = `plancasting/_implementation-report.md` contains a 'Launch Readiness Assessment' section. "Truncated" = file exists but lacks that section. For `⏸ Blocked` features, check if the blocker (noted in 'Notes' column) is now `✅ Done` — if yes, change status to `🔧 In Progress`. When all features are `✅ Done` and a valid report exists, output: 'Stage 5 is complete — all features implemented and implementation report generated. Proceed to Stage 5B (Implementation Completeness Audit).' and terminate.
-7. Read `./plancasting/_scaffold-manifest.md` (if it exists) — understand the scaffold's file structure, component-to-page mapping, and hook-to-component mapping. This informs feature briefs and prevents duplicate file creation.
-8. Read `./plancasting/_codegen-context.md` (Stage 3's code generation map) — understand the full file structure and naming conventions established during scaffolding. This file maps features to their generated files and informs implementation decisions.
+8. Read `./plancasting/_scaffold-manifest.md` (if it exists) — understand the scaffold's file structure, component-to-page mapping, and hook-to-component mapping. This informs feature briefs and prevents duplicate file creation.
+9. Read `./plancasting/_codegen-context.md` (Stage 3's code generation map) — understand the full file structure and naming conventions established during scaffolding. This file maps features to their generated files and informs implementation decisions.
 
    **Manifest File Distinction**: `_codegen-context.md` maps each feature ID to its generated FILES (FEAT-001 → convex/auth.ts, src/components/features/auth/LoginForm.tsx). `_scaffold-manifest.md` maps COMPONENTS to PAGES that import them, plus backend functions by domain. Use _codegen-context to understand the full file structure; use _scaffold-manifest to prevent creating duplicate components and to verify import relationships.
-9. Build the **Feature Implementation Queue**:
+10. Build the **Feature Implementation Queue**:
    - Include ALL features (P0 through P3) — nothing excluded.
    - Sort by development priority: P0 first (foundational), then P1 (primary value), then P2 (enhancing), then P3 (polish).
    - Within each priority level, respect the dependency graph.
    - **Cross-feature dependencies**: Perform a topological sort across the full queue, respecting both priority order AND transitive dependency chains. If Feature C (P2) depends on Feature B (P1) which depends on Feature A (P0), all three must appear in A→B→C order regardless of priority grouping. If a dependency cycle exists, document it and resolve by splitting one feature into two parts. For single-hop cross-priority dependencies: implement the dependency first (re-order within the queue) OR scaffold a mock data provider pending its full implementation. Document any re-ordering decisions in `_progress.md` Notes column.
    - Count total features. This is the target: all must reach ✅ Done.
-10. Read `./plancasting/prd/02-feature-map-and-prioritization.md` cross-feature interaction matrix (if present) — note which features interact with each other.
+11. Read `./plancasting/prd/02-feature-map-and-prioritization.md` cross-feature interaction matrix (if present) — note which features interact with each other.
 
 ### Feature Implementation Cycle
 
@@ -362,7 +363,7 @@ CRITICAL: Before writing any code, read these in order:
 1. CLAUDE.md (especially the "Design & Visual Identity" section)
 2. Check `./plancasting/tech-stack.md` for the `Session Language` setting. Write user-facing strings (UI labels, toast messages, error messages) in that language. Code and comments remain in English.
 3. tech-stack.md "Design Direction" section — for the selected UI component library, aesthetic direction, design reference URLs, and Figma designs. These are the authoritative design inputs from the user.
-4. The existing design tokens at src/styles/design-tokens.ts
+4. The existing design tokens at the design token file (see CLAUDE.md Part 2 Technology Stack table or `plancasting/tech-stack.md`)
 5. The Feature Implementation Brief at ./plancasting/_briefs/<feature-id>.md
 
 DESIGN GUIDELINES (follow throughout all frontend work):
@@ -524,7 +525,7 @@ Check `./plancasting/tech-stack.md` for the `Session Language` setting. Write us
 Read the user flows in ./plancasting/prd/06-user-flows.md that involve this feature.
 
 Your tasks:
-0. SCAFFOLD INVENTORY: Check `e2e/` for existing scaffold test files for this feature. If scaffold E2E files exist (from Stage 3 Teammate 5), implement inside them rather than creating new files. Run `ls e2e/` to identify existing files.
+0. SCAFFOLD INVENTORY: Check `e2e/` for existing scaffold test files for this feature. If scaffold E2E files exist (from Stage 3 Teammate 5), implement inside them rather than creating new files. Run `ls e2e/` to identify existing files. Also check `_scaffold-manifest.md` for E2E test scaffold mappings.
 
 1. FEATURE E2E TESTS: Write Playwright tests in `e2e/<feature-name>.spec.ts`.
    - One test file per user flow that touches this feature, with test cases covering happy path, critical alternative paths, and critical error paths.

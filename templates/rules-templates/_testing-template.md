@@ -29,7 +29,7 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 
 - Per CLAUDE.md Part 1 E2E Tests, use async assertion patterns for eventually-consistent backends (Playwright: `expect.poll()`/`expect.toPass()`; Jest/Vitest: custom polling helper).
 - Never use `page.waitForTimeout()` as a substitute for proper async assertions.
-- Set reasonable polling intervals and timeouts based on expected backend latency. Recommended defaults below — adjust all values based on measured backend latency:
+- Set reasonable polling intervals and timeouts based on expected backend latency. Default timeout: 10000ms (10s) for cloud backends (Convex, Supabase, Firebase). Override to 5000ms (5s) if the project runs a local database in development. Recommended defaults below — adjust all values based on measured backend latency:
   - `expect.poll()`: periodic UI checks — `{ timeout: 10000, intervals: [100, 200, 500] }` for exponential backoff
   - `expect.toPass()`: complex multi-step assertions — `{ timeout: 10000 }` for multi-condition checks
   - Local dev: 2–5s timeout. Cloud backends (Convex, Supabase, Firebase): 10–15s timeout.

@@ -247,6 +247,7 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
 - Shared auth helper functions used by ALL backend functions: `requireAuth()`, `requireOrgMembership()`, `requireProjectRole()`, `requirePlanTier()`, etc.
 - These helpers are consumed by every domain file's mutations and sensitive queries.
 - Note: Auth CONFIGURATION files (provider setup, role definitions) belong to Teammate 4. Auth HELPER functions (runtime permission checks called by backend functions) belong to Teammate 1.
+- Disambiguation: If the file configures an external auth provider or declares role/permission enums → Teammate 4. If the file exports functions called by backend mutations/queries to enforce access control → Teammate 1.
 
 **Spawn prompt must emphasize**: The schema must be COMPLETE — every table/model for every feature. Every backend function file must cover ALL endpoints for its domain. This includes domains that would traditionally be deferred. Pay special attention to cross-domain reads and writes (e.g., a billing function that reads project data, an analytics function that aggregates user activity) — these interactions exist because all features are built simultaneously.
 
@@ -363,6 +364,7 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
   - Component-level tokens: button styles, input styles, card styles.
 
 **`tailwind.config.ts`** (CUSTOMIZE — never use defaults)
+- The instructions below apply to Next.js App Router. For other frameworks (Remix, SvelteKit, Vite + React, etc.), adapt the CSS file location, metadata patterns, and config bridge syntax. The core principle (Tailwind v4 requires `@config` bridge for `tailwind.config.ts`) applies to all frameworks.
 - Check the Tailwind CSS version in `package.json` or `plancasting/tech-stack.md`. The `@config` directive and CSS-first configuration requirements below apply ONLY to Tailwind v4+. For Tailwind v3, standard `tailwind.config.ts` auto-loading applies.
 - Extend Tailwind's default theme with the design tokens defined above.
 - Custom colors, fonts, spacing, border-radius, box-shadow, animation keyframes.
@@ -474,7 +476,7 @@ Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
   - JSDoc with PRD traceability
 
 - **Visual Design Rules for all components**:
-  - Use the design tokens from `src/styles/design-tokens.ts` — never hardcode colors, fonts, or spacing.
+  - Use the design tokens from the design token file (default: `src/styles/design-tokens.ts` — adapt path per `plancasting/tech-stack.md` Design Direction section) — never hardcode colors, fonts, or spacing.
   - Apply purposeful motion: CSS transitions on hover/focus, staggered reveal on page load, smooth state changes.
   - Use spatial composition: vary density, use negative space intentionally, break uniform grid layouts where it serves the content.
   - Add depth: subtle shadows, layered elements, background variations — avoid flat, lifeless surfaces.
@@ -616,7 +618,7 @@ These files prevent the most common Stage 5 test failures:
 - `package.json` — Dependencies and scripts for the COMPLETE product
 - `tsconfig.json`, `next.config.ts`, ESLint configuration (use `eslint.config.mjs` for ESLint 9+ flat config, or `.eslintrc.cjs` for ESLint 8 — check `plancasting/tech-stack.md` for the ESLint version), `.prettierrc`, `.gitignore`. Default to ESLint 9+ flat config (`eslint.config.mjs`) for new projects unless `plancasting/tech-stack.md` specifies ESLint 8.
 
-**`next.config.ts` — Deployment-Critical Configuration** (the following rules apply only if the frontend framework is Next.js — check `plancasting/tech-stack.md`; these cause real production failures if missed):
+**`next.config.ts` — Deployment-Critical Configuration (Next.js only — skip for other frameworks)** (the following rules apply only if the frontend framework is Next.js — check `plancasting/tech-stack.md`; these cause real production failures if missed):
 
 1. **Content-Security-Policy (CSP)**: If generating security headers with CSP, do NOT include `'strict-dynamic'` in `script-src` unless you also implement nonce-based CSP. `'strict-dynamic'` causes browsers to **ignore** both `'self'` and `'unsafe-inline'`, which blocks ALL Next.js chunk loading from `/_next/static/`. To use `'strict-dynamic'` safely:
    - Create a Next.js middleware that generates a per-request nonce via `crypto.randomUUID()`
@@ -864,7 +866,7 @@ If this session was started to RESUME a previously interrupted scaffold generati
    - If design reference URLs are listed, visit them to understand the visual patterns the user wants to emulate.
    - If a Figma URL or file is provided, extract design tokens from it — Figma designs override all other direction.
    - Build all components using the selected UI component library from `plancasting/tech-stack.md`.
-   - All components must use the design tokens from `src/styles/design-tokens.ts`.
+   - All components must use the design tokens from the design token file (default: `src/styles/design-tokens.ts` — adapt path per `plancasting/tech-stack.md` Design Direction section).
    - Avoid generic fonts (Inter, Roboto, Arial), default Tailwind colors, or predictable card-grid layouts where possible — if using them, ensure they align with the project's stated aesthetic direction.
    - Apply purposeful motion, intentional spatial composition, and visual depth.
    - Every UI element must feel distinctively designed for this product — not AI-generated.

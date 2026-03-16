@@ -71,7 +71,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
 3. Create `./plancasting/_audits/security/checklist.md` with the full checklist.
 4. Create a task list for all teammates with dependency tracking.
 
-**Scope Boundary — Rate Limiting**: See Teammate 4 Task 4 for the 6A/6G rate limiting scope boundary.
+**Scope Boundary — Rate Limiting**: 6A scope: config-level rate-limit middleware (e.g., express-rate-limit setup, Vercel rate-limit headers, API gateway config). 6G scope: application-level retry/backoff logic and circuit breakers. See Teammate 4 Task 4 for the full 6A/6G rate limiting scope boundary.
 
 ### Phase 2: Spawn Audit Teammates
 

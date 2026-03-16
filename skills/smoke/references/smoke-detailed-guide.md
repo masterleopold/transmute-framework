@@ -303,7 +303,7 @@ If Stage 6R was run (`./plancasting/_audits/runtime-remediation/report.md` exist
 
 ### Check 6. Stage 6P / 6P-R Visual Polish Verification (if 6P or 6P-R report exists)
 
-If Stage 6P or 6P-R was run (`./plancasting/_audits/visual-polish/report.md` exists), spot-check that visual polish enhancements survived the production build.
+If Stage 6P was run (`./plancasting/_audits/visual-polish/report.md` exists) or Stage 6P-R was run (`./plancasting/_audits/visual-polish/redesign-report.md` exists), spot-check that visual polish enhancements survived the production build.
 
 **6P-R branch merge check**: If 6P-R was used (check for `./plancasting/_audits/visual-polish/design-plan.md` — only 6P-R creates this file), verify that the `redesign/frontend-elevation` branch was merged to main before deployment. Run `git log --oneline -5` and confirm the merge commit is present. If the branch was NOT merged, all 6P-R visual changes will be missing from production — flag as **CRITICAL** and abort the rest of 7V until the branch is merged and redeployed.
 

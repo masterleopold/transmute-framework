@@ -136,6 +136,7 @@ Category D suggestions are for POST-LAUNCH review. They do NOT block Stage 7 dep
    - If `progress.md` in the same directory shows all phases completed → 6P-R is done. Skip this stage (6P).
    - If `progress.md` is missing or shows incomplete phases → 6P-R failed mid-execution. Do NOT proceed — request operator approval before continuing.
    - If `design-plan.md` exists but 6P-R's `progress.md` shows incomplete status, verify with the operator whether 6P-R was intentionally abandoned before proceeding.
+   - Also check if `./plancasting/_audits/visual-polish/progress.md` exists without `design-plan.md` — this indicates an interrupted 6P-R attempt. Verify with the operator before proceeding with 6P.
    - If `design-plan.md` does not exist → 6P-R was not run. Proceed with 6P.
 
 1. **`frontend-design` plugin** (recommended but has a fallback):

@@ -26,7 +26,7 @@ The examples below use `bun` commands. If your project uses a different package 
 - `npm audit` → For Bun projects (bun.lockb exists): (1) First choice: `npm audit` if `package-lock.json` also exists (widest ecosystem coverage — requires npm installed and `package-lock.json` present); (2) Fallback: `bunx audit-ci` (Bun-native); (3) Fallback: `npx snyk test` (third-party). Choose one and document in the report for consistency across future Stage 9 runs.
 - `npm update` → `bun update`
 - `bun run` → `npm run` (if your project uses npm)
-- `npm outdated` → `bunx npm-check-updates` (Bun does not have a built-in `outdated` command; use npm-check-updates via bunx)
+- `npm outdated` → As of Bun v1.2+, `bun outdated` is available natively. For older Bun versions, use `bunx npm-check-updates`.
 - `package-lock.json` → `bun.lockb` (binary format — cannot be diffed directly)
 Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actual conventions.
 
@@ -295,6 +295,7 @@ After all teammates complete:
    bun run build
    ~~~
    Compare results to the baseline. All tests must pass.
+   If updates touched UI component libraries, CSS frameworks, or auth libraries, also run `bun run test:e2e`.
 
 2. **Runtime version check**: If any major version updates changed `engines` requirements in `package.json`, verify the current Node.js/Bun version satisfies them (`node --version`, `bun --version`). If Stage 7D requires Node.js v20.17.0+ for Mintlify CLI, ensure that constraint is still met. If the runtime does NOT satisfy the new requirement: (a) update your local runtime (via `nvm`, Homebrew, or official installer), (b) update your CI/CD pipeline runtime requirements, (c) if the new requirement is a blocker, revert the dependency update and document as a deferred major update, (d) re-run the full test suite after runtime update.
 
@@ -315,7 +316,7 @@ After all teammates complete:
 
 5. **Stage 6V/7D re-run decision**: After all tests pass, check if any major updates touched React, Next.js, Tailwind, CSS framework, or UI component library. If yes, add to the report: 'Recommend re-running Stage 6V (MODE: critical) to validate UI rendering with updated dependencies.' Do NOT auto-run these stages.
 
-6. Update `plancasting/tech-stack.md` with new version numbers for core dependencies (runtime, framework, backend SDK, auth library, UI component library, CSS framework). Match the version format already used in `plancasting/tech-stack.md`.
+6. Update `plancasting/tech-stack.md` with new version numbers for core dependencies (runtime, framework, backend SDK, auth library, UI component library, CSS framework). Match the version format already used in `plancasting/tech-stack.md`. Use exact version numbers (e.g., `18.3.1`, not `^18.3.1`) in `tech-stack.md` — this file documents the actual installed versions, not package.json range constraints.
 
 7. If major framework versions changed (e.g., Next.js, runtime), also update the Technology Stack table in CLAUDE.md Part 2 to reflect the new versions.
 
@@ -325,7 +326,7 @@ After all teammates complete:
    - Read all rule files in `.claude/rules/`.
    - Remove rules referencing deprecated APIs, removed packages, renamed functions, or non-existent file paths.
    - Remove stale candidates from `plancasting/_rules-candidates.md` (pending 2+ maintenance cycles without promotion). Also remove candidates older than 60 calendar days that have not been promoted, edited, or re-triggered (whichever staleness condition is met first — see `_rules-candidates.md` Staleness Policy).
-   - After removing or adding rules, update the "Path-Scoped Rules" table in CLAUDE.md Part 2 with current rule counts per file.
+   - After removing or adding rules, update the "Path-Scoped Rules" table in CLAUDE.md Part 2 with current rule counts per file. Count the actual bullet-point rules in each `.claude/rules/*.md` file and update the Rule Count column. If the table still contains `[N]` placeholders from the template, replace them with actual counts.
    - Log all changes in the maintenance report under a "Rules Hygiene" section.
 
 10. **Complete the Gate Decision** (see below) BEFORE merging. Do NOT merge until the Gate Decision confirms PASS or CONDITIONAL PASS. If FAIL, do NOT merge — fix issues on the maintenance branch first. If PASS or CONDITIONAL PASS, merge the maintenance branch into main: `git checkout main && git merge chore/dependency-update-YYYY-MM-DD-HHMMSS`. Use the actual branch name created in Phase 1. Or create a pull request if your workflow requires review.
@@ -382,7 +383,7 @@ During each Stage 9 run, review `.claude/rules/` for stale rules. See CLAUDE.md 
    - Rules updated: [n] (list changes)
    - Rules unchanged: [n]
    ~~~
-4. **Review `plancasting/_rules-candidates.md`**: If candidates have been pending for 2+ maintenance cycles without promotion, remove them (the pattern did not recur).
+4. **Review `plancasting/_rules-candidates.md`**: Remove candidates matching EITHER staleness condition: (a) pending for 2+ maintenance cycles without promotion, OR (b) older than 60 calendar days without promotion, edit, or re-trigger — whichever comes first (see `_rules-candidates.md` Staleness Policy).
 
 ## Critical Rules
 

@@ -11,11 +11,11 @@ You are a senior performance engineer acting as the TEAM LEAD for a multi-agent 
 
 This stage runs AFTER Stage 5B (Implementation Completeness Audit). Before beginning:
 1. Verify `./plancasting/_audits/implementation-completeness/report.md` exists and shows a PASS or CONDITIONAL PASS gate decision. If the file does not exist, STOP: "Stage 5B report not found — run Stage 5B before starting Stage 6 audits." (Override: if the operator explicitly confirms 5B was intentionally skipped, proceed with a WARN in the report noting unverified implementation completeness.)
-   If `./plancasting/_audits/security/report.md` (6A) exists, read it to understand security changes that should not be undone during optimization (e.g., added validation, CSP headers, rate limiting).
-   If `./plancasting/_audits/accessibility/report.md` (6B) exists, read it to understand accessibility patterns (e.g., focus ring styles, semantic HTML changes, `prefers-reduced-motion` support) that should not be regressed by performance optimizations.
 2. If 5B shows FAIL, STOP — the codebase has unresolved implementation gaps that must be fixed before performance optimization. If CONDITIONAL PASS, note the documented Category C issues — skip performance optimization for those incomplete features.
-3. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
-4. Read the relevant PRD sections for context on what was implemented.
+3. If `./plancasting/_audits/security/report.md` (6A) exists, read it to understand security changes that should not be undone during optimization (e.g., added validation, CSP headers, rate limiting).
+4. If `./plancasting/_audits/accessibility/report.md` (6B) exists, read it to understand accessibility patterns (e.g., focus ring styles, semantic HTML changes, `prefers-reduced-motion` support) that should not be regressed by performance optimizations.
+5. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
+6. Read the relevant PRD sections for context on what was implemented.
 
 ## Input
 
@@ -322,5 +322,5 @@ After all teammates complete:
 7. Use the commands from CLAUDE.md for testing (e.g., `bun run test`).
 8. Reference Stage 5B output to avoid optimizing incomplete features.
 9. INP replaces FID (deprecated). Use TBT as lab proxy for INP. See Measurement Standards section above for details.
-10. **Parallel execution**: This stage may run concurrently with 6A and 6B. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit.
+10. **Parallel execution**: This stage may run concurrently with 6A and 6B. Document required changes to shared config files (`next.config.ts`, `middleware.ts`, `tailwind.config.ts`) in the report under a `## Pending Config Changes` section rather than modifying them directly — this prevents silent overwrites when parallel stages commit. If a Core Web Vitals critical fix MUST modify a shared config file immediately (e.g., `next.config` image optimization settings), commit the change immediately and note it prominently in the report under `## Pending Config Changes`.
 ````

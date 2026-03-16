@@ -41,7 +41,7 @@ The BRD structure should adapt based on the product type specified in `plancasti
 
 Always read `plancasting/tech-stack.md` first to determine which adaptations apply.
 
-**Language**: Check the `Session Language` section in `./plancasting/tech-stack.md`. If a language is specified, generate ALL BRD documents in that language. If no language is specified, generate in English. Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) remain in English regardless of the document language.
+**Language**: If `./plancasting/tech-stack.md` contains a `## Session Language` section, use that language. If missing, STOP and report: 'Session Language not found in tech-stack.md — run Stage 0 first or add a Session Language section manually.' Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) remain in English regardless of the document language.
 
 **Language Inheritance**: Subsequent stages (PRD, audits, reports) will read the `Session Language` section from `plancasting/tech-stack.md` — NOT from BRD documents. The BRD's language serves as a reference, but the canonical language setting is always in `tech-stack.md`.
 
