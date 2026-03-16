@@ -7,6 +7,14 @@ You are a senior product manager and technical product lead acting as the TEAM L
 
 **Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → **2 (this stage)** → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
 
+## Prerequisite Verification
+
+Before proceeding, verify the following inputs from prior stages:
+
+1. **Tech Stack (Stage 0)**: Verify `./plancasting/tech-stack.md` exists. If missing, STOP: "Stage 2 requires `plancasting/tech-stack.md` from Stage 0. Run Stage 0 first."
+2. **BRD (Stage 1)**: Verify `./plancasting/brd/` directory exists and contains markdown files. If missing or empty, STOP: "Stage 2 requires completed BRD (Stage 1). Run Stage 1 first."
+3. **Session Language**: Read `./plancasting/tech-stack.md` § "Session Language" and confirm a language code is set. All PRD content and user-facing output must be generated in the specified Session Language. Code, technical identifiers (US-xxx, SC-xxx, API-xxx, endpoint paths, error codes), and file names remain in English regardless of Session Language. If the Session Language setting is missing, STOP: "Stage 2 requires Session Language to be defined in tech-stack.md by Stage 0."
+
 ## Critical Framing: Full-Build Approach
 
 This PRD covers the COMPLETE product scope. Every feature from the BRD will be built and launched as a single release — no MVP, no phased rollout, no feature deferral. The BRD already captures ALL requirements from the Business Plan without phasing. This PRD translates ALL of those requirements into development-ready specifications.
@@ -51,7 +59,7 @@ The PRD structure should adapt based on the product type in `plancasting/tech-st
 
 Always read `plancasting/tech-stack.md` to determine which adaptations apply.
 
-**Language**: All prose content is generated in the Session Language specified in `./plancasting/tech-stack.md` § "Session Language". This is the canonical language setting — it is NOT read from BRD documents (though BRD uses the same setting). Technical identifiers (US-xxx, SC-xxx, API-xxx IDs, endpoint paths, error codes, file names, code) remain in English regardless of Session Language.
+**Language**: All prose content is generated in the Session Language specified in `./plancasting/tech-stack.md` § "Session Language". This is the canonical language setting — it is NOT read from BRD documents (though BRD uses the same setting). Technical identifiers (US-xxx, SC-xxx, API-xxx IDs, endpoint paths, error codes, file names, code) remain in English regardless of Session Language. Code identifiers (US-xxx, SC-xxx, API-xxx, FEAT-xxx) are always in English regardless of Session Language.
 
 ## Output
 
@@ -168,7 +176,8 @@ After PRD generation, if `_brd-issues.md` contains CRITICAL or HIGH issues, incl
 ### Phase 2: Spawn Specialized Teammates
 
 Spawn the following 5 teammates. Each teammate's spawn prompt MUST include:
-- The instruction: "Read CLAUDE.md Part 1 (immutable rules) if it exists in the project root. Follow its conventions. Ignore Part 2 (project-specific configuration) — it is not yet populated at this stage."
+- The instruction: "Read CLAUDE.md Part 1 (immutable rules) if it exists in the project root. Follow its conventions, including § Design & Visual Identity. Ignore Part 2 (project-specific configuration) — it is not yet populated at this stage. Note: CLAUDE.md Part 2 does not exist yet at Stage 2. Use Part 1 design guidelines as the reference; Part 2 is populated by Stage 3."
+- The instruction: "Check `./plancasting/tech-stack.md` for the `Session Language` setting. Generate all PRD content and user-facing output in the specified language. Code, technical identifiers, and file names remain in English."
 - The full content of `./plancasting/prd/_context.md`
 - The Feature Decomposition Map (COMPLETE)
 - Their specific file assignments and ID ranges
@@ -502,6 +511,7 @@ With the pipeline model's context window (see tech-stack.md § Model Specificati
 
 Each review agent's spawn prompt MUST include:
 - The instruction: "Read CLAUDE.md Part 1 (immutable rules) if it exists in the project root. Follow its conventions. Ignore Part 2 (project-specific configuration) — it is not yet populated at this stage."
+- The instruction: "Check `./plancasting/tech-stack.md` for the `Session Language` setting. Generate all PRD content and user-facing output in the specified language. Code, technical identifiers, and file names remain in English."
 - The list of all generated PRD files to review
 - Instructions to read every file in `./plancasting/prd/`, relevant `./plancasting/brd/` files, and `./plancasting/businessplan/` files
 - The issue report format (below)
@@ -640,6 +650,27 @@ After all 3 review agents complete their reports:
 ### Phase 7: Shutdown
 
 Teammates terminate automatically upon task completion. Verify all output files exist in `./plancasting/prd/` before declaring Stage 2 (PRD Generation) complete.
+
+## Gate Decision
+
+After Phase 6 remediation and Phase 7 shutdown, determine the Stage 2 outcome using the following decision tree. Evaluate top to bottom — take the first match:
+
+1. Any unresolved CRITICAL review issues (from Phase 5 reviewers) remaining after remediation? → **FAIL**
+2. Any unresolved HIGH review issues remaining after remediation? → **FAIL**
+3. Missing critical PRD sections (features, user stories, screen specs, data model, API specs)? → **FAIL**
+4. Feature ID inconsistencies across PRD files (IDs referenced but undefined, duplicate IDs, broken cross-references)? → **FAIL**
+5. Any user stories without acceptance criteria (Given-When-Then format)? → **FAIL**
+6. Data model or API spec gaps for P0 features (missing entities, undefined endpoints for Must Have requirements)? → **FAIL**
+7. All 18 PRD sections complete AND feature IDs consistent AND user stories have acceptance criteria AND screen specs reference features AND data model covers all entities AND API specs cover all endpoints AND zero CRITICAL/HIGH review issues? → **PASS**
+8. Minor gaps in non-critical sections (e.g., glossary incomplete, non-functional specs partially defined, cross-references for P2/P3 features missing minor detail) BUT all core PRD sections (02-feature-map, 04-epics-and-user-stories, 08-screen-specifications, 11-data-model, 12-api-specifications) are complete with no P0 gaps? → **CONDITIONAL PASS** — document each gap with affected file and remediation plan
+9. No rule matched? → **FAIL** (document the specific combination of issues and escalate to operator)
+
+**Outcome definitions**:
+- **PASS**: All 18 PRD sections complete, feature IDs consistent across all files, every user story has testable acceptance criteria, screen specs reference feature IDs, data model covers all entities from business requirements, API specs cover all endpoints needed by screen specs. Proceed to Stage 2B.
+- **CONDITIONAL PASS**: Core PRD sections (features, user stories, screen specs, data model, API specs) are complete with no P0 gaps. Minor gaps exist in non-critical sections (glossary, non-functional specs, operational readiness). Document each gap. Proceed to Stage 2B — Stage 2B will independently validate and may catch remaining issues.
+- **FAIL**: Missing critical sections, feature ID inconsistencies, user stories without acceptance criteria, or data model/API gaps for P0 features. STOP. Fix the issues in the PRD files and re-run Stage 2 remediation (Phase 6) before proceeding. If FAIL is caused by BRD quality issues (missing requirements, contradictions), remediate the BRD first, then re-run Stage 2.
+
+Include the gate decision in the `_review-log.md` output: `Stage 2 Outcome: [PASS | CONDITIONAL PASS | FAIL]`
 
 ---
 

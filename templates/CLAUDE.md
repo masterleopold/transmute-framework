@@ -18,19 +18,19 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold + 
    [Input]        [0]       [1]   [2]      [2B]              [3+4]             [5]                [5B]              [6A–6G]         [6H]           [6V]               [6R]              [6P / 6P-R]          [7]        [7V]              [7D]        [8] / [9]
 ```
 
-> **Notation**: `+` = sequential in one session. `/` between alternatives (6P / 6P-R) = run exactly one, never both. `/` between sequential stages (8 / 9) = run both, but one at a time, never concurrently. `[6A–6G]` is simplified (includes security, accessibility, performance, refactoring, seed data, resilience, and documentation sub-stages) — see Stage 6 ordering below for the mandatory execution order.
+> **Notation**: `+` = sequential in one session. `/` between alternatives (6P / 6P-R) = run exactly one, never both. `/` between sequential stages (8 / 9) = run both, but one at a time, never concurrently. `[6A–6G]` is simplified (includes security, accessibility, performance, refactoring, seed data, resilience, and documentation sub-stages — excludes 6H, 6V, 6R, and 6P/6P-R which are shown separately). See Stage 6 ordering below for the mandatory execution order within this block.
 
 All stages follow the **Transmute Full-Build Approach**: every feature in the Business Plan is built (P0 → P3 priority order). No MVP, no phased delivery. Priority levels defined in `plancasting/prd/02-feature-map-and-prioritization.md`.
 
-**Stage 6 ordering** (mandatory — not merely recommended): First, parallel: 6A + 6B + 6C (commit each before proceeding). Then sequential: 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P or 6P-R. Then proceed to Stage 7 → 7V → 7D (see execution-guide.md). Note: 6D (Documentation) runs AFTER 6G (Resilience) despite its lower letter — all code-modifying stages must complete before documentation. 6H is a static pre-deployment gate that runs BEFORE 6V (live verification). **Parallel safety**: When running 6A+6B+6C in parallel, shared config files can be overwritten silently — commit each stage's changes immediately, or run 6A first (most config changes), commit, then 6B+6C in parallel.
+**Stage 6 ordering** (mandatory — not merely recommended): First, parallel: 6A + 6B + 6C (commit each before proceeding). Then sequential: 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P or 6P-R. Then proceed to Stage 7 → 7V → 7D (see execution-guide.md). Note: 6D (Documentation) runs AFTER 6G (Resilience) despite its lower letter — all code-modifying stages (6A–6C, 6E–6G) must complete before documentation so docs reflect final code. 6H is a static pre-deployment gate (binary READY/NOT READY outcome, distinct from 6A–6G's PASS/CONDITIONAL PASS/FAIL) that runs BEFORE 6V (live verification). **Parallel safety**: When running 6A+6B+6C in parallel, shared config files can be overwritten silently — commit each stage's changes immediately, or run 6A first (most config changes), commit, then 6B+6C in parallel.
 
 ### Safety-Critical Rules
 
-- **Never skip** 5B, 6V, 6P/6P-R, or 7V. Always run exactly one of 6P or 6P-R (default: 6P). (5B catches the #1 cause of Stage 6 failures — frontend stubs and duplication that slip through fatigued quality gates.)
+- **Never skip** 5B, 6V, 6P/6P-R, or 7V. Always run exactly one of 6P or 6P-R (default: 6P). (5B catches the #1 cause of Stage 6 failures — frontend stubs and duplication that slip through fatigued quality gates.) Note: 5B uses four outcomes (PASS, CONDITIONAL PASS, FAIL-RETRY, FAIL-ESCALATE) — see execution-guide.md § "Gate Decision Outcomes" for thresholds and recovery actions.
 - **6P / 6P-R mutual exclusivity**: Run exactly one, never both. To switch: commit 6P work, `git revert` the 6P commit, then run 6P-R in a new session.
-- **6R skip conditions**: Skip 6R only if 6V returns PASS (zero issues) or CONDITIONAL PASS with only 6V-C issues. If 6V returns FAIL, fix critical issues and re-run 6V before considering 6R. If skipped, 6P/6P-R uses the 6V report as input.
-- **Stage 7 prerequisites**: 6H READY + 6V PASS or CONDITIONAL PASS + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS (one of 6P/6P-R always runs) + 6D complete (strongly recommended — without 6D, Stage 7 has no project-specific deployment documentation to reference). 6D always runs for software products; 'strongly recommended' refers to 6D's value as a Stage 7 input, not whether to run it. Note: 6D = developer/deployment docs (Stage 6); 7D = user guide (runs after Stage 7 deployment, optional). If 6D was skipped, refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running.
-- **Stage 8 prerequisite**: Stage 7V must achieve PASS or CONDITIONAL PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN (FAIL blocks Stage 8 until resolved).
+- **6R skip conditions**: Skip 6R only if 6V returns PASS (zero issues) or CONDITIONAL PASS with only 6V-C issues (human-judgment items — architectural decisions, design trade-offs — that 6R cannot auto-fix). If 6V returns FAIL, fix critical issues and re-run 6V before considering 6R. If skipped, 6P/6P-R uses the 6V report as input.
+- **Stage 7 prerequisites**: 6H READY + 6V PASS or CONDITIONAL PASS + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS (one of 6P/6P-R always runs) + 6D complete (mandatory for software products; its output serves as Stage 7's deployment reference). Note: 6D = developer/deployment docs (Stage 6); 7D = user guide (runs after Stage 7 deployment, optional). If 6D was skipped, refer to your hosting provider's documentation for deployment steps; no earlier stages need re-running.
+- **Stage 8 prerequisite**: Stage 7V must achieve PASS or CONDITIONAL PASS before starting Stage 8 (Feedback Loop). If Stage 7D was run, it must be PASS or WARN (non-blocking issues documented but not gate-failing; FAIL blocks Stage 8 until resolved). Note: Stage 7D uses PASS/WARN/FAIL instead of the universal PASS/CONDITIONAL PASS/FAIL because it produces documentation, not code — WARN indicates quality gaps that do not block deployment.
 - **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json`, lock files, and source code. Run one, commit, then the other.
 - **Stage 9 prerequisite**: Stage 9 does not formally require 7V PASS — it can update dependencies at any point after Stage 5. However, if the product is deployed, re-run 7V after deploying updated dependencies.
 
@@ -93,7 +93,7 @@ Always read the relevant PRD/BRD files BEFORE implementing any feature:
 3. ALWAYS support keyboard navigation.
 4. NEVER use inline styles. Use the project's CSS framework (Tailwind, etc.). Exception: dynamic runtime values that cannot be expressed as utility classes (e.g., `style={{ width: \`${progress}%\` }}`).
 5. Props interfaces must be explicitly typed and exported.
-6. NEVER use inline SVG `<path>` elements for standard UI icons. Use the project's icon library (see `plancasting/tech-stack.md` "Icon library" field and the project's icon registry file). Inline SVGs are permitted ONLY for product logos, brand marks, or custom illustrations unavailable in any icon library.
+6. NEVER use inline SVG `<path>` elements for standard UI icons. Use the project's icon library (see `plancasting/tech-stack.md` "Icon library" field and the project's icon registry file). If the project defines an icon registry (see Technology Stack table, 'Icon Registry' row), import all standard icons from that registry file. Inline SVGs are permitted ONLY for product logos, brand marks, or custom illustrations unavailable in any icon library.
 
 ### Design & Visual Identity
 
@@ -103,8 +103,8 @@ Always read the relevant PRD/BRD files BEFORE implementing any feature:
 
 **Design Direction**: This project has a defined design direction stored in the design token file (see Part 2 Technology Stack table for path; common locations: `src/styles/design-tokens.ts`, `src/lib/tokens.css`, `app/styles/tokens.ts`) and referenced in `plancasting/tech-stack.md` (Design Direction section from Stage 0). All UI code must follow this direction consistently. If the design direction does not yet exist, establish one before building components by:
 1. Reading the PRD product overview and persona definitions.
-2. Choosing a BOLD aesthetic direction that matches the product's personality and target users.
-3. Documenting the direction in the design token file with CSS variables, color palettes, typography choices, spacing scales, and animation patterns.
+2. Choosing a distinctive, opinionated aesthetic direction (not generic or safe) that matches the product's personality and target users.
+3. Documenting the direction in the design token file with CSS variables, color palettes, typography choices, spacing scales, and animation patterns. The format (TypeScript module, CSS file, or both) depends on the tech stack — see `plancasting/tech-stack.md` for the chosen approach.
 
 **Anti-Patterns — NEVER do these**:
 - Generic AI-generated aesthetics: defaulting to common font families without intentional selection, clichéd purple-on-white gradients, predictable card-grid layouts, cookie-cutter component styles. Choose fonts that match the product's personality — even widely-used fonts can work if deliberately chosen for a reason.
@@ -113,7 +113,7 @@ Always read the relevant PRD/BRD files BEFORE implementing any feature:
 - Bland, evenly-distributed color palettes. Use dominant colors with sharp accents.
 
 **Must-Have Design Qualities**:
-- **Typography**: Choose distinctive, characterful fonts. Pair a display font with a body font. Import via the framework's font optimization (e.g., `next/font` for Next.js, `@fontsource` for Vite/Remix) for performance. Never default to system fonts.
+- **Typography**: Choose distinctive, characterful fonts. Pair a display font with a body font. Import via the framework's font optimization (e.g., `next/font` for Next.js, `@fontsource` for Vite/Remix) for performance. Never default to system fonts unless the design direction explicitly specifies a system font stack for strategic reasons (e.g., developer tools, CLI dashboards).
 - **Color & Theme**: Define a cohesive palette in CSS variables. Commit to it across all components. Use light/dark mode if specified in PRD.
 - **Motion & Micro-interactions**: Use CSS transitions for hover states, focus rings, and state changes. Use staggered reveal animations on page load. Keep animations purposeful — enhance understanding, don't decorate.
 - **Spatial Composition**: Break predictable grid layouts where appropriate. Use asymmetry, overlap, generous negative space. Every page should feel intentionally composed, not auto-generated.
@@ -146,7 +146,7 @@ This prevents the "duplication pattern" where Stage 5 agents rebuild UI inline i
 ### TypeScript Rules
 
 - Strict mode (`strict: true`). No exceptions.
-- No `any` types in project code. If a third-party library forces `any` in its type definitions, wrap it with an explicit project type at the boundary. No `@ts-ignore`. No `@ts-expect-error` (unless with an explanation comment).
+- No `any` types in project code. If a third-party library forces `any` in its type definitions, wrap it with an explicit project type at the boundary. No `@ts-ignore`. Avoid `@ts-expect-error`; when unavoidable, always include an explanation comment justifying the suppression.
 - Explicit return types for all exported functions.
 - Use `type` for object shapes. Use `interface` only when extension is intended.
 
@@ -165,11 +165,11 @@ This prevents the "duplication pattern" where Stage 5 agents rebuild UI inline i
 #### E2E Tests
 - One test file per user flow from PRD `plancasting/prd/06-user-flows.md`.
 - Cover happy path, key alternative paths, and critical error paths.
-- Use `getByRole`/`getByText` selectors (not CSS classes).
+- Prefer `getByRole`/`getByText`/`getByLabel` selectors. Use `getByTestId` as fallback when no semantic selector is available. Never use CSS class or ID selectors.
 - For eventually-consistent backends (e.g., Convex): use `expect.poll()` or `expect.toPass()`.
 
 #### Test Count Preservation
-- Test count must never decrease during refactoring — if a refactoring reduces test count, it is a regression. Implementation-detail tests may be restructured, but user-facing behavior tests must remain.
+- The number of tested behaviors must never decrease during refactoring. Test files may be consolidated, but every previously-tested behavior must remain covered. If a refactoring reduces behavior coverage, it is a regression.
 
 ### Traceability Rules
 
@@ -211,7 +211,15 @@ Implementation progress is tracked in `./plancasting/_progress.md`. Update this 
 
 Valid status values: `⬜ Not Started`, `🔧 In Progress`, `✅ Done`, `🔄 Needs Re-implementation` (set by Stage 5B audit for Category C features, or by operator after reviewing 5B report, to trigger re-build in next Stage 5 session), `⏸ Blocked` (feature blocked by dependency or external issue — document blocker in Notes column). File location: `plancasting/_progress.md`.
 
-**Valid state transitions**: `⬜` → `🔧` (Stage 5 starts feature) → `✅` (Stage 5 completes feature) → `🔄` (Stage 5B audit or operator sets after 5B FAIL) → `🔧` (Stage 5 re-run picks up feature) → `✅`. Also: `⬜`/`🔧` → `⏸` (blocked) → `🔧` (unblocked). When transitioning `🔧` → `⏸`, preserve sub-status columns (Backend/Frontend/Tests) as-is — they indicate which layers were completed before the blocker. When unblocked (`⏸` → `🔧`), Stage 5 resumes from the first incomplete layer.
+**Valid state transitions**: `⬜` → `🔧` (Stage 5 starts feature) → `✅` (Stage 5 completes feature) → `🔄` (Stage 5B audit or operator sets after 5B FAIL) → `🔧` (Stage 5 re-run picks up feature) → `✅`. Also: `⬜`/`🔧`/`🔄` → `⏸` (blocked) → `🔧` (unblocked). When transitioning `🔧`/`🔄` → `⏸`, preserve sub-status columns (Backend/Frontend/Tests) as-is and record the pre-block status in the Notes column (e.g., "Blocked: was 🔄") — they indicate which layers were completed before the blocker. When unblocked (`⏸` → `🔧`), Stage 5 resumes from the first incomplete layer; if the feature was `🔄` before being blocked (check Notes column), unblocking restores it to `🔄` (rebuild from scratch, not resume).
+
+```
+⬜ → 🔧 → ✅ → 🔄 → 🔧 → ✅
+          ↓              ↓
+         ⏸ ←───────────⏸
+          ↓
+         🔧 (unblocked)
+```
 
 **Stage 5 resumption**: The Feature Orchestrator (Stage 5) reads this file at startup and performs a **positional scan** (top-to-bottom, not status-prioritized) to resume from the first `🔧 In Progress`, `⬜ Not Started`, or `🔄 Needs Re-implementation` feature, skipping all `✅ Done` and `⏸ Blocked` features. Features marked `🔧 In Progress` from a crashed session are inspected for sub-status (backend/frontend/tests completeness) and resumed from the first incomplete layer — see `prompt_feature_orchestrator.md` § "Session Recovery" and execution-guide.md § "Stage 5" for details. (`⏸ Blocked` features are treated like `✅ Done` for resumption purposes but retain their `⏸` status so the operator can unblock and re-run later.) This enables multi-session execution when the feature count exceeds the session limit.
 
@@ -227,6 +235,7 @@ Claude Code natively reads `.claude/rules/` files and applies matching rules bas
 - **Stage 3** (Scaffold): Generates **starter rules** from `tech-stack.md` using the templates in `plancasting/transmute-framework/rules-templates/` — known patterns, gotchas, and best practices for the selected stack. These are tech-stack knowledge (theoretical). Templates: `_backend-template.md`, `_frontend-template.md`, `_api-contracts-template.md`, `_auth-template.md`, `_data-model-template.md`, `_testing-template.md`.
 - **Stage 5B** (Audit): Extracts **implementation lessons** from recurring audit findings — patterns that caused stubs, duplication, or gaps across 2+ features. These are observed patterns (empirical).
 - **Stage 6R** (Remediation): Captures **verified fix patterns** from successful 6V-A/B fixes — confirmed working solutions to runtime issues. These have the highest confidence (battle-tested).
+- **Stage 9** (Maintenance): Reviews existing rules for **staleness** — removes rules referencing deprecated APIs or resolved issues, updates rules with changed file paths, and prunes old candidates from `_rules-candidates.md`. Does not generate new rules but maintains rule quality.
 
 **Confidence hierarchy**: Rules generated later in the pipeline carry higher inherent confidence — Stage 3 rules are theoretical (tech-stack knowledge), Stage 5B rules are empirical (observed across features), and Stage 6R rules are battle-tested (verified working fixes). When rules from different stages conflict, prefer the later stage's rule.
 
@@ -292,6 +301,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `style`
 - DO NOT display, echo, log, or repeat credential values in output. Use non-revealing checks (e.g., `wc -c`) to verify presence without exposing values.
 - DO NOT copy credential values between files — each service reads from `.env.local` or the hosting platform's environment variable configuration.
 - DO NOT use `console.log(process.env)` or log entire config/env objects in application code — log only specific non-sensitive fields. Error handlers MUST sanitize connection strings and tokens before logging.
+- For implementation patterns on credential handling, see `.claude/rules/backend.md` § Environment Variables and `.claude/rules/auth.md` § Auth Error Handling (available after Stage 3).
 
 ---
 
@@ -306,7 +316,8 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `style`
 ## Part 2: Project-Specific Configuration
 
 <!-- ⚠️ TEMPLATE: Bracketed values below ([PROJECT_NAME], [N], [e.g., ...]) are placeholders.
-     Stage 3 populates them with actual project values. Stage 4 verifies no placeholders remain.
+     Stage 3 MUST fill ALL bracketed placeholders in Part 2, including those inside code blocks
+     and table cells. Stage 4 will grep for remaining brackets (`grep -nE '\[[A-Z_]+\]'`).
      If reading this in a project and placeholders are still present, run Stage 4 verification. -->
 
 ### Project Overview
@@ -331,6 +342,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `style`
 | Design Tokens | [e.g., src/styles/design-tokens.ts] | Design direction file (see Design & Visual Identity) |
 | CSS | [e.g., Tailwind CSS v4.1] | Styling |
 | Backend | [e.g., Convex / Supabase / Firebase] | Backend-as-a-Service |
+| Database | [e.g., Convex (built-in) / PostgreSQL / SQLite] | Data storage (see `.claude/rules/data-model.md` for reserved words) |
 | Auth | [e.g., WorkOS / Clerk / NextAuth] | Authentication |
 | AI | [e.g., Claude Agent SDK / OpenAI SDK] | AI integration |
 | Payments | [e.g., Stripe] | Billing |
@@ -345,7 +357,7 @@ Rows for AI, Payments, and other integrations are optional — include only cate
 
 **Auth helpers**: [List the actual auth helper functions and their locations]
 
-**Soft delete**: [Describe the soft-delete pattern if applicable, including field name and retention period]
+**Soft delete**: [Describe the soft-delete pattern if applicable, including field name, retention period, and child entity strategy (cascade soft-delete vs. orphan)] (See `.claude/rules/data-model.md` § Soft Delete for the canonical pattern definition once Stage 3 generates it.)
 
 **Deployment**: [Describe deployment order and production URLs]
 
@@ -385,19 +397,23 @@ bun run seed:reset       # Clear all data and re-seed
 
 ### Backend Rules
 
-<!-- Stage 3: Add backend-specific summary rules here (validation patterns, error handling, auth guards); full rules are in .claude/rules/backend.md -->
+<!-- Stage 3: Add backend-specific summary rules here as bullet-point directives (max 5 items).
+     Detailed rules belong in .claude/rules/backend.md. Example: "- Always validate [field] with [validator] before mutation." -->
 
 ### Frontend Rules
 
-<!-- Stage 3: Add frontend-specific summary rules here (component states, design tokens, responsive patterns); full rules are in .claude/rules/frontend.md -->
+<!-- Stage 3: Add frontend-specific summary rules here as bullet-point directives (max 5 items).
+     Detailed rules belong in .claude/rules/frontend.md. Example: "- Always use [LoadingComponent] for async states." -->
 
 ### Security Rules
 
-<!-- Stage 3: Add security summary patterns here (auth middleware, public routes, session handling); full rules are in .claude/rules/auth.md -->
+<!-- Stage 3: Add security summary patterns here as bullet-point directives (max 5 items).
+     Detailed rules belong in .claude/rules/auth.md. Example: "- Always call [authHelper] before accessing user data." -->
 
 ### Project-Specific Prohibitions
 
-<!-- Stage 3: Add stack-specific prohibitions extending Part 1 -->
+<!-- Stage 3: Add stack-specific prohibitions extending Part 1 as bullet-point directives.
+     Example: "- DO NOT use [deprecated API] — use [replacement] instead." -->
 
 ### Key Reference Documents
 
@@ -416,6 +432,8 @@ See `plancasting/_progress.md` for feature tracking.
 ### Path-Scoped Rules
 
 <!-- Stage 3: Populate with actual rule files generated from tech stack -->
+
+Stage 3 replaces all `[PLACEHOLDER]` values below with actual project paths and rule counts.
 
 | Rule File | Globs | Generated By | Rule Count |
 |---|---|---|---|

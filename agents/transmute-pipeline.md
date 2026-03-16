@@ -86,7 +86,7 @@ For each stage:
 | 6R | remediate | 6V (if failures) | `plancasting/_audits/runtime-remediation/report.md` |
 | 6P | polish | Running app + 6R report (or 6V report if 6R was skipped) | `plancasting/_audits/visual-polish/report.md` |
 | 6P-R | redesign | Running app + 6R report (or 6V report if 6R was skipped) (alternative to 6P) | `plancasting/_audits/visual-polish/{context,design-plan,slop-inventory,progress,report}.md` |
-| 7 | Manual deployment | 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (recommended) | Production environment |
+| 7 | Manual deployment | 6H READY + 6V complete + 6R PASS/CONDITIONAL PASS (if run) + 6P or 6P-R PASS/CONDITIONAL PASS + 6D complete (mandatory for software products; its output serves as Stage 7's deployment reference) | Production environment |
 | 7V | smoke | Stage 7 complete | `plancasting/_audits/production-smoke/report.md` |
 | 7D | user-guide | 7V PASS or CONDITIONAL PASS | `user-guide/` directory |
 | 8 | feedback | 7V PASS or CONDITIONAL PASS (if 7D was run, must be PASS or WARN) | Updated specs + code |
@@ -116,7 +116,7 @@ For each stage:
 ### Post-6V Routing
 | 6V Result | Next Step |
 |---|---|
-| PASS (zero issues) | Skip 6R → proceed to 6P or 6P-R |
+| PASS (zero actionable issues) | Skip 6R → proceed to 6P or 6P-R |
 | CONDITIONAL PASS (6V-A/6V-B issues) | Proceed to 6R |
 | CONDITIONAL PASS (ONLY 6V-C issues) | Skip 6R → proceed to 6P or 6P-R |
 | FAIL (critical issues) | Stop — fix manually, re-run 6V |

@@ -13,13 +13,15 @@ This BRD covers the COMPLETE product scope. Every feature described in the Busin
 
 The rationale: AI-assisted development enables parallel construction of all features simultaneously, eliminating the traditional need for incremental delivery.
 
+Features explicitly labeled "out-of-scope" in the Business Plan are excluded. All other described functionality is treated as in-scope regardless of language like "future" or "potential" — flag ambiguous scope boundaries in the BRD for operator review.
+
 ## Known Failure Patterns
 
 Based on observed Plan Cast outcomes, these are common BRD generation failures:
 
 1. **Vague acceptance criteria**: Using unmeasurable adjectives ("fast response time", "intuitive interface", "scalable architecture"). ALWAYS include specific metrics (e.g., "response time < 200ms", "task completion in < 3 clicks").
 2. **Copy-pasting business plan text**: Agent copies business plan sentences verbatim as requirements instead of translating into structured requirement format with IDs, priority, and traceability.
-3. **MoSCoW inflation**: All requirements marked "Must Have" because the full-build approach is misinterpreted as "everything is critical." Maintain proper priority distribution — Must/Should/Could/Won't should reflect both criticality and implementation dependency order, ensuring reasonable distribution across tiers. In a full-build approach, all features are in-scope (will be built). However, MoSCoW reflects CRITICALITY AND DEPENDENCY ORDER, not inclusion/exclusion. A healthy distribution: Must 50–65%, Should 20–30%, Could 10–15%, Won't 0–5% (reserved for features explicitly considered and rejected — features NOT described in the Business Plan at all, e.g., features someone might assume exist but the Business Plan intentionally omits; never use Won't Have for Business Plan features marked as 'future' or 'phase 2' — in the full-build approach, those are still in-scope). Example: Authentication (Must Have) is more critical for day-one than advanced reporting (Could Have), even though both will be built.
+3. **MoSCoW inflation**: All requirements marked "Must Have" because the full-build approach is misinterpreted as "everything is critical." Maintain proper priority distribution — Must/Should/Could/Won't should reflect both criticality and implementation dependency order, ensuring reasonable distribution across tiers. In a full-build approach, all features are in-scope (will be built). However, MoSCoW reflects CRITICALITY AND DEPENDENCY ORDER, not inclusion/exclusion. A healthy distribution: Must 50–65%, Should 20–30%, Could 10–15%, Won't 0–5% (reserved for features explicitly considered and rejected — features NOT described in the Business Plan at all, e.g., features someone might assume exist but the Business Plan intentionally omits; never use Won't Have for Business Plan features marked as 'future' or 'phase 2' — in the full-build approach, those are still in-scope). Exception: Products with mandatory compliance requirements (regulated industries, accessibility-critical systems) may have higher Must Have (up to 70%). See prompt_validate_specs.md gate validation for acceptance thresholds during Stage 2B. Example: Authentication (Must Have) is more critical for day-one than advanced reporting (Could Have), even though both will be built.
 4. **Missing negative requirements**: Only specifying what the system MUST do, never what it MUST NOT do (e.g., "the system must NOT allow users to access other organizations' data").
 5. **Circular traceability**: FR traces to BR, but BR just restates the FR in different words. Each requirement level must add specificity.
 6. **NFRs without measurement methods**: Specifying "99.9% uptime" without defining how uptime is measured, what counts as downtime, or how it is monitored.
@@ -41,7 +43,7 @@ The BRD structure should adapt based on the product type specified in `plancasti
 
 Always read `plancasting/tech-stack.md` first to determine which adaptations apply.
 
-**Language**: If `./plancasting/tech-stack.md` contains a `## Session Language` section, use that language. If missing, STOP and report: 'Session Language not found in tech-stack.md — run Stage 0 first or add a Session Language section manually.' Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) remain in English regardless of the document language.
+**Language**: If `./plancasting/tech-stack.md` contains a `## Session Language` section, use that language. If Session Language is not specified in `tech-stack.md`, default to English. Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) remain in English regardless of the document language.
 
 **Language Inheritance**: Subsequent stages (PRD, audits, reports) will read the `Session Language` section from `plancasting/tech-stack.md` — NOT from BRD documents. The BRD's language serves as a reference, but the canonical language setting is always in `tech-stack.md`.
 
@@ -92,6 +94,7 @@ As the team lead, complete the following BEFORE spawning any teammates:
 **Prerequisite Verification** (BEFORE any other steps):
 - Verify `./plancasting/businessplan/` directory exists and contains `.md` or `.pdf` files. If missing or empty, STOP: "Stage 1 requires a Business Plan at `./plancasting/businessplan/`. Place your business plan files (.md or .pdf) there before running Stage 1."
 - Verify `./plancasting/tech-stack.md` exists (created by Stage 0). If missing, STOP: "Stage 1 requires `plancasting/tech-stack.md` from Stage 0. Run Stage 0 first."
+- Read `./plancasting/tech-stack.md` and verify it contains a `## Session Language` section. If missing, STOP: "Session Language not found in tech-stack.md — run Stage 0 first or add a Session Language section manually." Generate all BRD content and user-facing output in the specified language. Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) and file names remain in English.
 
 1. Read and fully internalize all files in `./plancasting/businessplan/` and `./plancasting/tech-stack.md`.
 2. **Feature Extraction Sweep**: Identify EVERY feature, capability, and function described anywhere in the Business Plan — including those labeled as "future", "Phase 2/3", "nice-to-have", "roadmap", "planned", or "long-term". Compile a master feature inventory. Nothing is out of scope. **Deduplication rule**: If two features are variants of the same capability (e.g., "real-time collaboration" and "live editing" both describe concurrent document interaction), merge them into one feature with multiple acceptance criteria. If they are distinct (e.g., "user invitations" vs "user roles"), keep separate. **Variant test**: Two features are variants if they share the same user goal AND the same core data entity AND the same business logic. Different delivery channels (email notifications vs push notifications) for the same notification entity with the same trigger rules ARE variants — merge them. But if the channels have divergent business logic (e.g., email = daily digest aggregation, push = real-time instant alert), treat as separate features with separate FRs. Different data domains (user management vs billing) are distinct even if they share a UI pattern (e.g., both use list views) — keep separate. When in doubt, keep as separate features — merging is harder to undo than splitting.
@@ -119,8 +122,9 @@ As the team lead, complete the following BEFORE spawning any teammates:
 Spawn the following 5 teammates. If dependencies between teammates are identified during Phase 1 analysis, the lead MAY delay spawning dependent teammates until their prerequisite teammates complete. **Known dependency**: Teammate 3 (data-and-integration) depends on Teammate 2 (technical-infrastructure) for security requirements (SR-xxx) and data privacy classifications (PII categories, encryption requirements, data residency). Either spawn Teammate 3 after Teammate 2 completes, or include Teammate 2's security and compliance context in Teammate 3's spawn prompt.
 
 Each teammate's spawn prompt MUST include:
+- The instruction: "Check `./plancasting/tech-stack.md` for the `Session Language` setting. Generate all BRD content and user-facing output in the specified language. Code, technical identifiers, and file names remain in English."
 - The instruction: "Read CLAUDE.md Part 1 (immutable rules) if it exists in the project root. Follow its conventions. Ignore Part 2 (project-specific configuration) — it contains implementation details that should not influence requirements definitions. Requirements are tech-neutral; tech stack adaptation happens in later stages."
-- The full content of `./plancasting/brd/_context.md` (including the master feature inventory)
+- The full content of `./plancasting/brd/_context.md` (copy the FULL TEXT inline into each spawn prompt — do not instruct teammates to read the file themselves, as parallel teammates may race on file reads)
 - Their specific file assignments and ID ranges
 - Instructions to read the Business Plan sections most relevant to their domain
 - The explicit instruction: "The Business Plan may describe features in phases or as future roadmap items. IGNORE all phasing. Treat every described feature as in-scope for this BRD."
@@ -279,6 +283,7 @@ With the pipeline model's context window (see tech-stack.md § Model Specificati
 #### Review Agent Spawn Protocol
 
 Each review agent's spawn prompt MUST include:
+- The instruction: "Check `./plancasting/tech-stack.md` for the `Session Language` setting. Generate all BRD content and user-facing output in the specified language. Code, technical identifiers, and file names remain in English."
 - The instruction: "Read CLAUDE.md Part 1 (immutable rules) if it exists in the project root. Follow its conventions. Ignore Part 2 (project-specific configuration) — it is not yet populated at this stage."
 - The list of all generated BRD files to review
 - Instructions to read every file in `./plancasting/brd/` and relevant `./plancasting/businessplan/` files
@@ -417,6 +422,35 @@ Teammates terminate automatically upon task completion. No explicit shutdown is 
 
 ---
 
+## Gate Decision
+
+After Phase 6 remediation and the Final Summary are complete, determine the Stage 1 outcome using the following decision tree. Evaluate top to bottom and take the first match:
+
+1. Any unresolved CRITICAL review issues (from Phase 5 reviewers) remaining after remediation? → **FAIL**
+2. Any unresolved HIGH review issues remaining after remediation? → **FAIL**
+3. Missing critical BRD sections (see Critical Sections definition below: 06, 07, 08, 09, 12, 13, 14)? → **FAIL**
+4. Internal contradictions detected between BRD files (e.g., conflicting MoSCoW priorities, inconsistent data entity definitions, contradictory numerical targets)? → **FAIL**
+5. Any business requirement (BR-xxx) not traceable to a specific Business Plan section? → **FAIL**
+6. Master feature inventory coverage < 100% (features from Business Plan without corresponding FR-xxx entries)? → **FAIL**
+7. All BRD sections complete, zero CRITICAL/HIGH issues, all BRs traceable to Business Plan, 100% feature inventory coverage, MoSCoW distribution within acceptable ranges (see Known Failure Pattern #3)? → **PASS**
+8. Minor gaps in non-critical sections (e.g., 22-glossary-and-appendices.md incomplete, minor formatting issues in 00-cover-and-metadata.md or 21-timeline-and-milestones.md), but ALL core business requirements documented with traceability AND zero CRITICAL/HIGH issues AND feature inventory coverage = 100%? → **CONDITIONAL PASS** (document each gap with description and remediation plan in `_review-log.md`)
+9. No rule matched? → **FAIL** (document the specific combination of metrics and escalate to operator for manual review)
+
+**Definitions**:
+- **Critical sections**: 06-business-requirements.md, 07-functional-requirements.md, 08-non-functional-requirements.md, 09-data-requirements.md, 12-regulatory-and-compliance-requirements.md, 13-security-requirements.md, 14-business-rules-and-logic.md
+- **Non-critical sections**: 00-cover-and-metadata.md, 03-current-state-analysis.md, 04-stakeholder-analysis.md, 20-cost-benefit-analysis.md, 21-timeline-and-milestones.md, 22-glossary-and-appendices.md
+- **Traceable**: A BR-xxx includes an explicit reference to a Business Plan section (e.g., "Derived from Business Plan § Product Description") — not a vague or circular reference
+
+**Assumption volume interaction**: If assumption volume ≥ 30% (flagged as CRITICAL in the Final Summary), the gate can still be PASS or CONDITIONAL PASS — the assumption volume triggers a pipeline halt (operator must review before Stage 2), but it does not downgrade the gate outcome for Stage 1's own quality assessment. The `_review-log.md` § Assumption Review Status captures this separately for Stage 2B's gate evaluation.
+
+Include the gate decision in the Final Summary output and in `_review-log.md`: "Stage 1 Outcome: [PASS | CONDITIONAL PASS | FAIL]"
+
+- **PASS** → proceed to Stage 2 (subject to assumption volume pipeline halt if applicable)
+- **CONDITIONAL PASS** → proceed to Stage 2 with documented exceptions (subject to assumption volume pipeline halt if applicable)
+- **FAIL** → remediate and re-run Stage 1
+
+---
+
 ## Writing Guidelines (Include in ALL teammate spawn prompts)
 
 1. **Full Scope**: Every feature, capability, and function described anywhere in the Business Plan is in-scope. Ignore any phasing, sequencing, or deferral language in the Business Plan. If the Business Plan says "in Phase 3, we will add X," then X is a current requirement.
@@ -432,4 +466,14 @@ Teammates terminate automatically upon task completion. No explicit shutdown is 
 11. **Requirement IDs**: Follow the ID format and ranges defined in `_context.md`. Ensure uniqueness within your assigned range.
 12. **Cross-Feature Interactions**: When documenting a requirement, consider how it interacts with ALL other features (not just features from the same Business Plan phase). Document these interactions explicitly.
 13. **Lowercase Anchors**: Use lowercase anchors in all heading IDs and cross-reference links (e.g., `#br-001` not `#BR-001`) for compatibility with case-sensitive systems and downstream PRD linking. When creating cross-reference links to other BRD sections, use lowercase in the anchor portion (e.g., `[See BR-001](./06-business-requirements.md#br-001)` not `#BR-001`). Markdown heading IDs are auto-generated in lowercase by most renderers.
+
+## Gate Decision
+
+- **PASS**: All 23 BRD files generated and complete, master feature inventory covers 100% of Business Plan features, assumption volume < 30%, all cross-references resolve, mermaid diagrams render without syntax errors
+- **CONDITIONAL PASS**: All BRD files generated, assumption volume ≥ 30% (flagged for operator review before Stage 2), or minor cross-reference gaps in non-critical sections (glossary, appendices). Operator must review assumptions before proceeding.
+- **FAIL**: Missing critical BRD files (business requirements, functional requirements, security requirements), master feature inventory incomplete (Business Plan features not captured), or files are empty/corrupted. Re-run Stage 1.
+
+> **Session Language**: Read `./plancasting/tech-stack.md` § 'Session Language' and generate all BRD content in the specified language. If Session Language is not set, STOP: 'Stage 1 requires Session Language to be defined in tech-stack.md by Stage 0.'
+
+> **Prerequisite**: Verify `./plancasting/tech-stack.md` exists. If missing, STOP: 'Stage 1 requires `plancasting/tech-stack.md` from Stage 0. Run Stage 0 first.'
 ````

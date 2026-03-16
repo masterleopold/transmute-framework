@@ -3,7 +3,7 @@
 ## Shared Reference for Stages 6V and 7V
 
 > **WARNING**:
-> - **DO NOT PASTE THIS FILE'S CONTENTS INTO CLAUDE CODE AS A PROMPT.** This is a shared reference guide read DURING Stage 6V (Phase 1) and Stage 7V (Phase 0). See `prompt_visual_functional_verification.md` or `prompt_production_smoke_verification.md` for the actual prompts to paste.
+> - **DO NOT PASTE THIS FILE'S CONTENTS INTO CLAUDE CODE AS A PROMPT.** This file is read by the 6V and 7V agents during their scenario generation phases (Phase 1 for 6V, Phase 0 for 7V). They read it as a reference file using their file-reading tools — it is NOT pasted as a prompt. See `prompt_visual_functional_verification.md` or `prompt_production_smoke_verification.md` for the actual prompts to paste.
 > - **DO NOT MODIFY THIS FILE** in project copies. It is project-agnostic and shared across all Transmute projects. Updates should only be made in the Transmute Framework Template repository.
 >
 > **Scenario Generation**: Stage 6V reads this file during Phase 1 (Lead Analysis); Stage 7V reads it during Phase 0 (Scenario Generation). The agent generates scenarios dynamically by reading the PRD, codebase, and this guide. Do NOT create scenarios manually. This file MUST be copied to `./plancasting/transmute-framework/` in the project directory before running 6V or 7V (see execution-guide.md § "Pre-6V Setup" for copy instructions).
@@ -83,6 +83,10 @@ Test error handling, validation, and edge cases.
 
 ## Generation Algorithm
 
+### Step 0: Filter by Implementation Status
+
+Before generating scenarios, read `./plancasting/_progress.md` (if it exists) and identify which features are marked `✅ Done`. Only generate scenarios for completed features. Features marked `⬜ Not Started`, `🔧 In Progress`, `🔄 Needs Re-implementation`, or `⏸ Blocked` are EXCLUDED from the scenario matrix — do not generate scenarios for them. If `_progress.md` does not exist (pre-Stage 5 scenario generation for planning purposes), assume all features in the PRD are in scope.
+
 ### Step 1: Read All PRD Sources
 
 Read these files and extract structured data:
@@ -106,22 +110,25 @@ Supplement PRD data with actual implementation:
 | Source | Extract |
 |--------|---------|
 | Route constants (e.g., `src/lib/constants.ts`) | All defined routes — may include routes not in PRD |
-| Page files (`src/app/**/page.tsx`) | All implemented pages — may differ from PRD routes |
-| Middleware (`src/middleware.ts`) | PUBLIC_ROUTES array, auth redirect logic |
-| Auth helpers (e.g., `convex/auth.ts`) | Role definitions, permission checks |
-| Schema (e.g., `convex/schema.ts`) | Entity status enums, role enums |
+| Page files (`[PAGE_DIR]/**/page.*` (e.g., `src/app/**/page.tsx` for Next.js)) | All implemented pages — may differ from PRD routes |
+| Middleware (`[MIDDLEWARE_PATH]` (e.g., `src/middleware.ts` for Next.js)) | PUBLIC_ROUTES array, auth redirect logic |
+| Auth helpers (`[BACKEND_DIR]/auth.*` (e.g., `convex/auth.ts` for Convex)) | Role definitions, permission checks |
+| Schema (`[SCHEMA_DIR]/schema.*` (e.g., `convex/schema.ts` for Convex)) | Entity status enums, role enums |
 | Layout components | Navigation links, conditional tab logic |
-| Hooks directory (`src/hooks/`) | Available data operations per domain |
-| E2E tests (`e2e/` or equivalent) | Existing test scenarios — avoid duplicating existing E2E coverage |
+| Hooks directory (`[HOOKS_DIR]/` (e.g., `src/hooks/` for Next.js)) | Available data operations per domain |
+| E2E tests (`[TEST_DIR]/` (e.g., `e2e/` for Playwright)) | Existing test scenarios — avoid duplicating existing E2E coverage |
 
-### Step 3: Build the Feature Graph
+### Step 3: Build the Feature Dependency Graph
 
 Create a directed graph of features and their dependencies. Dependencies are extracted from:
 1. **Explicit dependency fields** in `prd/02-feature-map-and-prioritization.md` (if present — look for "Depends on" or "Prerequisites" columns)
 2. **User story prerequisites**: If US-005 requires data from FEAT-002, then features behind US-005 depend on FEAT-002
 3. **Implicit dependencies**: If FEAT-010 (Deploy) requires FEAT-005 (Implementation) to have run, infer the edge. **Inference algorithm**: (1) Read each feature's prerequisites in PRD 02-feature-map. (2) For each prerequisite, add an edge in the graph. (3) Read user stories — if a story for FEAT-A references data created by FEAT-B, add edge FEAT-B → FEAT-A (keyword detection: look for "created by", "requires", "depends on" in story text). (4) For features with lifecycle states, add edges based on state transitions (if FEAT-X produces state S and FEAT-Y is only valid in state S, add edge FEAT-X → FEAT-Y).
 
-**Cycle detection**: After building the graph, topologically sort all features. If a cycle is detected (e.g., FEAT-A → FEAT-B → FEAT-C → FEAT-A), report as ERROR and list the cycle. Do not proceed with scenario generation until the cycle is resolved — either by removing an incorrect edge or by flagging it for PRD correction. If the cycle cannot be resolved by the agent (requires PRD correction), break the cycle at the edge with the weakest evidence (inferred rather than explicit dependency), document the break in the scenario matrix with a WARNING, and proceed. Flag the PRD inconsistency in the 6V/7V report for operator review.
+**Cycle detection**: After building the graph, topologically sort all features. If a cycle is detected (e.g., FEAT-A → FEAT-B → FEAT-C → FEAT-A):
+1. Report as ERROR with the full cycle description (list all edges in the cycle and their evidence source — explicit PRD dependency, user story reference, or inferred from state transitions).
+2. Attempt to resolve by checking if any inferred (non-explicit) edges in the cycle are false positives — if an edge was added by the inference algorithm (Step 3, item 3/4) but has weak evidence, remove it and re-attempt topological sort. Document the removal in the scenario matrix with a WARNING.
+3. If all edges in the cycle have strong evidence (explicit in PRD dependency fields or user story prerequisites), halt and ask the operator: the cycle indicates a PRD inconsistency requiring human review. Do NOT silently break strongly-evidenced edges — removing a real dependency distorts the scenario execution order and may mask integration failures. If a cycle is detected, the operator has three options: (a) reorder features to break the cycle (preferred), (b) merge the cyclic features into a single combined scenario, or (c) accept the cycle and test in declared order with a documented note.
 
 **Transitive reduction** (recommended): If FEAT-A → FEAT-B → FEAT-C and also FEAT-A → FEAT-C, the direct FEAT-A → FEAT-C edge is redundant (implied by transitivity). Remove it to simplify the graph. This reduces complexity for scenario ordering without losing coverage, and prevents unnecessary blocking cascades during execution (an early failure blocks fewer downstream scenarios).
 
@@ -281,6 +288,8 @@ Example: If 6V generates FS-001, FS-003, FS-007, FS-012 for P0 features, 7V renu
 **For 6V (Full)**:
 - Generate ALL scenario types for ALL features (P0-P3)
 - Total scenario count typically ranges from 50 to the verification scenario cap (default: 150 for 6V split across teammates at ~2–3 min per scenario; 15 for 7V single agent at ~2 min per scenario). Default cap: 150 scenarios for 6V, 15 for 7V. To override, update the `Verification scenario cap` value in `plancasting/tech-stack.md` § Model Specifications table. If `plancasting/tech-stack.md` § Model Specifications defines a 'Verification scenario cap', use that value instead. **Limit justification**: The scenario cap ÷ 3–4 teammates yields a manageable per-teammate load, at ~2–3 min per scenario, fitting within a single pipeline model session. If count is within the verification scenario cap, proceed to execution without trimming. If count exceeds the verification scenario cap, apply these trimming steps in order (each step removes lower-value scenarios first) until count drops to within the cap. Stop applying further steps as soon as count drops to within the cap.
+  > **Note**: Steps 1–4 apply to 6V's full matrix. For 7V, the matrix is already filtered to P0+P1 — steps 1–4 are typically no-ops; start evaluation at step 5 (terminal condition).
+
   1. Remove P3 scenarios entirely (P3 = "nice-to-have" features; testing them is deferrable to post-launch)
   2. Remove P2 negative variants for non-critical features (error paths are important but less critical than happy paths; keep P0/P1 negative scenarios)
   3. Remove P2 Entity State and Role Permission scenarios, keeping only Feature Scenarios for P2 (ES/RS are detailed behavior tests; FS are end-to-end workflows with higher signal-to-noise ratio)
@@ -321,6 +330,8 @@ Save the matrix to the appropriate path based on which stage is running:
 - **Stage 6V**: `./plancasting/_audits/visual-verification/feature-scenario-matrix.md`
 - **Stage 7V**: `./plancasting/_audits/production-smoke/smoke-scenario-matrix.md`
 
+Validate all Mermaid syntax in the feature dependency graph: verify closed subgraph blocks, consistent arrow syntax, and properly quoted node labels containing special characters.
+
 ```markdown
 # Feature Scenario Matrix
 - **Generated**: [date]
@@ -339,6 +350,7 @@ Save the matrix to the appropriate path based on which stage is running:
 
 ## Feature Dependency Graph
 [Mermaid diagram or text representation]
+<!-- Validate all Mermaid syntax: verify closed subgraph blocks, consistent arrow syntax, and properly quoted node labels containing special characters. -->
 
 ## Scenarios by Priority
 ### P0 (must test)
@@ -383,7 +395,7 @@ When distributing scenarios to teammates:
 |----------|---------------|--------------|
 | Teammate 1 (automated-page-verifier) | Auth Context (AS), Entity State (ES) — page load and component checks per auth/state | TEST_USER_STARTER |
 | Teammate 2 (acceptance-criteria-verifier) | Feature Scenarios (FS), Negative Scenarios (NS) — multi-step flow execution | TEST_USER_PRO |
-| Teammate 3 (visual-ai-reviewer) | Reviews screenshots from Teammates 1+2; performs visual/accessibility spot-checks (no new scenario execution) | TEST_USER_STARTER |
+| Teammate 3 (visual-ai-reviewer) | **Reviewer only** — reviews screenshots from Teammates 1+2; performs visual/accessibility spot-checks (no new scenario execution, no scenarios from the matrix) | TEST_USER_STARTER |
 | Teammate 4 (responsive-and-interaction-verifier) | Role Permission (RS), buttons/interactions from all FS — interaction testing | TEST_USER_ENTERPRISE |
 
 Note: This teammate mapping applies to Stage 6V only. Stage 7V is a single-agent stage that executes all scenario types itself. Teammate names reference Stage 6V's default naming. If your 6V session uses different teammate names, map accordingly.
@@ -407,7 +419,7 @@ Test user assignments are primary defaults. Teammates testing Auth Context (AS) 
 
 ## Handling Flaky Scenarios
 
-Re-run a failing scenario once. If it passes on re-run, mark as "Flaky — investigate timing" and include in the report's flaky tests section. If both runs fail, mark as failed. Do not retry more than once. **Stage distinction**: For 6V (dev environment), flaky scenarios are informational — flag for investigation but do NOT block the gate and are EXCLUDED from the pass/fail percentage calculation. They appear in a separate "Flaky Scenarios" section of the report. For 7V (production smoke), a flaky scenario is a FAIL — production instability must be resolved before re-running 7V. Don't exclude flaky scenarios from the matrix, but flag them for developer attention. Flaky scenarios often indicate:
+Re-run a failing scenario once. If it passes on re-run, mark as "Flaky — investigate timing" and include in the report's flaky tests section. If both runs fail, mark as failed. Do not retry more than once. **Stage distinction**: For 6V (dev environment), flaky scenarios are informational — flag for investigation but do NOT block the gate and are EXCLUDED from the pass/fail percentage calculation. They appear in a separate "Flaky Scenarios" section of the report. For 7V (production smoke), a flaky scenario is a FAIL — production instability must be resolved before re-running 7V. Note: Flaky handling differs by stage. In 6V, flaky scenarios are excluded from the pass-rate denominator (informational). In 7V, flaky scenarios count as FAIL (production must be deterministic). This is intentional — see execution-guide.md § Gate Decision Outcomes. Don't exclude flaky scenarios from the matrix, but flag them for developer attention. Flaky scenarios often indicate:
 1. Missing waits/polling in the test (add `expect.poll()` or `expect.toPass()` for eventually-consistent backends)
 2. Race conditions in the app (add explicit wait states)
 3. External service latency (mock external services for consistent timing)
@@ -427,4 +439,4 @@ Before distributing the matrix, the lead should verify:
 4. Role Permission Scenarios cover all role combinations mentioned in user stories
 5. Total scenario count is within the allocated execution time budget (6V: 30-120 min depending on scenario count, 7V: 15-45 min)
 6. All scenario prerequisites (entity states, test accounts) can be set up with existing seed data or UI flows
-7. `_progress.md` was checked — features marked `⬜ Not Started`, `🔄 Needs Re-implementation`, `🔧 In Progress`, or `⏸ Blocked` are EXCLUDED from the scenario matrix (no scenarios generated for them). Only `✅ Done` features have scenarios generated. If `_progress.md` does not exist (e.g., running before Stage 5), derive the feature list from `plancasting/prd/02-feature-map-and-prioritization.md` instead. Note: 6V should only run after Stage 5B completes. If `_progress.md` does not exist, this likely indicates a pipeline sequence error — verify Stage 5 was run before proceeding.
+7. `_progress.md` was checked — always read the LATEST version of `_progress.md` at scenario generation time (Stage 5B may have changed feature statuses after Stage 5 completion). Features marked `⬜ Not Started`, `🔄 Needs Re-implementation`, `🔧 In Progress`, or `⏸ Blocked` are EXCLUDED from the scenario matrix (no scenarios generated for them). Only `✅ Done` features have scenarios generated. If `_progress.md` does not exist (e.g., running before Stage 5), derive the feature list from `plancasting/prd/02-feature-map-and-prioritization.md` instead. Note: 6V should only run after Stage 5B completes. If `_progress.md` does not exist, this likely indicates a pipeline sequence error — verify Stage 5 was run before proceeding.

@@ -27,7 +27,7 @@ Verify before starting — this stage has the strictest prerequisite checks:
    - `./plancasting/_audits/security/report.md` (6A)
    - `./plancasting/_audits/accessibility/report.md` (6B)
    - `./plancasting/_audits/performance/report.md` (6C)
-   - `./plancasting/_audits/documentation/report.md` and `./docs/` (6D) — skip if plancasting/tech-stack.md indicates N/A
+   - `./plancasting/_audits/documentation/report.md` and `./docs/` (6D) — mandatory for software products; skip only if plancasting/tech-stack.md indicates non-software product or documentation explicitly marked N/A
    - `./plancasting/_audits/refactoring/report.md` (6E)
    - `./seed/README.md` and `./plancasting/_audits/seed-data/report.md` (6F) — skip if plancasting/tech-stack.md indicates N/A
    - `./plancasting/_audits/resilience/report.md` (6G)

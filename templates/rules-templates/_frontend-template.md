@@ -5,13 +5,14 @@ globs: ["[FRONTEND_DIR]/**"]
 
 # Frontend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[FRONTEND_FRAMEWORK]`, `[LOADING_COMPONENT]`, `[ERROR_COMPONENT]`, `[EMPTY_COMPONENT]`, `[IMAGE_COMPONENT]`, `[DESIGN_TOKENS_PATH]`, `[ICON_LIBRARY]`, `[ICON_REGISTRY_PATH]`, `[BREAKPOINT_CONFIG]`, `[MOBILE_BREAKPOINT]`, `[CLIENT_ENV_PREFIX]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[FRONTEND_FRAMEWORK]`, `[LOADING_COMPONENT]`, `[ERROR_COMPONENT]`, `[EMPTY_COMPONENT]`, `[IMAGE_COMPONENT]`, `[DESIGN_TOKENS_PATH]`, `[ICON_LIBRARY]`, `[ICON_REGISTRY_PATH]`, `[BREAKPOINT_CONFIG]`, `[MOBILE_BREAKPOINT]`, `[CLIENT_ENV_PREFIX]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), (3) update the globs in frontmatter with actual paths, and (4) remove ALL other HTML comments (e.g., `<!-- Stage 3: ... -->`, `<!-- Note: ... -->`) — these are template-only guidance that must not appear in generated rule files. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -nE '\[[A-Z_]+\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). **Rule count limit**: The rendered output must contain ≤ 15 rules (individual bullet-point directives). This template contains conditional sections — omit sections that don't apply to the selected tech stack. If the rendered output exceeds 15 rules after omitting inapplicable sections, split into two rule files (e.g., `frontend.md` → `frontend.md` + `frontend-ssr.md`) and update CLAUDE.md Part 2 § Path-Scoped Rules accordingly. Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
 
 ## Component States
 
 <!-- TODO: Stage 3 — replace with actual component state pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #1, every component must handle all five states (default, loading, empty, error, disabled). For data-fetching components, use `[LOADING_COMPONENT]` for loading states and `[ERROR_COMPONENT]` for error states (include a retry action where appropriate); never render a blank screen.
+<!-- If [EMPTY_COMPONENT] does not exist in the scaffold, Stage 3 creates it at [COMPONENT_DIR]/EmptyState.tsx -->
 - Additionally: empty states must use `[EMPTY_COMPONENT]` (a shared component or layout pattern for empty-state messaging — if none exists, Stage 3 should create one during scaffold generation) with a descriptive message and, where applicable, a call-to-action (stack-specific enhancement beyond Part 1).
 
 ```typescript
@@ -25,8 +26,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual hook pattern. Source: tech-stack.md | Confidence: HIGH -->
 
-- Never cast backend responses with `as unknown as Type` — create explicit mapping functions when shapes differ; co-locate response types with hooks.
-- When a backend field is renamed or computed, map it explicitly and document the mapping with a comment in the hook.
+- Never cast backend responses with `as unknown as Type` — create explicit mapping functions when shapes differ; co-locate response types with hooks, and when a backend field is renamed or computed, map it explicitly with a comment documenting the mapping. Run typecheck (see `.claude/rules/api-contracts.md` § Type Alignment) after modifying hook response mappings.
 
 ```typescript
 // TODO: Replace with actual hook mapping pattern
@@ -46,8 +46,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace [DESIGN_TOKENS_PATH] with actual path (e.g., src/styles/design-tokens.ts, src/tokens/colors.css). All components import from this single source. Stage 3 creates this file based on the design direction from `plancasting/tech-stack.md`; if Stage 0 did not provide a design direction, Stage 3 creates a minimal placeholder that Stage 5 can extend. -->
 
-- Import all colors, spacing, typography, and shadows from `[DESIGN_TOKENS_PATH]` — never hardcode color or spacing values in component files; use the token scale.
-- If a new token is needed, add it to the design tokens file, not inline.
+- Import all colors, spacing, typography, and shadows from `[DESIGN_TOKENS_PATH]` — never hardcode color or spacing values in component files; use the token scale, and if a new token is needed, add it to the design tokens file, not inline.
 
 ## Image Optimization
 
@@ -66,6 +65,7 @@ globs: ["[FRONTEND_DIR]/**"]
 <!-- TODO: Stage 3 — replace [ICON_LIBRARY] and [ICON_REGISTRY_PATH] with actual values from tech-stack.md. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #6, never use inline SVG `<path>` elements for standard UI icons — import all icons from `[ICON_LIBRARY]` using the project's established pattern; inline SVGs are permitted only for product logos, brand marks, or custom illustrations.
+<!-- Stage 3: Include this rule only if the project uses an icon registry. If no registry, omit this bullet entirely. -->
 - If an icon registry exists at `[ICON_REGISTRY_PATH]`, register new icons there first and import from the registry. If no registry is used (check tech-stack.md "Icon Registry" field — if empty or absent, omit this bullet in the generated rule), import directly from `[ICON_LIBRARY]` in component files.
 
 ## Environment Variables
@@ -76,7 +76,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 ## SSR/Hydration
 
-<!-- Stage 3: Include this section ONLY if the frontend framework uses SSR (e.g., Next.js, Nuxt, Remix, SvelteKit). Omit for pure SPA frameworks (e.g., Vite+React without SSR). -->
+<!-- Stage 3: If framework uses SSR, replace this section with actual SSR patterns. If framework does NOT use SSR, DELETE this entire section. -->
 <!-- TODO: Stage 3 — replace with actual SSR hydration pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Avoid referencing `window`, `document`, or `localStorage` during server-side rendering — use dynamic imports with `ssr: false` or `useEffect`/`onMounted` for browser-only code.

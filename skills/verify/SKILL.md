@@ -141,7 +141,7 @@ The gate uses TWO systems -- the final gate is the WORSE of the two:
 
 | Percentage | Categories Present | Final Gate | Next Stage |
 |---|---|---|---|
-| PASS (>90%) | None (zero issues) | PASS | -> 6P/6P-R |
+| PASS (>90%) | None (zero actionable issues) | PASS | -> 6P/6P-R |
 | PASS (>90%) | A/B only | CONDITIONAL PASS | -> 6R -> 6P/6P-R |
 | PASS (>90%) | C only | PASS | -> 6P/6P-R (document C for human) |
 | PASS (>90%) | Mixed A/B + C | CONDITIONAL PASS | -> 6R -> 6P/6P-R (document remaining C) |

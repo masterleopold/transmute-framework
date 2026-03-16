@@ -19,10 +19,13 @@ You are a senior frontend designer and engineer leading an interactive frontend 
 
 **Stage 6P-R** occupies the same pipeline slot as 6P (after all Stage 6 quality passes, before Stage 7 deployment). It is an ALTERNATIVE to standard 6P, not an addition. Run one or the other, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first (`git revert` the 6P commit). See execution-guide.md § "6P vs 6P-R" for details.
 
+**Pre-flight check**: Before starting 6P-R, verify 6P has NOT been run in this pipeline cycle: `test -f ./plancasting/_audits/visual-polish/report.md && echo 'WARNING: 6P report exists — revert 6P before running 6P-R'`
+
 **Switching from 6P**: If 6P was previously run, it must be reverted before starting 6P-R:
 1. Verify 6P changes were committed: `git log --oneline -3`
-2. Revert the 6P commit: `git revert <6P-commit-hash>` (NOT `git reset --hard`)
-3. Start a new session and run 6P-R
+2. Before reverting, verify the 6P commit is isolated: run `git log --oneline HEAD~5..HEAD` to confirm no other commits landed after 6P. If intervening commits exist, use `git revert <specific-6P-hash>` (not HEAD) to avoid reverting unrelated work.
+3. Revert the 6P commit: `git revert <6P-commit-hash>` (NOT `git reset --hard`)
+4. Start a new session and run 6P-R
 
 **Stage Sequence**: ... → 6V (Verification) → [6R (Runtime Remediation) — only if 6V found 6V-A/B issues] → **6P-R (this stage)** → 7 (Deploy) → 7V (Production Smoke) → 7D (User Guide) → 8 (Feedback) / 9 (Maintenance)
 
@@ -474,6 +477,7 @@ If the user provided a brand color in Step 0.2, present it as option 7 (Custom) 
 Notes:
 - If Figma tokens specified fonts in Step 0.6, present those as the recommended option.
 - **Font availability**: Options 1-6 include fonts from both Google Fonts and Fontshare. Before confirming, verify availability: Google Fonts options (Inter, DM Sans, Source Sans 3, Nunito, Geist, Outfit, Sora) can be loaded via `next/font/google`; Fontshare options (Satoshi, Cabinet Grotesk, General Sans, Switzer, Clash Display) require downloading `.woff2` files and using `next/font/local` (or via `@fontsource` or direct CSS import). Inform the user of the loading method difference.
+- **Font fallback mapping**: If Fontshare fonts cannot be downloaded during the session (site blocked, download fails), use Google Fonts alternatives. Fallback mapping: Satoshi → DM Sans, Cabinet Grotesk → Work Sans, General Sans → Source Sans 3, Switzer → Inter, Clash Display → Rubik.
 
 ### Decision 5 — Border Radius
 
@@ -720,7 +724,6 @@ Install and configure the approved font pairing:
    - Check if the font is available on Google Fonts (works with `next/font/google`)
    - If NOT on Google Fonts (e.g., Satoshi, Cabinet Grotesk, General Sans from Fontshare), download `.woff2` files and use `next/font/local`
    - If font files cannot be obtained, inform the user and suggest an available alternative
-   - **Font fallback mapping**: If Fontshare fonts cannot be downloaded during the session (site blocked, download fails), use Google Fonts alternatives. Fallback mapping: Satoshi → DM Sans, Cabinet Grotesk → Work Sans, General Sans → Source Sans 3, Switzer → Inter, Clash Display → Rubik.
    - NEVER configure a font import that will fail at build time
 
 2. **Package installation** (if using `next/font` or local files):
@@ -1068,7 +1071,7 @@ Cross-reference the slop inventory from Step 3.5 (`./plancasting/_audits/visual-
 2. **Check surviving**: Which inventory patterns still appear in Phase 4 screenshots? These need fixing now.
 3. **Check new**: Did the implementation introduce NEW slop patterns not in the original inventory? (This is common — the agent fixes gradient text on the hero but adds a pill badge above the new heading.) Fix these too.
 
-If the `frontend-design` skill is available, invoke it for guidance on each remaining fix.
+If the `frontend-design` skill is available, invoke it once here — submit all remaining fixes together in a single consolidated invocation (not per-fix).
 
 ### NEVER Patterns — Detect and Remove
 
@@ -1358,7 +1361,7 @@ If this stage is interrupted mid-execution:
 
 3. **ALWAYS get explicit user approval on the design plan** (Phase 2) before implementing anything. The user's design preferences override any default recommendations.
 
-4. **ALWAYS use the `frontend-design` skill** (if available) for aesthetic decisions. It prevents generic AI-generated aesthetics. **The lead invokes the skill ONCE** (in Phase 5 (Anti-AI-Slop Refinement) or equivalent) and shares the output. Teammates read the shared output — they do NOT invoke the skill themselves. This ensures design consistency across all phases.
+4. **ALWAYS use the `frontend-design` skill** (if available) for aesthetic decisions. It prevents generic AI-generated aesthetics. **The lead invokes the skill once, in Phase 5 (Anti-AI-Slop Refinement), covering all remaining fixes in a single consolidated invocation** — not per-fix or per-pattern. Teammates read the shared output — they do NOT invoke the skill themselves. This ensures design consistency across all phases.
 
 5. **ALWAYS take before/after screenshots.** Every change must be visually documented and verified.
 

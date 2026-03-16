@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.8.0** — 14th-pass audit sync: gate precision, BRD file robustness, crash recovery, framework agnosticism, edge case handling
+> **v2.9.0** — 17th-pass audit sync: gate precision, cross-template consistency, Session Language propagation, safety hardening
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -150,7 +150,7 @@ The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are 
 - **5B**: PASS requires zero issues + all tests pass; FAIL triggers RETRY (4-5 Category C, 3+ A/B unfixed, or test failures) or ESCALATE (6+ Category C); per-feature consecutive FAIL-RETRY tracking (3x → auto-escalate)
 - **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
 - **6R**: Max 3 internal fix-verify cycles per run before escalation; max 2 outer 6V→6R cycles total
-- **7V**: Binary gate — PASS proceeds to 7D, FAIL requires hotfix + re-deploy or rollback
+- **7V**: 3-outcome gate — PASS or CONDITIONAL PASS proceeds to 7D (CONDITIONAL PASS documents minor P1/P2 issues for post-launch fix via Stage 8), FAIL requires hotfix + re-deploy or rollback
 - **6P**: Issues categorized as Omission (O), Execution (E), or Design (D)
 - **6P-R**: Severity levels — Critical, Major, Minor
 - **6A/B/C**: Run as parallel agents for safe concurrent execution
@@ -249,6 +249,43 @@ transmute-framework/
 - A business plan (markdown or PDF files)
 
 ## Changelog
+
+### v2.9.0
+
+**Gate Precision**
+- 7V gate changed from binary to 3-outcome (PASS/CONDITIONAL PASS/FAIL) — CONDITIONAL PASS documents minor P1/P2 issues for post-launch fix
+- 6V PASS definition clarified: zero actionable issues, not literally zero observations
+- 6R max-cycle exhaustion documented as exception to FAIL blocking, not a true CONDITIONAL PASS
+- 5B FAIL-ESCALATE thresholds clarified with independent trigger conditions
+- 5B CONDITIONAL PASS path (c) gains total cap: A/B + C ≤ 5
+
+**Cross-Template Consistency**
+- Rule templates gain cross-template sync annotations (e.g., `[ERROR_TYPE]` must match between backend and auth)
+- Rule count limits (max 15 rules per file) added to all 6 rule templates with splitting guidance
+- `feature_scenario_generation.md` paths generalized to bracketed placeholders
+
+**Session Language Propagation**
+- BRD and PRD spawn contexts now include explicit Session Language instructions for parallel teammates
+- BRD Session Language fallback changed from STOP to default English
+
+**Safety Hardening**
+- 6P-R pre-flight check verifies 6P hasn't already run before proceeding
+- 6P mutual exclusivity check added at prerequisite stage
+- State transitions: `🔄` can now transition to `⏸ Blocked`; pre-block status preserved in Notes column
+- 6D changed from "strongly recommended" to "mandatory for software products" for Stage 7 prerequisites
+- Stage 8 prerequisite changed: 7V PASS → 7V PASS or CONDITIONAL PASS
+- Stage 9 adds breaking-change warning for dependency updates to production
+
+**New Sections**
+- Gate Decision sections added to BRD (Stage 1) and PRD (Stage 2) prompts with full decision trees
+- Never-skip stages table added to execution-guide.md Stage Skip Logic
+- 6D early-draft check added before 6H
+- Git prerequisite added to execution-guide.md
+
+**Template Updates**
+- CLAUDE.md: enhanced state transition diagram, E2E selector hierarchy expanded, test count preservation reframed as behavior-based
+- execution-guide.md: scaffold manifest completeness guidance, Mintlify note for 7D, prompt file path note
+- All rule templates: preamble expansion with conditional section guidance
 
 ### v2.8.0
 
