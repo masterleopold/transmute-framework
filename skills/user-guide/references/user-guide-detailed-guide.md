@@ -245,7 +245,8 @@ For per-language branding overrides (banner, footer, navbar), add a top-level `l
 If `./user-guide/` already exists from a prior run:
 1. Run `git status ./user-guide/` and `git diff ./user-guide/` to detect both uncommitted and staged changes.
 2. If uncommitted, unstaged, or untracked changes exist, STOP — do not proceed. Report: "user-guide/ has uncommitted changes. Commit or discard them before re-running Stage 7D."
-3. Only delete after explicit operator confirmation or after verifying zero uncommitted changes.
+3. If `./plancasting/_audits/visual-polish/design-plan.md` exists (6P-R was run), record image paths before deletion: `grep -r 'src="' user-guide/ --include='*.mdx' > /tmp/7d-prior-image-paths.txt 2>/dev/null || true`. This file is used in step 4 below for screenshot path alignment.
+4. Only delete after explicit operator confirmation or after verifying zero uncommitted changes.
 
 ### Stale Context Detection
 

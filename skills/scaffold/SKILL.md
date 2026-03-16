@@ -29,7 +29,7 @@ Before proceeding, verify ALL of these conditions. Stop with a clear error messa
 4. Verify spec validation passed: check `plancasting/_audits/spec-validation/report.md` for PASS or CONDITIONAL PASS. If FAIL or missing: STOP — "Stage 3 requires spec validation. Run Stage 2B first."
 5. Verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return no matches.
 6. Validate credential tiers from `plancasting/tech-stack.md`:
-   - Red tier pipeline infrastructure credentials (TRANSMUTER_ANTHROPIC_API_KEY, E2B_API_KEY, SANDBOX_AUTH_TOKEN) must be present
+   - Red tier pipeline infrastructure credentials (TRANSMUTER_ANTHROPIC_API_KEY, E2B_API_KEY, SANDBOX_AUTH_TOKEN) must be present. **Exception**: If `plancasting/tech-stack.md` indicates a standalone project (no Transmuter platform), pipeline infrastructure credentials (`TRANSMUTER_ANTHROPIC_API_KEY`, `E2B_API_KEY`, `SANDBOX_AUTH_TOKEN`) may be absent — exclude them from validation.
    - Yellow tier product service credentials should be present (WARN if missing — can be added before Stage 5)
 
 ## Known Failure Patterns
@@ -154,8 +154,10 @@ After all teammates complete:
 
 11. **Gate Decision**:
     - **PASS**: All required output files exist, PRD coverage ≥ 95%, CLAUDE.md Part 2 fully populated, `_progress.md` lists all features, `.claude/rules/` populated → proceed to Stage 4
-    - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded → proceed to Stage 4 with noted gaps
-    - **FAIL**: PRD coverage < 80%, required output files missing, or CLAUDE.md Part 2 not populated → re-run Stage 3
+    - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded, CLAUDE.md Part 2 populated and `_progress.md` present (rules may be incomplete) → proceed to Stage 4 with noted gaps
+    - **FAIL**: PRD coverage < 80%, OR CLAUDE.md Part 2 not populated, OR `_progress.md` missing, OR required output files missing → re-run Stage 3
+
+> **Terminology note**: "Coverage" in this stage means scaffold coverage — the percentage of PRD screens (SC-xxx), API endpoints, and data entities that have corresponding scaffold files. This differs from Stage 2B's "coverage" (BRD→PRD requirement traceability).
 
 ### Phase 5: Shutdown
 

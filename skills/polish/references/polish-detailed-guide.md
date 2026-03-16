@@ -77,8 +77,8 @@ Issues with a clear right/wrong answer. MUST fix these.
 
 **Category boundary guideline**: If the feature is BROKEN or INACCESSIBLE (violates standards, prevents functionality), it's Category O. If it WORKS but FEELS UNPOLISHED (lacks feedback, delight, or visual consistency), it's Category E. Examples -- Category O: missing focus ring (WCAG violation), layout overflow (content hidden). Category E: missing hover state (button works but lacks feedback), no page entry animation.
 
-### Category E: Enhancement (Pattern-Based, Apply & Verify)
-Issues where the fix follows established patterns in the codebase.
+### Category E: Enhancement (Pattern-Based, Apply Where Feasible)
+Issues where the fix follows established patterns in the codebase. Category E is discretionary — skip if the enhancement conflicts with the design system, has negligible visual impact, or risks regression.
 
 | Issue Type | Detection | Fix Pattern | Verify |
 |---|---|---|---|
@@ -216,7 +216,7 @@ See `./plancasting/_audits/visual-polish/design-elevation-brief.md`
 - Tests: PASS / FAIL
 
 ## Gate Decision
-- **PASS**: All Category O fixed, Category E applied, no regressions -- ready for Deploy
+- **PASS**: All Category O fixed, Category E enhancements applied where feasible (E is discretionary — skip if an enhancement conflicts with the design system, has negligible visual impact, or risks regression), no regressions -- ready for Deploy
 - **CONDITIONAL PASS**: All critical fixed + Category D brief for optional elevation -- ready for Deploy, consider design review
 - **FAIL**: Regressions remain, critical Category O defects unresolved, or validation fails -- investigate before Deploy
 

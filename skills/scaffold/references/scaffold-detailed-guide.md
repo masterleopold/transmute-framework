@@ -236,7 +236,7 @@ Before writing ANY component code:
 - `package.json` — dependencies and scripts for the COMPLETE product
 - `tsconfig.json`, `next.config.ts`, ESLint config, `.prettierrc`, `.gitignore`
 
-**next.config.ts Critical Configuration**:
+**`next.config.ts` — Deployment-Critical Configuration** (the following rules apply only if the frontend framework is Next.js — check `plancasting/tech-stack.md`; these cause real production failures if missed):
 1. Content-Security-Policy: Do NOT include `'strict-dynamic'` without nonce-based CSP
 2. i18n Plugin Aliases: Add BOTH Turbopack (relative paths) and webpack (absolute paths) aliases
 3. Environment Variables: `.env.local` is NOT auto-synced to hosting providers
@@ -378,8 +378,10 @@ After all teammates complete:
 
 12. **Gate Decision**:
     - **PASS**: All required output files exist, PRD coverage ≥ 95%, CLAUDE.md Part 2 fully populated (no `[PLACEHOLDER]`, `[PROJECT_NAME]`, `[N]`, or `[e.g.,` markers remain), `_progress.md` lists all features, `.claude/rules/` populated → proceed to Stage 4
-    - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded → proceed to Stage 4 with noted gaps
-    - **FAIL**: PRD coverage < 80%, required output files missing, or CLAUDE.md Part 2 not populated → re-run Stage 3
+    - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded, CLAUDE.md Part 2 populated and `_progress.md` present (rules may be incomplete) → proceed to Stage 4 with noted gaps
+    - **FAIL**: PRD coverage < 80%, OR CLAUDE.md Part 2 not populated, OR `_progress.md` missing, OR required output files missing → re-run Stage 3
+
+> **Terminology note**: "Coverage" in this stage means scaffold coverage — the percentage of PRD screens (SC-xxx), API endpoints, and data entities that have corresponding scaffold files. This differs from Stage 2B's "coverage" (BRD→PRD requirement traceability).
 
 ---
 

@@ -38,6 +38,7 @@ globs: ["[BACKEND_DIR]/**"]
 
 - Every mutation and action must call `[AUTH_HELPER]` as the first operation — never skip auth checks, even for "internal" functions.
 - Store the authenticated user identity in a local variable and pass it explicitly to helpers.
+- See `.claude/rules/auth.md` § Auth Guards for the complete auth pattern including middleware vs. backend scope.
 
 ```typescript
 // TODO: Replace with actual auth guard pattern
@@ -49,7 +50,7 @@ globs: ["[BACKEND_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual soft-delete field and filter pattern. Source: data-model schema | Confidence: HIGH -->
 
-- Always apply soft-delete filter (`[SOFT_DELETE_FIELD] === null` or equivalent) on all queries (see data-model rules for field name).
+- Always apply soft-delete filter (`[SOFT_DELETE_FIELD] === null` or equivalent) on all queries (see `.claude/rules/data-model.md` § Soft Delete for field name and retention period).
 - Never return soft-deleted records to the frontend unless explicitly requested by an admin view.
 - Apply tenant isolation filters (org/workspace scoping) on every query.
 
@@ -60,3 +61,10 @@ globs: ["[BACKEND_DIR]/**"]
 - Prefer indexed queries over full-table scans for any collection with >100 expected records.
 - Every query pattern must have a supporting index — see data-model rules § Indexes for definition patterns and conventions.
 - When adding a new query pattern, add the supporting index in the same commit.
+
+## Environment Variables
+
+<!-- TODO: Stage 3 — replace with actual env var access pattern. Source: tech-stack.md | Confidence: HIGH -->
+
+- Reference env var names exactly as defined in `.env.local.example` — never invent alternative names (see Stage 3 Known Failure Pattern #9).
+- Never log, return, or expose env var values in API responses or error messages — use non-revealing checks (e.g., `!!process.env.KEY`) for validation.

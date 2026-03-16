@@ -5,7 +5,7 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 
 # Data Model Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/data-model.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[SCHEMA_DIR]`, `[SOFT_DELETE_FIELD]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/data-model.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/data-model.md` instead.
 
 ## Indexes
 
@@ -27,7 +27,8 @@ globs: ["[SCHEMA_DIR]/**", "[MIGRATION_DIR]/**"]
 
 <!-- TODO: Stage 3 — replace with actual soft-delete field name and pattern. Source: tech-stack.md, schema | Confidence: HIGH -->
 
-- Use `[SOFT_DELETE_FIELD]` (e.g., `deletedAt`) for soft deletion — never hard-delete user data; all queries must filter out soft-deleted records by default (`[SOFT_DELETE_FIELD] === null`), as enforced by backend rules. Backend functions are responsible for filtering — add `[SOFT_DELETE_FIELD] === null` (or equivalent) to all queries by default. Do NOT rely on database triggers for filtering.
+- Use `[SOFT_DELETE_FIELD]` (e.g., `deletedAt`) for soft deletion — never hard-delete user data.
+- All queries must filter out soft-deleted records by default (`[SOFT_DELETE_FIELD] === null`). Backend functions are responsible for filtering — do NOT rely on database triggers.
 - Admin/audit views may include soft-deleted records — mark these queries explicitly.
 - Retention policy: soft-deleted records are permanently purged after `[RETENTION_PERIOD]`.
 <!-- Stage 3: Fill [RETENTION_PERIOD] based on BRD data retention requirements. Default if BRD doesn't specify: 90 days (allows GDPR 30-day erasure grace period + buffer). Document the chosen value in CLAUDE.md Part 2. Source: BRD data retention | Confidence: HIGH -->

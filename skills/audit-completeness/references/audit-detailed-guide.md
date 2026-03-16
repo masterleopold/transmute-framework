@@ -179,7 +179,7 @@ fi
 - **Duplication fixes**: Page has inline UI + orphan component -> move inline code into component, refactor page to import
 - **Bloated page decomposition**: Page with 200+ lines -> extract into scaffold components
 
-### Category C — Large Gap (escalate; 1-3 = CONDITIONAL PASS, 4-5 = FAIL-RETRY, 6+ = FAIL-ESCALATE)
+### Category C — Large Gap (escalate; 1-3 = CONDITIONAL PASS, 4-5 = FAIL-RETRY, 6+ Category C OR 6+ total unfixed = FAIL-ESCALATE; if both FAIL-RETRY and FAIL-ESCALATE thresholds are met simultaneously, FAIL-ESCALATE takes precedence)
 
 This threshold is a HARD gate. Do NOT classify 4 Category C issues as CONDITIONAL PASS. If a 4th Category C issue is found mid-audit, the gate automatically becomes FAIL.
 
@@ -373,7 +373,7 @@ Report in exact format:
 **Mandatory file conflict prevention**: Before spawning, assign mutually exclusive file sets to Teammates 1 and 2. If shared files exist (type definitions, shared utilities, barrel exports), assign them to Teammate 1 (frontend) exclusively — Teammate 2 (backend) MUST NOT modify frontend-owned files. If Teammate 2 discovers a type mismatch in a shared file, report it to the lead for manual fix after Teammate 1 completes. For files in the backend directory, Teammate 2 has exclusive ownership. For shared files, Teammate 2 should read the latest version after Teammate 1 completes.
 
 1. After each teammate completes, review their completion message for Category C escalations — if found, document them in `plancasting/_progress.md`.
-2. If the FAIL-ESCALATE gate is triggered (6+ Category C issues, OR 6+ total unfixed issues, OR 3 consecutive FAIL-RETRY outcomes), add a note to the audit report recommending a FULL Stage 5 re-run for affected features rather than targeted fixes — this volume of Category C issues indicates systemic frontend failure, not just isolated gaps. For FAIL-RETRY (4–5 Category C), recommend re-running 5B with targeted fixes.
+2. If the FAIL-ESCALATE gate is triggered (6+ Category C issues, OR 6+ total unfixed issues, OR 3 consecutive per-feature FAIL-RETRY outcomes for the same FEAT-ID (tracked per-feature, not globally)), add a note to the audit report recommending a FULL Stage 5 re-run for affected features rather than targeted fixes — this volume of Category C issues indicates systemic frontend failure, not just isolated gaps. For FAIL-RETRY (4–5 Category C), recommend re-running 5B with targeted fixes.
 3. Resolve any conflicts between backend and frontend fixes. If teammates 1 and 2 modify the same file, the lead must review both change sets and merge. If a teammate is stuck on a fix exceeding Category B scope (needs >100 lines of new code), reclassify as Category C and move on.
 
 ---
@@ -414,10 +414,11 @@ Save to `./plancasting/_audits/implementation-completeness/report.md`:
 - Orphan Scan: ✅ / ❌ (0 orphan components)
 
 ## Gate Decision
+Gate decision is evaluated in priority order: PASS first, then CONDITIONAL PASS, then FAIL-RETRY, then FAIL-ESCALATE. The first matching outcome applies.
 - **PASS**: All Category A/B fixed, zero Category C issues, all tests pass, zero stubs remain → proceed to Stage 6
 - **CONDITIONAL PASS**: All Category A/B fixes attempted; 0–2 A/B issues remain unfixed (each documented with explanation why the fix failed), OR all A/B fixed AND 1–3 Category C issues documented with clear descriptions and workarounds. If BOTH unfixed A/B AND Category C issues exist, apply CONDITIONAL PASS only if total unfixed (A/B + C) ≤ 3; otherwise apply FAIL-RETRY → proceed to Stage 6 with known gaps noted
 - **FAIL-RETRY** (re-run 5B): ANY of: (a) 3+ Category A/B issues remain unfixed, (b) test failures from 5B fixes, (c) 4–5 Category C issues. Before re-running, diagnose WHY the fix failed — re-running without diagnosis will loop. Maximum 3 re-runs of 5B (Run Number 4 = final attempt). If A/B issues persist after Run 3, escalate all remaining A/B issues to Category C. If Run 4+, skip Phase 2 and escalate all remaining A/B issues to Category C in Phase 4.
-- **FAIL-ESCALATE** (re-run Stage 5): 6+ Category C issues, OR 6+ total unfixed issues across all categories combined, OR 3 consecutive FAIL-RETRY outcomes (indicates systemic implementation failure)
+- **FAIL-ESCALATE** (re-run Stage 5): 6+ Category C issues, OR 6+ total unfixed issues across all categories combined AFTER Phase 2/3 fix attempts (i.e., remaining unfixed A/B that Phase 2 could not resolve + all Category C), OR 3 consecutive FAIL-RETRY outcomes for the same feature (indicates systemic implementation failure)
 - **FAIL recovery actions**: Specific steps by failure type:
   - **Unfixed A/B issues**: Diagnose the root cause, then re-run Stage 5B with targeted fixes for the specific files
   - **4–5 Category C issues**: Operator should manually address or set affected features to `🔄 Needs Re-implementation` in `_progress.md`, then re-run 5B to re-scan. 5B cannot fix Category C issues itself — the re-run verifies operator fixes reduced the count. If Category C count still exceeds 3 after operator intervention, escalate to FAIL-ESCALATE
@@ -446,7 +447,7 @@ Save to `./plancasting/_audits/implementation-completeness/report.md`:
 | 1+ | any | *(determined after fixes)* | Spawn Phase 2 teammates to fix A/B. Document Category C in `_progress.md`. After Phase 3, proceed to Phase 4 for gate decision. |
 | any (Run 4+) | any | **FAIL-ESCALATE** | Run 4+ reached. Skip Phase 2 auto-fixes. Reclassify all remaining A/B issues as Category C. Proceed to Phase 4 to generate report with FAIL-ESCALATE gate. Set `🔄` in `_progress.md` for affected features. |
 
-**Per-feature escalation rule**: If a single feature (same FEAT-ID) reports FAIL-RETRY three consecutive times across 5B re-runs (fail → operator sets `🔄` → Stage 5 re-runs feature → 5B fails again, repeated 3×), that feature automatically escalates to FAIL-ESCALATE regardless of overall category counts. Track per-feature run counts in the audit report's feature table. This prevents infinite retry loops on features that consistently fail due to deeper architectural issues.
+**Per-feature escalation rule**: If a single feature (same FEAT-ID) reports FAIL-RETRY three consecutive times across 5B re-runs (fail → operator sets `🔄` → Stage 5 re-runs feature → 5B fails again, repeated 3×), that feature automatically escalates to FAIL-ESCALATE regardless of overall category counts. Other features' results and intervening PASS/CONDITIONAL PASS outcomes for OTHER features are irrelevant. **Reading previous run state**: At the start of Phase 1, read the previous audit report at `./plancasting/_audits/implementation-completeness/report.md` if it exists — extract the per-feature `5B Runs` column to continue tracking consecutive FAIL-RETRY counts. If no previous report exists, this is Run 1. Track per-feature run counts in the audit report's feature table. This prevents infinite retry loops on features that consistently fail due to deeper architectural issues.
 
 **Note**: This table determines whether Phase 2 teammate spawning is necessary. Phase 4 (report generation) and Phase 5 (rule extraction) ALWAYS run regardless of early exit — the report is required by downstream stages (6A–6G, 6H), and rule extraction captures any patterns found during the Phase 1 scan even if no fixes were needed. Save the report to `./plancasting/_audits/implementation-completeness/report.md` with the gate decision and Category C details.
 
@@ -481,6 +482,8 @@ After gate decision, extract implementation lessons as path-scoped rules:
 4. **Update ONLY CLAUDE.md Part 2** Path-Scoped Rules table with updated rule counts if any HIGH confidence rules were added. Do NOT modify Part 1.
 
 5. Stage updated `.claude/rules/` files and `plancasting/_rules-candidates.md` in the audit commit.
+
+> **Limits**: Respect the limits from CLAUDE.md: max 15 rules per file, max 8 rule files total.
 
 ---
 

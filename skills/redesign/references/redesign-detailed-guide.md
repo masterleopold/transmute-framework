@@ -1270,6 +1270,11 @@ Generate `./plancasting/_audits/visual-polish/report.md`:
 
 **Category note**: 6P-R uses Critical/Major/Minor severity for review issues, distinct from 6P's O/E/D visual categories. Both systems are independent of the 6V/6R fixability-based A/B/C categories.
 
+**Severity classification**:
+- **Critical**: Design system not applied to key pages, broken dark mode, validation failures
+- **Major**: Inconsistent design token usage across 3+ components, missing responsive breakpoint
+- **Minor**: Single-component spacing issue, minor color inconsistency
+
 - **PASS**: All design decisions implemented, visual review passed, validation clean → proceed to Stage 7
 - **CONDITIONAL PASS**: Minor visual issues remain but documented → proceed to Stage 7, address in next iteration
 - **FAIL**: Critical visual issues, validation failures, or broken dark mode → fix before proceeding

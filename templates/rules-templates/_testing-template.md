@@ -5,7 +5,7 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 
 # Testing Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/testing.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[TEST_DIR]`, `[TEST_RUNNER]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/testing.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/testing.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[TEST_DIR]`, `[TEST_RUNNER]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/testing.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/testing.md` instead.
 
 ## Selectors
 
@@ -26,7 +26,8 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 
 <!-- TODO: Stage 3 — replace with actual async assertion pattern for [BACKEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
-- Per CLAUDE.md Part 1 E2E Tests, use async assertion patterns for eventually-consistent backends (Playwright: `expect.poll()`/`expect.toPass()`; Jest/Vitest: custom polling helper) — additionally, never use `page.waitForTimeout()` as a substitute.
+- Per CLAUDE.md Part 1 E2E Tests, use async assertion patterns for eventually-consistent backends (Playwright: `expect.poll()`/`expect.toPass()`; Jest/Vitest: custom polling helper).
+- Never use `page.waitForTimeout()` as a substitute for proper async assertions.
 - Set reasonable polling intervals and timeouts based on expected backend latency:
   - `expect.poll()`: periodic UI checks — use `{ timeout: 10000, intervals: [100, 200, 500] }` for exponential backoff
   - `expect.toPass()`: complex multi-step assertions — use `{ timeout: 10000 }` for multi-condition checks
@@ -41,14 +42,14 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 
 ## Test Isolation
 
-<!-- TODO: Stage 3 — replace with actual setup/teardown pattern -->
+<!-- TODO: Stage 3 — replace with actual setup/teardown pattern. Source: tech-stack.md | Confidence: HIGH -->
 
 - Each test must not depend on state from previous tests — use `beforeEach` to set up required state and `afterEach` to clean up if needed.
 - For E2E tests, use unique identifiers (timestamps, UUIDs) to avoid collisions; prefer creating fresh test data over relying on seed data.
 
 ## Component Testing
 
-<!-- TODO: Stage 3 — replace with actual component test patterns for [TEST_RUNNER] -->
+<!-- TODO: Stage 3 — replace with actual component test patterns for [TEST_RUNNER]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Tests, test all five states (default, loading, empty, error, disabled) for every component.
 - Include axe-core accessibility checks (`[AXE_INTEGRATION]`) in component tests (WCAG AA level minimum; upgrade to AAA if PRD requires it). Framework-specific: Next.js+Jest → `jest-axe`, Vite+Vitest → `@axe-core/react`, Playwright E2E → `@axe-core/playwright`.
@@ -56,14 +57,14 @@ globs: ["[TEST_DIR]/**", "**/*.test.*", "**/*.spec.*"]
 
 ## Credentials
 
-<!-- TODO: Stage 3 — replace with actual test constants location -->
+<!-- TODO: Stage 3 — replace with actual test constants location. Source: tech-stack.md | Confidence: HIGH -->
 
 - Never hardcode credentials in test files — reference test credentials from `[TEST_CONSTANTS_PATH]` (e.g., `e2e/constants.ts`); never log, commit, or share credential values.
 - Use separate test accounts for each test suite to avoid auth state leakage.
 
 ## Test Data
 
-<!-- TODO: Stage 3 — replace with actual seed/factory pattern -->
+<!-- TODO: Stage 3 — replace with actual seed/factory pattern. Source: tech-stack.md | Confidence: HIGH -->
 
 - Use seed data scripts or factory functions to generate test data — never use production data in tests.
 - Factories should produce minimal valid objects — override only the fields relevant to each test.

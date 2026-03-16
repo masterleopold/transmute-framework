@@ -161,8 +161,8 @@ If a runtime issue requires architectural changes beyond this stage's scope:
 
 ## Post-3-Cycles Escalation
 
-After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist:
-- Escalate ALL remaining 6V-A/B to 6V-C
+After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist, remaining 6V-A/B issues auto-escalate to 6V-C:
+- Update escalated issues to 6V-C
 - Update gate to CONDITIONAL PASS
 - Create `remaining-blockers.md` as authoritative list of unresolved issues
 - Operator must: (a) manually resolve, re-run 6V, then 6R if needed, OR (b) document as known limitations and proceed to 6P
@@ -207,11 +207,11 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 - **Previous cycle report**: [path or "N/A -- first cycle"]
 
 ## Gate Decision
-- **PASS**: All critical/high issues resolved
-- **CONDITIONAL PASS**: Some high-severity issues remain but documented
-- **FAIL**: Critical issues remain that block deployment
+- **PASS**: All 6V-A and 6V-B issues resolved. Remaining 6V-C issues documented with rationale.
+- **CONDITIONAL PASS**: Some 6V-B issues remain with workarounds documented. All 6V-A issues resolved.
+- **FAIL**: 6V-A or 6V-B issues remain unresolved without workarounds.
 
-**Cycle limit rule**: After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist, escalate to 6V-C. Update gate to CONDITIONAL PASS and proceed to 6P/6P-R. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed.
+**Cycle limit rule**: After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues persist, remaining 6V-A/B issues auto-escalate to 6V-C. Update gate to CONDITIONAL PASS and proceed to 6P/6P-R. If 6R gate is FAIL after max cycles, do NOT re-run 6R — manually fix 6V-C issues first, re-run 6V, then 6R if needed.
 
 ## Rules Extracted
 - HIGH confidence (auto-promoted): [n] rules added to `.claude/rules/`
@@ -219,7 +219,7 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/B issues pers
 
 ## Next Steps
 - If PASS: proceed to Stage 6P/6P-R -> 7 (Deploy) -> Stage 7V -> Stage 7D
-- If CONDITIONAL PASS: human reviews remaining issues
+- If CONDITIONAL PASS: human reviews remaining issues. Proceed to Stage 6P or 6P-R (one always runs), then Stage 7 if human accepts remaining issues.
 - If FAIL: human resolves 6V-C critical issues, then re-run 6V -> 6R
 ```
 

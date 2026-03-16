@@ -78,9 +78,9 @@ Validate that the PRD completely covers all BRD requirements.
 2. **BRD → PRD Reverse Traceability**: For every US-xxx:
    - Check if it traces to at least one BR-xxx or FR-xxx
    - For orphan stories, apply the **Orphan Story Decision Tree**:
-     - **(1) Indirect mapping**: Implements NFR/BRL/IR indirectly → document, flag as "BRD gap — recommend adding FR-xxx". Do NOT create the FR retroactively — the lead evaluates in Phase 4.
-     - **(2) PRD refinement or valid inference**: UX implementation of documented requirement or best-practice pattern → preserve, label as "PRD refinement" or "Valid inference". If it adds functional capability beyond UX polish, additionally flag as BRD gap.
-     - **(3) Scope creep**: Neither (1) nor (2) → flag for removal or explicit approval. Do NOT silently preserve.
+     - **(a) Indirect mapping**: Implements NFR/BRL/IR indirectly → document, flag as "BRD gap — recommend adding FR-xxx". Do NOT create the FR retroactively — the lead evaluates in Phase 4.
+     - **(b) PRD refinement or valid inference**: UX implementation of documented requirement or best-practice pattern → preserve, label as "PRD refinement" or "Valid inference". If it adds functional capability beyond UX polish, additionally flag as BRD gap.
+     - **(c) Scope creep**: Neither (a) nor (b) → flag for removal or explicit approval. Do NOT silently preserve.
 
 3. **Business Requirement Completeness**: Every BR-xxx has at least one FR. Product KPIs/OKRs align with business KPIs.
 
@@ -191,9 +191,9 @@ Monitor progress. Facilitate cross-team findings:
    5. CRITICAL = 0 AND HIGH = 0 AND overall coverage ≥ 95%? → **PASS**
    6. CRITICAL = 0 AND HIGH ≤ 3 AND no P0 blockers AND overall coverage ≥ 90%? → **CONDITIONAL PASS** (document each HIGH with root cause + remediation plan)
    7. BRD assumption volume ≥ 30% AND HIGH ≤ 3 AND operator confirmed (`Operator reviewed: YES`)? → **CONDITIONAL PASS** (with caveat)
-   8. No rule matched? → **FAIL** (edge case — document and escalate)
+   8. No rule matched? → **FAIL** (edge case — e.g., CRITICAL=0 but HIGH>3 with ≥95% coverage, or other metric combinations not covered above. Document the specific combination of metrics and escalate to operator for manual gate decision)
 
-   **Coverage definitions**:
+   **Coverage definitions** (note: "coverage" in this stage means BRD→PRD requirement traceability — each FR has US + SC + API. This differs from Stage 3's "scaffold coverage" which measures PRD→file mapping):
    - **Complete coverage** for an FR = FR has at least one US AND at least one SC AND (at least one API OR documented as frontend-only)
    - **Overall coverage** = (FRs with complete coverage / total FRs) × 100%
    - **P0 coverage** = coverage calculated only for FRs mapped to P0 features (via Feature Decomposition Map)

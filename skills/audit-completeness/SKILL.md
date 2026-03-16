@@ -49,7 +49,7 @@ Issues found during this audit are classified into three SIZE-BASED categories:
 
 Based on observed Plan Cast outcomes, these are the most common stub patterns, ordered by frequency:
 
-### Frontend Stubs (PRIMARY — ~80% of issues) (observed across early Plan Casts; percentages are approximate)
+### Frontend Stubs (PRIMARY — ~80% of issues) (observed across early Plan Casts; percentages are approximate and overlap — duplication co-occurs with frontend stubs, so totals exceed 100%)
 1. **Scaffold component bodies**: Components that return a single `<div>` or `<p>` with the feature name and description, no real UI
 2. **Unconnected hooks**: Components that import a hook but use `useState("")` or hardcoded mock data instead of the hook's return value
 3. **Missing form handlers**: Forms with `onSubmit` that calls `e.preventDefault()` and nothing else
@@ -140,7 +140,7 @@ Apply the early exit decision table (covers cases where no teammate spawning is 
 | 1+ | any | *(after fixes)* | Spawn teammates for A/B fixes, document Cat C |
 | any (Run 4+) | any | FAIL-ESCALATE | Skip Phase 2 auto-fixes, reclassify all remaining A/B as Cat C |
 
-**Per-feature escalation rule**: If a single feature (same FEAT-ID) reports FAIL-RETRY three consecutive times across 5B re-runs, that feature automatically escalates to FAIL-ESCALATE regardless of overall category counts.
+**Per-feature escalation rule**: If a single feature (same FEAT-ID) reports FAIL-RETRY three consecutive times across 5B re-runs, that feature automatically escalates to FAIL-ESCALATE regardless of overall category counts. Other features' results and intervening PASS/CONDITIONAL PASS outcomes for OTHER features are irrelevant. **Reading previous run state**: At the start of Phase 1, read the previous audit report at `./plancasting/_audits/implementation-completeness/report.md` if it exists — extract the per-feature `5B Runs` column to continue tracking consecutive FAIL-RETRY counts. If no previous report exists, this is Run 1.
 
 When skipping Phase 2-3, the lead MUST still generate the audit report with gate decision and Category C details. Phase 4 (report) and Phase 5 (rule extraction) ALWAYS run regardless of early exit.
 
@@ -195,10 +195,11 @@ After all teammates complete:
 3. **Update `plancasting/_progress.md`**: Mark Category C features as Needs Re-implementation. Add Stage 5B Audit section.
 
 4. **Gate Decision**:
+   Gate decision is evaluated in priority order: PASS first, then CONDITIONAL PASS, then FAIL-RETRY, then FAIL-ESCALATE. The first matching outcome applies.
    - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs remain -> Stage 6
    - **CONDITIONAL PASS**: All A/B fixes attempted; 0–2 A/B remain unfixed (each documented with explanation), OR all A/B fixed AND 1–3 Cat C documented. If BOTH unfixed A/B AND Cat C exist, apply CONDITIONAL PASS only if total unfixed (A/B + C) ≤ 3; otherwise FAIL-RETRY -> Stage 6 with known gaps
    - **FAIL-RETRY**: 3+ A/B unfixed, OR test failures from 5B fixes, OR 4–5 Cat C -> re-run 5B (max 3 re-runs; 3 consecutive FAIL-RETRY = auto-escalate). Before re-running, diagnose WHY the fix failed — re-running without diagnosis will loop. If Run 4+, skip Phase 2 and escalate all remaining A/B to Cat C.
-   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues across all categories combined, OR 3 consecutive FAIL-RETRY reports -> re-run Stage 5 for affected features
+   - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues across all categories combined AFTER Phase 2/3 fix attempts (i.e., remaining unfixed A/B that Phase 2 could not resolve + all Category C), OR 3 consecutive FAIL-RETRY outcomes for the same feature -> re-run Stage 5 for affected features
 
 ### Phase 5: Rule Extraction (Post-Gate)
 
@@ -208,6 +209,8 @@ After gate decision, extract implementation lessons as path-scoped rules (see CL
 2. Generate rule candidates with Source Stage, Evidence, Trigger, Rule Text, Target File, Confidence, Affected Features
 3. Route by confidence: HIGH (2+ features) -> `.claude/rules/`, MEDIUM/LOW -> `plancasting/_rules-candidates.md`
 4. Update CLAUDE.md Part 2 Path-Scoped Rules table if HIGH confidence rules added
+
+> **Limits**: Respect the limits from CLAUDE.md: max 15 rules per file, max 8 rule files total.
 
 ### Phase 6: Shutdown
 

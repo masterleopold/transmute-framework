@@ -44,6 +44,8 @@ Always read `CLAUDE.md` and `plancasting/tech-stack.md` for actual conventions.
 
 **Branch safety**: Create a dedicated branch: `git checkout -b chore/dependency-update-$(date +%Y-%m-%d-%H%M%S)`. The HMS suffix prevents collisions if Stage 9 is re-run the same day. Do NOT commit directly to main.
 
+**Pre-flight Concurrency Check**: Before proceeding, verify that Stage 8 (Feedback Loop) is not currently in progress. Check: (1) `git log --oneline -5 | grep -i 'feedback'` — if the most recent commit is an in-progress feedback batch from the current day, STOP; (2) `git branch --list 'feedback/*'` — if a `feedback/batch-*` branch exists, Stage 8 may be active. Do not run Stage 9 concurrently with Stage 8 (both modify `package.json` and lock files). Wait for Stage 8 to complete and commit before starting Stage 9.
+
 1. Read `CLAUDE.md` and `plancasting/tech-stack.md`.
 2. Verify clean working directory.
 3. Create maintenance directory: `mkdir -p ./plancasting/_maintenance`

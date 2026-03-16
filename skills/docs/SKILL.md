@@ -182,7 +182,7 @@ Include in the report under a `## Gate Decision` heading (6H parses this heading
 
 - **PASS**: All features documented, all code examples verified, all internal links resolve.
 - **CONDITIONAL PASS**: Core features documented, minor gaps noted (incomplete features per 5B skipped).
-- **FAIL**: Major documentation gaps, code examples fail type-checking, or critical features undocumented.
+- **FAIL**: Major documentation gaps, code examples on critical paths fail type-checking, or critical features undocumented.
 
 ## Phase 5: Shutdown
 

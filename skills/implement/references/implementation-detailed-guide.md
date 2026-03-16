@@ -300,7 +300,7 @@ If typecheck/lint errors are introduced by THIS feature's new code, fix them bef
 
 If a teammate produces scaffold-quality output (stub components, placeholder text, unconnected hooks):
 1. Do NOT accept the work. Send it back with specific instructions.
-2. If the teammate cannot produce functional code, mark as `🔧 In Progress` with a clear note about what's blocking.
+2. If the teammate cannot produce functional code, mark the feature as `⏸ Blocked` with the blocker description in the Notes column.
 3. NEVER mark a feature as Done to "move on" — this creates false progress.
 
 ---

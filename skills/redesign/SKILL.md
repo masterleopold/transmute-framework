@@ -31,7 +31,7 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/redesign-detailed-gu
 
 **Stage 6P-R** occupies the same pipeline slot as 6P (after all Stage 6 quality passes, before Stage 7 deployment). It is an ALTERNATIVE to standard 6P, not an addition. Run one or the other, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first (`git revert` the 6P commit).
 
-**Mutual Exclusion with 6P**: 6P and 6P-R are mutually exclusive. To switch from 6P to 6P-R: (1) commit all current work including 6P changes, (2) revert the 6P commit with `git revert <6P-commit-hash>`, (3) start a new session and run 6P-R.
+**Mutual Exclusion with 6P**: 6P and 6P-R are mutually exclusive. To switch from 6P to 6P-R: (1) commit all current work including 6P changes, (2) revert the 6P commit with `git revert <6P-commit-hash>`, (3) Start a new session and run 6P-R.
 
 **Stage Sequence**: ... → 6V → [6R — only if 6V found 6V-A/B issues] → **6P-R** → 7 (Deploy) → 7V → 7D → 8 / 9
 

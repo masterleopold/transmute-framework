@@ -19,7 +19,7 @@ Lead a multi-agent error resilience hardening project. Systematically review the
 
 > **Cross-stage coordination**: Before implementing data-mutation rate limiting, read `./plancasting/_audits/security/report.md` from Stage 6A to verify which endpoints are already rate-limited (auth endpoints). Implement only DATA-MUTATION rate limiting here — auth endpoint rate limiting was handled in 6A.
 
-Stage 6A implements rate limiting for **AUTH endpoints** (login, signup, password reset, MFA, session management, password change, email verification, invitation acceptance). Stage 6G (this stage) implements rate limiting for **DATA-MUTATION endpoints** (create, update, delete operations, file uploads, user profile updates). Verify 6A's auth-endpoint rate limiting before implementing to avoid duplication.
+Stage 6A implements rate limiting for **AUTH endpoints** (login, signup, password reset, forgot password / password reset initiation, MFA, session management, password change, email verification, invitation acceptance). Stage 6G (this stage) implements rate limiting for **DATA-MUTATION endpoints** (create, update, delete operations, file uploads, user profile updates). Verify 6A's auth-endpoint rate limiting before implementing to avoid duplication.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Verify before starting:
 
 1. `./plancasting/_audits/implementation-completeness/report.md` exists with PASS or CONDITIONAL PASS. If missing, STOP: "Stage 5B report not found — do not harden code with unverified implementation completeness."
 2. If 5B shows FAIL, STOP. If CONDITIONAL PASS, review Category C issues and proceed with awareness.
-3. `./plancasting/_audits/refactoring/report.md` (6E) exists. If missing, WARN: "Stage 6E not completed. 6G is RECOMMENDED after 6E for cleaner error handling patterns." If present, read the "Extracted Error Handling Patterns" section to reuse existing patterns rather than creating duplicates.
+3. `./plancasting/_audits/refactoring/report.md` (6E) exists. If missing, WARN: "Stage 6E not completed. 6G is RECOMMENDED after 6E for cleaner error handling patterns." If present, read the "Extracted Error Handling Patterns for Stage 6G" section to reuse existing patterns rather than creating duplicates.
 4. Read `./CLAUDE.md` and `./plancasting/tech-stack.md` for project conventions.
 5. If `./plancasting/_audits/security/report.md` (6A) is available, include in teammate prompts for rate limiting scope boundaries. If missing, WARN and implement data-mutation rate limiting regardless.
 

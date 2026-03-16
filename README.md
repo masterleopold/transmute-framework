@@ -1,6 +1,6 @@
 # Transmute Framework
 
-> **v2.2.0** — Template sync: TODO source annotations, verification grep commands, retention defaults, UTC timestamps, timeout guidance, role model detail, deployment recovery, per-feature escalation tracking
+> **v2.3.0** — Gate precision, terminology alignment, standalone project support, crash recovery improvements
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
@@ -149,7 +149,7 @@ The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are 
 
 - **5B**: FAIL triggers RETRY (re-run Stage 5 for affected features) or ESCALATE (4+ Category C issues)
 - **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
-- **6R**: Max 3 internal fix-verify cycles per run before escalation
+- **6R**: Max 3 internal fix-verify cycles per run before escalation; max 2 outer 6V→6R cycles total
 - **7V**: Binary gate — PASS proceeds to 7D, FAIL requires hotfix + re-deploy or rollback
 - **6P**: Issues categorized as Omission (O), Execution (E), or Design (D)
 - **6P-R**: Severity levels — Critical, Major, Minor
@@ -252,6 +252,26 @@ transmute-framework/
 
 ### v2.1.0
 
+### v2.3.0
+
+**Gate Precision & Terminology Alignment**
+
+- **5B gate**: Added priority-order evaluation (PASS → CONDITIONAL PASS → FAIL-RETRY → FAIL-ESCALATE), expanded CONDITIONAL PASS paths (a/b/c), fixed FAIL-RETRY threshold (4–5 total unfixed), added FAIL-ESCALATE precedence rule, per-feature run state reading from previous reports
+- **6R gate**: Updated to 6V-A/6V-B/6V-C terminology, auto-escalation after 3 cycles, max 2 outer 6V→6R cycles, CONDITIONAL PASS next steps clarified
+- **6P gate**: Category E discretionary — skip if conflicts with design system, negligible impact, or risks regression
+- **6P-R**: Severity classification (Critical/Major/Minor), session boundary for 6P→6P-R switching
+- **3 gate**: CONDITIONAL PASS requires Part 2 + `_progress.md`, FAIL expanded with OR conditions, coverage terminology note
+- **2B gate**: Coverage definition disambiguation vs Stage 3, FAIL edge case examples
+- **Stage 8 prerequisite**: 7D PASS/WARN check added (FAIL blocks Stage 8)
+- **Scaffold**: Standalone project exception for pipeline credentials, Next.js-conditional config rules
+- **6G**: Added FORGOT PASSWORD edge case classification, 6E section reference fix
+- **Remediate**: Crash recovery uses subsection counting, cycle limit auto-escalation wording
+- **Stage 9**: Pre-flight concurrency check against Stage 8
+- **Stage 0**: Cross-reference to Stage 3 credential gate for standalone projects
+- **User guide**: Pre-deletion image path capture for 6P-R reruns, pre-flight cleanup note
+- **Feedback**: 6V re-run instruction with full 6V→6R→6P chain
+- **Progress tracking**: 🔄 status set by 5B audit OR operator
+
 ### v2.2.0
 
 **Comprehensive Template Sync (2-Pass Deep Audit)**
@@ -274,7 +294,7 @@ transmute-framework/
 - Stage 0: Expanded outputs list and skip conditions with section enumeration
 - Stage 3 prerequisite: Added credential validation details
 - .env.local timing: Expanded with backend deployment timing and mid-pipeline credential guidance
-- 6A/6G scope: Added account linking, signup, logout to 6A; file uploads to 6G; added decision rule with edge cases
+- 6A/6G scope: Added account linking, invitation acceptance, signup, logout to 6A; file uploads to 6G; added decision rule with edge cases
 - 6V modes: Clarified applies to 6V only, not 7V (7V always SMOKE scope)
 - 2B gate: Added "none P0-blocking" detail and assumption review conditional
 - 5B gate: Expanded with detailed thresholds (PASS/CONDITIONAL/FAIL-RETRY/FAIL-ESCALATE), per-feature escalation tracking

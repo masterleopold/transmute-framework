@@ -5,7 +5,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 # Frontend Rules
 
-> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly.
+> **This is a template.** Stage 3 (Scaffold Generation) reads this template and generates `.claude/rules/frontend.md` with actual project values. Stage 3 MUST: (1) replace ALL `[BRACKETED]` placeholder markers (e.g., `[FRONTEND_DIR]`, `[LOADING_COMPONENT]`), (2) replace each `<!-- TODO -->` HTML comment with a proper `<!-- Source: Stage 3 | Evidence: [ref] | Confidence: HIGH -->` annotation (`// TODO:` inside code blocks are code example placeholders — replace those with actual code patterns), and (3) update the globs in frontmatter with actual paths. Stage 4 confirms replacements are complete. After Stage 3 renders this template, verify no placeholders remain: `grep -n '\[.*\]' .claude/rules/frontend.md` — the output should be empty (all `[BRACKETED]` markers replaced with actual values). Do not edit this template directly — edit the generated `.claude/rules/frontend.md` instead.
 
 ## Component States
 
@@ -37,7 +37,7 @@ globs: ["[FRONTEND_DIR]/**"]
 
 ## Responsive Behavior
 
-<!-- TODO: Stage 3 — replace with actual breakpoint system -->
+<!-- TODO: Stage 3 — replace with actual breakpoint system. Source: tech-stack.md | Confidence: HIGH -->
 
 - Use the project's breakpoint system (`[BREAKPOINT_CONFIG]`) — never hardcode pixel widths; write base styles mobile-first, then layer larger breakpoints.
 - Test all pages at 320px, 768px, 1024px, and 1440px minimum.
@@ -53,21 +53,35 @@ globs: ["[FRONTEND_DIR]/**"]
 
 ## Image Optimization
 
-<!-- TODO: Stage 3 — replace with actual image component -->
+<!-- TODO: Stage 3 — replace with actual image component. Source: tech-stack.md | Confidence: HIGH -->
 
 - Use `[IMAGE_COMPONENT]` for all images — never use raw `<img>` tags; always specify `width`/`height` or use `fill` with a sized container.
 - Provide `alt` text for all images (empty `alt=""` only for purely decorative images) and use appropriate formats: WebP/AVIF for photos, SVG for icons and illustrations.
 
 ## Accessibility
 
-<!-- TODO: Stage 3 — replace with actual ARIA and keyboard patterns for [FRONTEND_FRAMEWORK] -->
+<!-- TODO: Stage 3 — replace with actual ARIA and keyboard patterns for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
 
 - Per CLAUDE.md Part 1 Component Rules #2 and #3, all interactive elements must have appropriate ARIA attributes and support keyboard navigation — use semantic HTML first, add ARIA only when native semantics are insufficient.
 - Tab order follows visual order, focus is trapped in modals, Escape closes overlays.
 
 ## Icon Usage
 
-<!-- TODO: Stage 3 — replace [ICON_LIBRARY] and [ICON_REGISTRY_PATH] with actual values from tech-stack.md -->
+<!-- TODO: Stage 3 — replace [ICON_LIBRARY] and [ICON_REGISTRY_PATH] with actual values from tech-stack.md. Source: tech-stack.md | Confidence: HIGH -->
 
-- Per CLAUDE.md Part 1 Component Rules #6, never use inline SVG `<path>` elements for standard UI icons — import all icons from `[ICON_REGISTRY_PATH]`; inline SVGs are permitted only for product logos, brand marks, or custom illustrations.
-- When adding a new icon, register it in `[ICON_REGISTRY_PATH]` first; import from there, not directly from `[ICON_LIBRARY]` in component files.
+- Per CLAUDE.md Part 1 Component Rules #6, never use inline SVG `<path>` elements for standard UI icons — import all icons from `[ICON_LIBRARY]` using the project's established pattern; inline SVGs are permitted only for product logos, brand marks, or custom illustrations.
+- If an icon registry exists at `[ICON_REGISTRY_PATH]`, register new icons there first and import from the registry. If no registry is used, import directly from `[ICON_LIBRARY]` in component files.
+
+## Environment Variables
+
+<!-- TODO: Stage 3 — replace [CLIENT_ENV_PREFIX] with actual prefix (e.g., NEXT_PUBLIC_ for Next.js, VITE_ for Vite). Source: tech-stack.md | Confidence: HIGH -->
+
+- Only variables prefixed with `[CLIENT_ENV_PREFIX]` are exposed to the browser — never reference server-only secrets without the prefix.
+- Reference env var names exactly as defined in `.env.local.example` — never invent alternative names (see Stage 3 Known Failure Pattern #9).
+
+## Error Boundaries
+
+<!-- TODO: Stage 3 — replace with actual error boundary pattern for [FRONTEND_FRAMEWORK]. Source: tech-stack.md | Confidence: HIGH -->
+
+- Place error boundaries at route segment level (one per page/layout) and around independently-failing widgets — do not wrap the entire app in a single boundary.
+- Every error boundary must render a user-friendly fallback with a retry action, not a blank screen.

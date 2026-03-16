@@ -154,8 +154,8 @@ If a runtime issue requires architectural changes beyond this stage's scope:
 
 ## Post-3-Cycles Escalation
 
-After 3 internal fix-verify cycles within a single 6R run, if 6V-A/6V-B issues persist:
-- Escalate ALL remaining 6V-A/B to 6V-C (human judgment required)
+After 3 internal fix-verify cycles within a single 6R run, if 6V-A/6V-B issues persist, remaining 6V-A/B issues auto-escalate to 6V-C:
+- Update escalated issues to 6V-C (human judgment required)
 - Update gate to CONDITIONAL PASS
 - Proceed to 6P/6P-R without further cycle attempts
 - Create `remaining-blockers.md` listing all unresolved issues
@@ -164,14 +164,14 @@ After 3 internal fix-verify cycles within a single 6R run, if 6V-A/6V-B issues p
 
 ## Gate Decision
 
-- **PASS**: All critical/high issues resolved. Remaining are medium/low and documented.
-- **CONDITIONAL PASS**: Some high-severity issues remain but documented with workarounds.
-- **FAIL**: Critical issues remain that block deployment.
+- **PASS**: All 6V-A and 6V-B issues resolved. Remaining 6V-C issues documented with rationale.
+- **CONDITIONAL PASS**: Some 6V-B issues remain with workarounds documented. All 6V-A issues resolved.
+- **FAIL**: 6V-A or 6V-B issues remain unresolved without workarounds.
 
 ## Next Steps
 
 - PASS: proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
-- CONDITIONAL PASS: human reviews remaining issues, decides to deploy or fix first
+- CONDITIONAL PASS: human reviews remaining issues. Proceed to Stage 6P or 6P-R (one always runs), then Stage 7 if human accepts remaining issues.
 - FAIL: human resolves 6V-C critical issues, then re-run 6V -> 6R
 
 ## Critical Rules

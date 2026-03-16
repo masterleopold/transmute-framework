@@ -81,8 +81,8 @@ Issues with a clear right/wrong answer: WCAG contrast failures, invisible text, 
 
 **Category boundary guideline**: If the feature is BROKEN or INACCESSIBLE (violates standards, prevents functionality), it's Category O. If it WORKS but FEELS UNPOLISHED (lacks feedback, delight, or visual consistency), it's Category E. Examples -- Category O: missing focus ring (WCAG violation), layout overflow (content hidden). Category E: missing hover state (button works but lacks feedback), no page entry animation.
 
-### Category E: Enhancement (Pattern-Based, Apply & Verify)
-Follow established codebase patterns: missing hover states, missing page transitions, inconsistent spacing, weak empty states (enhance with icon or CTA using existing design assets -- do NOT source new illustrations; document as Category D if none exist), flat typography hierarchy, missing card depth, plain loading states, inconsistent form inputs. Apply then verify visually.
+### Category E: Enhancement (Pattern-Based, Apply Where Feasible)
+Category E is discretionary — skip if the enhancement conflicts with the design system, has negligible visual impact, or risks regression. Follow established codebase patterns: missing hover states, missing page transitions, inconsistent spacing, weak empty states (enhance with icon or CTA using existing design assets -- do NOT source new illustrations; document as Category D if none exist), flat typography hierarchy, missing card depth, plain loading states, inconsistent form inputs. Apply then verify visually.
 
 ### Category D: Design Elevation (Document Only)
 Subjective improvements for human review: font pairing, color palette, hero visual impact, illustration style, micro-interaction opportunities, overall aesthetic direction. Document as suggestions -- do NOT apply. Category D suggestions are for POST-LAUNCH review and do NOT block Stage 7 deployment.
@@ -154,7 +154,7 @@ Re-verify ALL modified screens at 1440px, 768px, 375px plus dark mode. Flag regr
 
 ## Gate Decision
 
-- **PASS**: All Category O fixed, Category E applied, no regressions -- ready for Deploy
+- **PASS**: All Category O fixed, Category E enhancements applied where feasible (E is discretionary — skip if an enhancement conflicts with the design system, has negligible visual impact, or risks regression), no regressions -- ready for Deploy
 - **CONDITIONAL PASS**: All critical fixed + Category D brief for optional elevation -- ready for Deploy
 - **FAIL**: Regressions remain or validation fails -- investigate before Deploy. Consider switching to 6P-R for full design elevation if 6P is insufficient.
 
