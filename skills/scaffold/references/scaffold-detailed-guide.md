@@ -1,6 +1,12 @@
 # Scaffold Detailed Guide — Stage 3 Teammate Instructions & Code Generation Guidelines
 
-This reference contains the full teammate spawn instructions, backend principles, code generation guidelines, and coordination protocol for Stage 3: Project Code Skeleton Generation.
+This reference contains the full teammate spawn instructions, backend principles, code generation guidelines, rules-templates processing, and coordination protocol for Stage 3: Project Code Skeleton Generation.
+
+## Stage Sequence
+
+**Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → 2 (PRD) → 2B (Spec Validation) → **3+4 (this stage)** → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
+
+**Stage 3 vs Stage 4 Boundary**: Stage 3 generates all scaffold code. Stage 4 validates that CLAUDE.md Part 2 was correctly populated — verifying no `[PLACEHOLDER]` markers remain and all project-specific values match `tech-stack.md`.
 
 ## Backend Principles (ALL Teammates — Adapt to Your Stack)
 
@@ -241,6 +247,68 @@ Before writing ANY component code:
 
 ---
 
+## Rules-Templates Processing (Phase 4, Step 5)
+
+Stage 3 generates starter rules from templates in `./plancasting/transmute-framework/rules-templates/`.
+
+### Template Files
+- `_backend-template.md` — Backend function patterns, validation, error handling
+- `_frontend-template.md` — Component patterns, state management, rendering
+- `_api-contracts-template.md` — Type alignment, response shapes, field mapping
+- `_auth-template.md` — Auth checks, session patterns, permission enforcement
+- `_testing-template.md` — Test setup, mock patterns, assertion helpers
+- `_data-model-template.md` — Schema patterns, indexes, soft-delete, timestamps
+
+### Rendering Process
+For each template:
+
+1. **Read the template** and its TODO comments for context on what each placeholder expects
+2. **Replace directory placeholders** with actual paths from `tech-stack.md`:
+   - `[BACKEND_DIR]` → e.g., `convex`
+   - `[FRONTEND_DIR]` → e.g., `src`
+   - `[AUTH_DIR]` → e.g., `convex` or `src/lib`
+   - `[SCHEMA_DIR]` → e.g., `convex` or `prisma`
+   - `[TEST_DIR]` → e.g., `convex/__tests__` or `src/__tests__`
+   - `[HOOKS_DIR]` → e.g., `src/hooks`
+   - `[FRONTEND_TYPES_DIR]` → e.g., `src/lib`
+   - `[MIDDLEWARE_PATH]` → e.g., `src/middleware.ts`
+   - `[MIGRATION_DIR]` → e.g., `prisma/migrations` or N/A
+3. **Replace tech-stack-specific placeholders** with values from `tech-stack.md`:
+   - `[VALIDATOR_SYSTEM]` → e.g., `v validators` (Convex), `Zod` (tRPC)
+   - `[ERROR_TYPE]` → e.g., `ConvexError` (Convex), `TRPCError` (tRPC)
+   - `[AUTH_HELPER]` → e.g., `ctx.auth.getUserIdentity()` (Convex)
+   - `[LOADING_COMPONENT]` → e.g., `Skeleton` from UI library
+   - `[SESSION_PATTERN]` → e.g., `useConvexAuth()` or `useSession()`
+   - `[DATABASE]` → e.g., `Convex`, `PostgreSQL`, `MongoDB`
+   - `[TIMESTAMP_FORMAT]` → e.g., `Date.now()` (Convex), `new Date()` (Prisma)
+4. **Add `globs` frontmatter** based on actual project paths
+5. **Set metadata**: `Source: Stage 3`, `Evidence: tech-stack.md`
+6. **Remove template artifacts**: Delete all `<!-- TODO: Stage 3 — ... -->` comments and the template banner (`> **This is a template.**...`)
+
+### Output Files
+Write to `.claude/rules/`:
+- `backend.md` — from `_backend-template.md`
+- `frontend.md` — from `_frontend-template.md`
+- `api-contracts.md` — from `_api-contracts-template.md`
+- `auth.md` — from `_auth-template.md`
+- `testing.md` — from `_testing-template.md`
+- `data-model.md` — from `_data-model-template.md`
+
+### Limits
+- Max 15 rules per file
+- Max 8 rule files total
+- Each individual rule ≤ 3 sentences
+
+### Rules Candidates File
+
+Create `plancasting/_rules-candidates.md` with:
+- Explanation of the staging workflow (MEDIUM/LOW confidence rules staged here for operator review)
+- Candidate format specification
+- Confidence criteria (HIGH = 2+ distinct features affected with repeatable pattern → auto-promoted to `.claude/rules/`)
+- Zero initial candidates — Stages 5B and 6R will populate
+
+---
+
 ## Phase 3: Coordination During Execution
 
 While teammates work:
@@ -292,17 +360,53 @@ After all teammates complete:
 
 3. **Generate `ARCHITECTURE.md`**: System architecture diagram (mermaid), directory structure, data flow diagrams, cross-feature data flow, auth flow, feature flag flow, PRD-to-code traceability matrix.
 
-4. **Update `CLAUDE.md` Part 2 ONLY**: Fill in placeholder sections. NEVER modify Part 1.
+4. **Update `CLAUDE.md` Part 2 ONLY**: Fill in placeholder sections. NEVER modify Part 1. If CLAUDE.md does not exist, create it from the Transmute Framework Template's root CLAUDE.md.
 
-5. **Fix inconsistencies**.
+5. **Generate `.claude/rules/` starter rules**: See "Rules-Templates Processing" section above.
 
-6. **Output final summary**: File counts, PRD coverage percentages (target: 100%), cross-feature touchpoints, test file counts, feature flags, unresolved issues.
+6. **Create `plancasting/_rules-candidates.md`**: See "Rules Candidates File" section above.
+
+7. **Update Path-Scoped Rules table** in CLAUDE.md Part 2 with actual rule files (paths, globs, counts).
+
+8. **Copy framework files**: Copy `execution-guide.md` and `feature_scenario_generation.md` into `./plancasting/transmute-framework/` so they are available for 6V/7V stages.
+
+9. **Fix inconsistencies**.
+
+10. **Output final summary**: File counts, PRD coverage percentages (target: 100%), cross-feature touchpoints, test file counts, feature flags, unresolved issues. Verify `plancasting/_scaffold-manifest.md` is populated.
+
+11. **Verify all required output files exist**: All source code scaffold files, `plancasting/_codegen-context.md`, `plancasting/_progress.md`, `plancasting/_scaffold-manifest.md`, `ARCHITECTURE.md`, populated CLAUDE.md Part 2, `.claude/rules/*.md` (starter rules), `plancasting/_rules-candidates.md` (empty). Generate any missing files before completing.
+
+12. **Gate Decision**:
+    - **PASS**: All required output files exist, PRD coverage ≥ 95%, CLAUDE.md Part 2 fully populated (no `[PLACEHOLDER]`, `[PROJECT_NAME]`, `[N]`, or `[e.g.,` markers remain), `_progress.md` lists all features, `.claude/rules/` populated → proceed to Stage 4
+    - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded → proceed to Stage 4 with noted gaps
+    - **FAIL**: PRD coverage < 80%, required output files missing, or CLAUDE.md Part 2 not populated → re-run Stage 3
+
+---
+
+## Token Budget Management
+
+Each spawned agent has an output token limit per response (see tech-stack.md § Model Specifications). Safe budget per teammate: output token limit minus 7K headroom (fallback default: 25,000 tokens if tech-stack.md does not specify).
+
+**Estimation heuristics**:
+- Each backend function file: ~200–400 tokens
+- Each React component file: ~300–600 tokens
+- Each page file: ~150–300 tokens
+- Each hook file: ~200–400 tokens
+- Each test file: ~300–500 tokens
+- Configuration files: ~100–300 tokens each
+
+**Splitting if needed**:
+- Teammate 1 (backend): Split by domain group
+- Teammate 3 (components): Split by feature area
+- Teammate 5 (tests): Split by test type or feature area
+
+**If truncated**: Compare generated file count against expected. Re-spawn with reduced scope. Max 2 retry attempts per scope.
 
 ---
 
 ## Code Generation Guidelines (Include in ALL Teammate Spawn Prompts)
 
-1. **Full Scope**: Scaffold ALL features from the PRD. Nothing is deferred.
+1. **Full Scope**: Scaffold ALL features from the PRD. Every screen, every API endpoint, every entity. Nothing deferred.
 2. **PRD Traceability**: Every file starts with `@traces` comment block:
    ```typescript
    /**

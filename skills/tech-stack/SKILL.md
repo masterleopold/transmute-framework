@@ -11,23 +11,34 @@ version: 1.0.0
 
 # Transmute — Tech Stack Discovery & Configuration (Stage 0)
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/tech-stack-detailed-guide.md` for the complete procedure, technology category tables, credential checklists, and product type adaptation rules.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/tech-stack-detailed-guide.md` for the complete procedure, technology category tables, credential checklists, product type adaptation rules, and supported product types.
 
 ## Prerequisites
 
 Before starting, verify:
-1. `./plancasting/businessplan/` directory exists and contains `.md` or `.pdf` files. If missing or empty, STOP and instruct the user to create it.
+1. `./plancasting/businessplan/` directory exists and contains `.md` or `.pdf` files. Supported formats: markdown (`.md`) and PDF (`.pdf`). If the directory is missing or contains no supported files, STOP and instruct the user to create it.
 2. You have access to web search tools for technology research.
 
 ## Overview
 
 This is an INTERACTIVE, multi-phase process. Do NOT rush through — each phase builds on the previous one. The output (`plancasting/tech-stack.md`) is referenced by every subsequent pipeline stage.
 
+## Supported Product Types
+
+- Web applications (SaaS, marketplace, dashboard, portal)
+- Mobile applications (native, cross-platform, companion apps)
+- Desktop applications (Electron, Tauri, native)
+- IoT / Embedded devices (firmware, connected devices, sensor networks)
+- Hardware products (PCB design, 3D modeling, manufacturing)
+- AI/ML products (model serving, agent systems, data pipelines)
+- API services (developer platforms, microservices)
+- Hybrid products (multiple types with shared backend)
+
 ## Execution Flow
 
 ### Step 1: Session Language Selection
 
-Ask the user what language they want for interaction and document generation. Record the selection. All subsequent communication and generated documents use the selected language. Code, technical identifiers, and file names always remain in English.
+Ask the user what language they want for interaction and document generation. This is the FIRST step before any analysis. Record the selection. All subsequent communication and generated documents use the selected language. Code, technical identifiers, and file names always remain in English.
 
 ### Step 2: Business Plan Analysis (Round 0)
 
@@ -67,7 +78,17 @@ Ask ONLY questions the Business Plan did not clearly answer. Skip questions alre
 
 **Round 3**: Feature-specific requirements — authentication, authorization model, theme/dark mode, design direction (reference URLs, logo, Figma files, UI component library, aesthetic direction), data retention, accessibility target, data migration, payments, notifications, email, file storage, background processing, search, public API, audit trail, analytics, monitoring, AI agent orchestration, CI/CD, user-facing documentation.
 
-### Step 4: Technology Research (Phase 2)
+### Step 4: Design Direction Discovery
+
+For products with a frontend, this is a critical sub-phase within Round 3:
+
+1. **Design reference URLs** (1-5): Visit each URL to analyze visual patterns, color schemes, typography, layout approaches, and interaction styles
+2. **Product logo** (PNG/SVG): Extract dominant colors to inform the palette
+3. **Figma design files** (URL or .fig): Highest-authority source — extract tokens directly
+4. **UI component library selection**: Present framework-specific options (e.g., shadcn/ui, Radix, Mantine for React)
+5. **Aesthetic direction preference**: Suggest 3 tailored options based on product personality and target users
+
+### Step 5: Technology Research (Phase 2)
 
 Research the latest technologies using web search. For each technology category relevant to the product:
 
@@ -87,7 +108,7 @@ Research the latest technologies using web search. For each technology category 
 
 **Technology categories for Hardware**: EDA Tool, CAD Tool, Simulation, BOM Management, Version Control, Manufacturing Files.
 
-### Step 5: Present Recommendations (Phase 3)
+### Step 6: Present Recommendations (Phase 3)
 
 Present 2-3 options per category in this format:
 
@@ -108,13 +129,17 @@ Your choice? [A / B / C]
 
 Present ONE CATEGORY AT A TIME or in logical groups (3-4 at once). Do not overwhelm the user. After all selections, present the complete stack as a summary table and wait for explicit user approval before proceeding to credential collection.
 
-### Step 6: Credential Collection (Phase 4)
+### Step 7: Credential Collection (Phase 4)
 
-Generate a credentials checklist categorized by pipeline stage:
-- **Pipeline Infrastructure** (always required): Anthropic API Key, E2B API Key, Sandbox Auth Token
-- **Before Stage 3**: Database/BaaS deploy key, Auth provider dev keys
+Generate a credentials checklist categorized by pipeline stage and credential tier:
+
+- **Pipeline Infrastructure** (always required):
+  - `TRANSMUTER_ANTHROPIC_API_KEY` — Anthropic API key for pipeline AI operations
+  - `E2B_API_KEY` — E2B sandbox API key for code execution
+  - `SANDBOX_AUTH_TOKEN` — Sandbox authentication token
+- **Before Stage 3** (obtain before Stage 3, deploy to backend after Stage 3): Database/BaaS deploy key, Auth provider dev keys
 - **Before Stage 5**: Email, payment, AI, monitoring API keys
-- **Before Stage 7**: Production keys
+- **Before Stage 7**: Production keys for hosting, domains, CDN
 - **Before Stage 7D**: Mintlify account (if documentation site selected)
 
 Collect credentials with strict security rules:
@@ -125,15 +150,16 @@ Collect credentials with strict security rules:
 
 Validate each credential with a minimal test call. Resolve failures for pipeline infrastructure and red-tier credentials before proceeding.
 
-### Step 7: Generate Configuration Files (Phase 5)
+### Step 8: Generate Configuration Files (Phase 5)
 
 Generate these files:
 
 **`./plancasting/tech-stack.md`** — Complete human-readable tech stack document containing:
 - Session Language
 - Product Type, Target Audience, Scale
-- Business Plan Insights (technical implications)
+- Business Plan Insights (technical implications from the 19-category analysis)
 - Technology Stack table (category, technology, version, purpose, documentation URL)
+- Model Specifications (pipeline model, context window, output token limit, safe output budget, large product threshold)
 - Architecture Overview
 - Key Design Decisions with rationale
 - Development Commands (dev, build, test, lint)
@@ -158,7 +184,7 @@ Generate these files:
 
 After generating, read back `plancasting/tech-stack.md` and verify all required fields are present.
 
-### Step 8: Minimal Project Initialization (Phase 6)
+### Step 9: Minimal Project Initialization (Phase 6)
 
 If applicable, perform ONLY:
 1. Create project scaffold (e.g., `create-next-app`, `create-vite`)
@@ -167,7 +193,7 @@ If applicable, perform ONLY:
 
 Do NOT install product-specific packages, configure services, or create application directories. That is Stage 3's responsibility.
 
-### Step 9: Handoff (Phase 7)
+### Step 10: Handoff (Phase 7)
 
 Inform the user of completion and next steps. Instruct them to start a new Claude Code session for Stage 1 (BRD Generation).
 
@@ -185,6 +211,7 @@ Before declaring complete, verify `plancasting/tech-stack.md` contains ALL of th
 - Design Direction
 - Theme & Appearance
 - Data Retention & Deletion Policy
+- Model Specifications (context window, output token limit, safe output budget)
 
 If any field cannot be determined, mark as `> ⚠️ ASSUMPTION: [assumed value] — user should confirm`.
 

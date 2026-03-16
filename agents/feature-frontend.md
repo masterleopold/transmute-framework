@@ -38,11 +38,12 @@ You implement frontend components, pages, hooks, and client-side logic for the f
 ## Before Writing Any Code
 
 1. **Read CLAUDE.md** — Follow all Part 1 immutable rules (especially Component Rules and Design & Visual Identity) and Part 2 project-specific rules.
-2. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file.
-3. **Read PRD sections** — Check `plancasting/prd/08-screen-specifications.md` for UI specs, `plancasting/prd/09-interaction-patterns.md` for UX patterns, `plancasting/prd/06-user-flows.md` for flows.
-4. **Check design tokens** — Read `src/styles/design-tokens.ts` (or equivalent) for the project's design direction.
-5. **Check scaffold files** — Read `plancasting/_scaffold-manifest.md`. EXTEND existing scaffold files. NEVER create duplicates.
-6. **Check `plancasting/tech-stack.md`** — Use the specified UI component library and CSS framework.
+2. **Read `plancasting/_codegen-context.md`** — Understand naming conventions, file mappings, and code generation patterns established by the scaffold. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
+3. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file.
+4. **Read PRD sections** — Check `plancasting/prd/08-screen-specifications.md` for UI specs, `plancasting/prd/09-interaction-patterns.md` for UX patterns, `plancasting/prd/06-user-flows.md` for flows.
+5. **Check design tokens** — Read `src/styles/design-tokens.ts` (or equivalent) for the project's design direction.
+6. **Check scaffold files** — Read `plancasting/_scaffold-manifest.md`. EXTEND existing scaffold files. NEVER create duplicates.
+7. **Check `plancasting/tech-stack.md`** — Use the specified UI component library and CSS framework.
 
 ## Implementation Rules
 
@@ -64,6 +65,16 @@ You implement frontend components, pages, hooks, and client-side logic for the f
 - Type definitions
 - Update `plancasting/_progress.md` with frontend status for the feature
 
+## Anti-Stub Quality Gates
+
+Before marking implementation complete, verify **zero matches** for stub patterns:
+
+```bash
+grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" <modified-files> | grep -v 'placeholder="\|Placeholder='
+```
+
+Every component must render meaningful UI with real data from hooks — no empty returns, no hardcoded placeholder text, no commented-out JSX with TODO markers.
+
 ## Quality Checklist
 
 - [ ] All components handle 5 states (default, loading, empty, error, disabled)
@@ -75,3 +86,4 @@ You implement frontend components, pages, hooks, and client-side logic for the f
 - [ ] Traceability headers present
 - [ ] Extends scaffold files (no duplicates)
 - [ ] Frontend types match backend response shape
+- [ ] Anti-stub grep returns zero matches

@@ -19,7 +19,16 @@ transmute-framework/
 │       └── check-prerequisites.sh   # Gate enforcement script
 └── templates/
     ├── CLAUDE.md                # Generated project CLAUDE.md template
-    └── progress.md              # Progress tracking template
+    ├── progress.md              # Progress tracking template
+    ├── execution-guide.md       # Canonical stage reference document
+    ├── feature_scenario_generation.md  # Scenario extraction algorithm for 6V/7V
+    └── rules-templates/         # Stage 3 starter rule templates
+        ├── _api-contracts-template.md
+        ├── _auth-template.md
+        ├── _backend-template.md
+        ├── _data-model-template.md
+        ├── _frontend-template.md
+        └── _testing-template.md
 ```
 
 ## How to Add a New Stage

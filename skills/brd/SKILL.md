@@ -11,12 +11,12 @@ version: 1.0.0
 
 # Transmute — BRD Generation (Stage 1)
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/brd-detailed-guide.md` for the complete agent team architecture, teammate spawn prompts, token budget management, review agent checklists, and writing guidelines.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/brd-detailed-guide.md` for the complete agent team architecture, teammate spawn prompts, token budget management, review agent checklists, remediation procedures, and writing guidelines.
 
 ## Prerequisites
 
 Before starting, verify:
-1. `./plancasting/businessplan/` directory exists and contains markdown files. If missing or empty, STOP: "Stage 1 requires a Business Plan at `./plancasting/businessplan/`. Place your business plan markdown files there before running Stage 1."
+1. `./plancasting/businessplan/` directory exists and contains `.md` or `.pdf` files. If missing or empty, STOP: "Stage 1 requires a Business Plan at `./plancasting/businessplan/`. Place your business plan files (.md or .pdf) there before running Stage 1."
 2. `./plancasting/tech-stack.md` exists (created by Stage 0). If missing, STOP: "Stage 1 requires `plancasting/tech-stack.md` from Stage 0. Run Stage 0 first."
 
 ## Critical Framing
@@ -28,30 +28,32 @@ This BRD uses the **Full-Build Approach**: ALL features described in the Busines
 ### Step 1: Read and Analyze Inputs
 
 Read and fully internalize:
-- All files in `./plancasting/businessplan/`
+- All files in `./plancasting/businessplan/` (supported formats: `.md` and `.pdf`)
 - `./plancasting/tech-stack.md`
 
 Check `Session Language` in `./plancasting/tech-stack.md`. Generate ALL BRD documents in the specified language. Technical identifiers (requirement IDs like FR-001, section headers, cross-reference codes) remain in English.
 
+**Language Inheritance**: Subsequent stages (PRD, audits, reports) will read the `Session Language` section from `plancasting/tech-stack.md` — NOT from BRD documents. The BRD's language serves as a reference, but the canonical language setting is always in `tech-stack.md`.
+
 Adapt BRD structure based on product type in `plancasting/tech-stack.md`:
 - **Web applications**: Standard structure
-- **Mobile applications**: Add platform-specific requirement categories
-- **IoT / Embedded**: Add hardware requirement categories
-- **Desktop applications**: Add platform-specific requirements
-- **AI/ML products**: Add model requirement categories
+- **Mobile applications**: Add platform-specific requirement categories (App Store/Play Store guidelines, device permissions, offline capabilities)
+- **IoT / Embedded**: Add hardware requirement categories (environmental requirements, power requirements, connectivity protocols, certification requirements)
+- **Desktop applications**: Add platform-specific requirements (Windows/macOS/Linux compatibility, installation/update mechanisms, system resource requirements)
+- **AI/ML products**: Add model requirement categories (training data requirements, inference latency, accuracy metrics, bias/fairness requirements)
 
 ### Step 2: Feature Extraction Sweep
 
 Identify EVERY feature, capability, and function described anywhere in the Business Plan — including those labeled as "future", "Phase 2/3", "nice-to-have", "roadmap", "planned", or "long-term". Compile a master feature inventory.
 
-**Deduplication rule**: Merge variants of the same capability (e.g., "real-time collaboration" and "live editing" both describe concurrent document interaction). Keep distinct features separate (e.g., "user invitations" vs "user roles").
+**Deduplication rule**: Merge variants of the same capability (e.g., "real-time collaboration" and "live editing" both describe concurrent document interaction). Keep distinct features separate (e.g., "user invitations" vs "user roles"). **Variant test**: Two features are variants if they share the same user goal AND the same core data entity AND the same business logic. When in doubt, keep as separate features — merging is harder to undo than splitting.
 
 ### Step 3: Create Shared Context
 
 Create `./plancasting/brd/` directory and `./plancasting/brd/_context.md` containing:
 - Business Plan summary (market, product, revenue model, customers, risks, financials)
 - Technology stack summary from `./plancasting/tech-stack.md`
-- Master feature inventory (ALL features from ALL phases)
+- Master feature inventory (ALL features from ALL phases) as a markdown table with columns: Feature ID (FEAT-001, etc.), Feature Name, Business Plan Section, FR ID(s), Coverage Status
 - Master requirement ID registry with reserved ranges:
   - BR-001–BR-099, FR-001–FR-299, NFR-001–NFR-099, CR-001–CR-049, SR-001–SR-049, BRL-001–BRL-149, DR-001–DR-049, IR-001–IR-049
 - Glossary of key terms and acronyms
@@ -61,6 +63,8 @@ Create `./plancasting/brd/` directory and `./plancasting/brd/_context.md` contai
 ### Step 4: Spawn Agent Teams (Phase 2)
 
 Spawn 5 specialized teammates. Each spawn prompt MUST include: CLAUDE.md Part 1 instructions, full `_context.md` content, file assignments with ID ranges, relevant Business Plan sections, full-scope instruction ("IGNORE all phasing — treat every described feature as in-scope"), and the writing guidelines from the detailed guide.
+
+**Known dependency**: Teammate 3 (data-and-integration) depends on Teammate 2 (technical-infrastructure) for security requirements and data privacy classifications. Either spawn Teammate 3 after Teammate 2 completes, or include Teammate 2's security context in Teammate 3's spawn prompt.
 
 **Teammate 1 — "business-core"**
 Files: `00-cover-and-metadata.md`, `01-executive-summary.md`, `02-project-background-and-objectives.md`, `03-current-state-analysis.md`, `06-business-requirements.md`, `07-functional-requirements.md`
@@ -84,11 +88,11 @@ Emphasize: Risk analysis must include full-build-specific risks (complexity risk
 
 ### Step 5: Token Budget Management
 
-Each agent has ~32K output token limit. Safe budget: ~25K tokens per agent.
+Each agent has an output token limit per response (see tech-stack.md § Model Specifications). Safe budget per agent: output token limit minus 7K headroom.
 
-**Before spawning**: Estimate output size per file. If a single file exceeds 25K tokens, split by feature group. `07-functional-requirements.md` with 30+ features almost certainly needs splitting.
+**Before spawning**: Estimate output size per file. If a single file exceeds the safe output budget, split by feature group. `07-functional-requirements.md` with 30+ features almost certainly needs splitting.
 
-**If a teammate fails**: Check which files were written, re-spawn for missing/truncated files. Do NOT proceed to Phase 4 until all files are complete.
+**If a teammate fails**: Check which files were written, re-spawn for missing/truncated files. If a re-spawned teammate's output is still truncated after reducing scope, split further. Do NOT proceed to Phase 4 until all files are complete.
 
 ### Step 6: Structural Integration (Phase 4)
 
@@ -100,18 +104,18 @@ After all teammates complete:
    - Validate all cross-reference links
    - Verify terminology consistency with glossary
    - Confirm all assumptions marked with `> ⚠️ ASSUMPTION:`
-   - **Assumption volume check**: If >30% of total requirements are assumptions, flag as CRITICAL
+   - **Assumption volume check**: Count all assumption blockquotes vs total requirement IDs. If >30% of total requirements are assumptions, flag as CRITICAL for business plan remediation
    - Validate mermaid diagram syntax
    - Verify every BR has at least one FR
-   - **MoSCoW distribution check**: Flag if Must Have exceeds 70%
-   - Verify cross-feature interactions documented
+   - **MoSCoW distribution check**: Flag if Must Have exceeds 70% of total requirements. High Must Have (70%+) may be acceptable for enterprise/regulated products. RED FLAG: if Business Plan describes 'MVP first, phases later' but all requirements are marked Must Have — indicates phasing hasn't been eliminated despite full-build approach.
+   - **Cross-feature interaction check**: Identify requirements that interact across what the Business Plan originally described as separate phases. Ensure these interactions are explicitly documented.
 3. Generate `22-glossary-and-appendices.md`
 4. Generate `README.md` with navigation guide and prominent full-scope note
 5. Fix structural inconsistencies
 
 ### Step 7: Deep Quality Review (Phase 5)
 
-Spawn 3 review agents. Each reads ALL BRD files, `_context.md`, and the Business Plan. If BRD + Business Plan exceeds context for a single agent, split each reviewer's scope to a subset of BRD files by domain, and perform cross-file consistency checks manually in Phase 6.
+Spawn 3 review agents. Each reads ALL BRD files, `_context.md`, and the Business Plan. If BRD + Business Plan exceeds 60% of the model's context window (check tech-stack.md § Model Specifications), split each reviewer's scope to a subset of BRD files by domain, and the lead performs cross-file consistency checks in Phase 6 remediation.
 
 Each review agent produces issues in this format: Severity (CRITICAL/HIGH/MEDIUM/LOW), File, Location (section/requirement ID), Category, Description, Recommendation, Affected Requirements.
 
@@ -126,8 +130,9 @@ Each review agent produces issues in this format: Severity (CRITICAL/HIGH/MEDIUM
 - Every SR is specific and testable
 - All CR cite specific regulations with section numbers
 - NFRs have quantified targets
+- No requirement is a verbatim copy of Business Plan text
 - No placeholders, TODOs, or TBD entries remain
-- Cross-feature interactions documented
+- Cross-feature interactions documented for features spanning originally-separate Business Plan phases
 
 **consistency-reviewer**: Contradictions, duplications, terminology.
 - No contradictory requirements across files
@@ -159,27 +164,28 @@ Issue severity definitions: CRITICAL (blocks development), HIGH (causes rework),
 
 1. Consolidate review reports, remove duplicate findings
 2. CRITICAL and HIGH issues: remediation is MANDATORY
-3. Fix root causes, not symptoms. When fixing contradictions, consult the Business Plan for the correct version.
-4. If >15 CRITICAL+HIGH fixes, perform targeted re-review of modified files
-5. Create `./plancasting/brd/_review-log.md` with all findings
-6. Output Final Summary: requirement counts by category, feature coverage, assumptions flagged, mermaid diagrams, quality metrics (issues found/resolved/remaining)
+3. Fix root causes, not symptoms. When fixing contradictions, consult the Business Plan for the correct version. When adding missing requirements, follow the same ID conventions.
+4. If >15 CRITICAL+HIGH fixes, perform targeted re-review of modified files (single pass — do not enter recursive loop)
+5. Create `./plancasting/brd/_review-log.md` with all findings, including:
+   - **Assumption Review Status** section (required if assumption volume ≥ 30%): assumption percentage, CRITICAL flag, operator review marker (operator must update to YES before Stage 2B can pass)
+6. Output Final Summary: requirement counts by category, feature coverage, assumptions flagged, assumption percentage (if ≥ 30%, recommend Business Plan remediation), mermaid diagrams, cross-feature interactions, quality metrics (issues found/resolved/remaining)
 
 ## Known Failure Patterns to Avoid
 
 1. **Vague acceptance criteria**: Use specific metrics ("response time < 200ms"), not unmeasurable adjectives ("fast").
 2. **Copy-pasting business plan text**: Translate into structured requirement format with IDs and priority.
-3. **MoSCoW inflation**: Maintain reasonable distribution across Must/Should/Could/Won't.
+3. **MoSCoW inflation**: Maintain reasonable distribution across Must/Should/Could/Won't. Healthy distribution: Must 50-65%, Should 20-30%, Could 10-15%, Won't 0-5%.
 4. **Missing negative requirements**: Specify what the system MUST NOT do.
 5. **Circular traceability**: Each requirement level must add specificity.
 6. **NFRs without measurement methods**: Define how metrics are measured and monitored.
-7. **Mermaid syntax errors**: Validate syntax before including.
+7. **Mermaid syntax errors**: Validate syntax before including. Common errors: missing quotes around labels with special characters, incorrect arrow syntax, unclosed subgraph blocks.
 8. **Thin business plan extrapolation**: If >30% of requirements are assumptions, flag as CRITICAL.
 
 ## Writing Guidelines Summary
 
 - Every requirement traces to a specific Business Plan section
 - Measurable acceptance criteria (no "fast", "user-friendly", "scalable" without quantification)
-- Mark assumptions with `> ⚠️ ASSUMPTION:` blockquotes
+- Mark assumptions with `> ⚠️ ASSUMPTION:` blockquotes (must explain reasoning and impact)
 - Use mermaid syntax for all diagrams
 - Relative markdown links for cross-references
 - Lowercase anchors in heading IDs (`#br-001` not `#BR-001`)
@@ -192,5 +198,7 @@ Issue severity definitions: CRITICAL (blocks development), HIGH (causes rework),
 |---|---|---|
 | BRD files | `./plancasting/brd/` | 23 numbered markdown files (00-22) |
 | Shared context | `./plancasting/brd/_context.md` | ID registry, glossary, feature inventory |
-| Review log | `./plancasting/brd/_review-log.md` | Quality review findings |
+| Review log | `./plancasting/brd/_review-log.md` | Quality review findings, assumption review status |
 | Navigation hub | `./plancasting/brd/README.md` | File descriptions, reading order |
+
+Expected total: 26 files (23 numbered specification files + 3 supporting files)

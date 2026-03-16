@@ -6,7 +6,7 @@ description: >-
   "build the product", "run feature implementation", "orchestrate implementation",
   "run Stage 5", "start the feature build", or "implement from PRD",
   or when the transmute-pipeline agent reaches Stage 5 of the pipeline.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Transmute Implement — Stage 5: Feature Implementation Orchestrator
@@ -19,7 +19,15 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/implementation-detai
 
 Build the COMPLETE product. Every feature in the PRD is implemented in this run. There is no MVP gate, no "good enough for Phase 1" checkpoint. Features are implemented in dependency order (P0 -> P1 -> P2 -> P3), but ALL priority levels are built. P0-P3 determines the build ORDER, not the build SCOPE.
 
-If Stage 5B audit later identifies systemic gaps, the lead must re-run Stage 5 for those specific features — but features are never skipped, only reworked.
+If Stage 5B audit later identifies systemic gaps (6+ Category C issues, OR 6+ total unfixed issues, OR 3 consecutive FAIL-RETRY outcomes triggering a FAIL-ESCALATE gate), the lead must re-run Stage 5 for those specific features — but features are never skipped, only reworked. When you reach the end of the queue, the product is complete.
+
+## Post-Implementation Quality Gate
+
+After this stage completes, Stage 5B (Implementation Completeness Audit) will scan ALL features for:
+- Stub components that were never filled with real logic
+- Duplicate inline implementations that bypass scaffold components
+- Missing test coverage
+- Orphan component files
 
 ## Prerequisite Checks
 
@@ -44,7 +52,7 @@ Replace all `npm run` commands with your project's package manager from `CLAUDE.
 3. Read `./plancasting/prd/02-feature-map-and-prioritization.md` — build the feature queue.
 4. Read `./plancasting/_progress.md` — check for resumed sessions. If features have `🔄` status, this is a 5B re-run — filter queue to only those features and read the audit report for specific gaps.
 5. Read `./plancasting/_scaffold-manifest.md` — understand the scaffold structure.
-6. Read `./plancasting/_codegen-context.md` — understand naming conventions and patterns. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
+6. Read `./plancasting/_codegen-context.md` — understand naming conventions, patterns, and code generation context established during scaffolding. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
 
 ## Feature Queue Construction
 
@@ -53,7 +61,9 @@ Build the implementation queue from PRD `02-feature-map-and-prioritization.md`:
 - Within each priority, order by dependency (features with no dependencies first)
 - ALL priorities are included — P0-P3 determines ORDER, not SCOPE
 
-Skip features already marked as Done in `plancasting/_progress.md`. Resume features marked as In Progress.
+Skip features already marked as Done in `plancasting/_progress.md`. Resume features marked as In Progress. Skip features marked as `⏸ Blocked` (treat like Done for resumption, but retain their blocked status).
+
+**Feature Splitting**: If a feature requires creating or substantially modifying more than ~15 files total, split into sub-features and implement sequentially. Identify logical sub-features from user stories. Each sub-feature should be independently testable. Update `_progress.md` with IDs like `FEAT-003a`, `FEAT-003b`. Parent feature is marked Done only when all sub-features are Done.
 
 ## Per-Feature Implementation Cycle
 
@@ -108,10 +118,14 @@ Blocked by Step 3 completion. The teammate must:
 - Write cross-feature E2E tests in `e2e/integration/`
 - Test responsive behavior on mobile + desktop viewports
 - Run ALL existing E2E tests to verify no regressions
+- Clean up test data using `afterEach`/`afterAll` hooks
 
 ### Step 5: Quality Gate (Lead Only)
 
 After all teammates complete:
+
+> Items 1-6 are **blocking** (fail = feature not done). Items 8 and 10 are **required for session recovery**. Items 7, 9, 11-12 are **secondary** (fail = documented for Stage 5B).
+
 1. Run full project typecheck, test suite, and E2E suite
 2. Fix any regressions (spawn fix teammates if needed)
 3. Verify cross-feature integration
@@ -127,7 +141,30 @@ After all teammates complete:
 
 Before marking ANY feature as Done, verify:
 
-1. **No placeholder text patterns**: Grep all files for `implementation pending`, `pending feature build`, `⚠️ STUB`, `TODO [Stage 5]`, `Coming soon`, `Not yet implemented`, `PLACEHOLDER`. Zero matches required.
+### Per-Feature Grep Patterns
+
+Run this scan on all files created or modified for the feature:
+
+```bash
+# Scan for stub patterns (zero matches required)
+grep -rn --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" \
+  "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" \
+  <modified-files> | grep -v 'placeholder="\|Placeholder='
+
+# Scan for orphan components (every component must be imported somewhere)
+for file in <new-component-files>; do
+  component_name=$(basename "$file" .tsx)
+  if ! grep -rl "from.*${component_name}\|import.*${component_name}" [frontend-dir] --include="*.tsx" --include="*.ts" | grep -v "$file"; then
+    echo "ORPHAN: $file is never imported"
+  fi
+done
+```
+
+If either scan finds issues, the feature MUST be sent back to the responsible teammate. Do NOT mark as Done.
+
+### Structural Checks
+
+1. **No placeholder text patterns**: Zero matches from the grep scan above.
 2. **Functional component bodies**: Every component imports/uses hooks or receives real props, renders meaningful UI, handles all states, has wired interactive elements.
 3. **No orphan components**: Every component file is imported by at least one page.
 4. **Page-level data flow**: Real data from hooks, functional form submissions, real route navigation.
@@ -136,7 +173,7 @@ Before marking ANY feature as Done, verify:
 
 - **Build errors**: Send to responsible teammate. Spawn "debugger" teammate if unresolvable.
 - **Test failures (regression)**: Never skip or delete tests. Diagnose: intentional change (update test) or bug (fix code).
-- **Dependency conflicts**: Mark blocked feature as Blocked in `plancasting/_progress.md`, continue with next non-blocked feature. After each feature completes, scan for unblocked features.
+- **Dependency conflicts**: Mark blocked feature as `⏸ Blocked` in `plancasting/_progress.md` with the blocking feature noted in the Notes column. Continue with next non-blocked feature. **After each feature completes**: Scan `plancasting/_progress.md` for any features marked as `⏸ Blocked`. For each, check if its dependency (noted in Notes) is now `✅ Done`. If yes, change status to `🔧 In Progress` and add to the queue.
 - **Cross-feature breaks**: Highest priority — fix immediately before proceeding.
 
 ## Full-Product Completion Sequence
@@ -145,11 +182,11 @@ After ALL features are Done in `plancasting/_progress.md`:
 
 1. **Full Integration Test Suite**: Run typecheck, lint, all tests, all E2E. All must pass.
 
-2. **Cross-Feature Integration Sweep**: Spawn "cross-feature-auditor" to verify cross-feature user flows, data flows, shared UI aggregations, and write additional E2E tests for gaps.
+2. **Cross-Feature Integration Sweep**: Spawn "cross-feature-auditor" to verify cross-feature user flows, data flows, shared UI aggregations, and write additional E2E tests for gaps. Priority order: (1) Flag but do NOT fix data model inconsistencies. (2) Flag navigation gaps but do not add links. (3) Fix simple integration issues.
 
 3. **Onboarding Flow Verification**: Spawn "onboarding-auditor" (if PRD specifies onboarding) to verify progressive disclosure, first-time experience, and empty states.
 
-4. **Performance Validation**: Spawn "performance-auditor" for lightweight sanity check — bundle size, Lighthouse scores, query performance. Flag critical blockers only; optimization happens in Stage 6C.
+4. **Performance Validation**: Spawn "performance-auditor" for lightweight sanity check — bundle size, Lighthouse scores, query performance. Flag critical blockers only (page load >10s on 4G throttle, bundle >100% over budget); optimization happens in Stage 6C. Do NOT implement optimization fixes in this stage.
 
 5. **Final Implementation Report**: Generate `./plancasting/_implementation-report.md` with completion summary (features, files, functions, components, hooks, tests), PRD coverage (target: 100%), cross-feature integration metrics, quality metrics (zero errors, test pass rates, bundle/lighthouse), assumptions, PRD gaps, known issues, and launch readiness assessment.
 
@@ -159,9 +196,9 @@ After ALL features are Done in `plancasting/_progress.md`:
 
 If resuming a previously interrupted implementation:
 1. Read `plancasting/_progress.md` for feature status.
-2. For In Progress features: check `plancasting/_briefs/` to determine where implementation stopped.
+2. For In Progress features: check `plancasting/_briefs/` to determine where implementation stopped. Inspect the codebase to establish sub-status: (a) Backend: check if backend functions exist with real logic (not just scaffolds), (b) Frontend: check if components/pages render real UI connected to hooks, (c) Tests: check if test files exist with passing assertions. Resume from the first incomplete layer — do NOT re-spawn teammates for layers that are already complete.
 3. For Needs Re-implementation features (set by Stage 5B): read `./plancasting/_audits/implementation-completeness/report.md` for specific gaps. Focus frontend teammate on replacing stubs. Only re-run backend teammate if audit explicitly flags backend issues.
-4. For Blocked features: check if blocking dependency is now Done. If yes, unblock and add to queue.
+4. For `⏸ Blocked` features: check if blocking dependency is now Done. If yes, unblock and add to queue.
 5. Resume from first incomplete step. Do NOT restart from beginning.
 
 ## Critical Rules

@@ -36,14 +36,14 @@ Fixing these now costs minutes. Fixing them after code is written costs hours.
 
 Read:
 - All files in `./plancasting/brd/`, including `_context.md`
-- All files in `./plancasting/prd/`, including `_context.md` and `_brd-issues.md` (if exists)
+- All files in `./plancasting/prd/`, including `_context.md` and `_brd-issues.md` (if exists — contains BRD quality issues pre-identified during PRD generation; map classifications: BLOCKING → CRITICAL, CRITICAL-BUT-RECOVERABLE → HIGH, NON-BLOCKING → MEDIUM/LOW)
 - All files in `./plancasting/businessplan/`
 - `./plancasting/tech-stack.md` for technical feasibility checks
 - `./plancasting/brd/_review-log.md` and `./plancasting/prd/_review-log.md` if they exist
 
 Check `./plancasting/tech-stack.md` for `Session Language`. Generate all reports in the specified language. Code, technical identifiers, and file names remain in English.
 
-**Token Budget**: For products with large BRD+PRD (>50 files combined), split validation by feature group instead of cross-cutting concern. If splitting by feature group, the lead MUST perform Phase 4 cross-feature consistency checks manually using the unified issue list from all teammates, since teammates split by feature group cannot detect cross-feature inconsistencies.
+**Token Budget**: With the pipeline model's context window (see tech-stack.md § Model Specifications), most BRD+PRD sets fit comfortably. For exceptionally large products (>50 files combined), split validation by feature group instead of cross-cutting concern. If splitting by feature group, the lead MUST perform Phase 4 cross-feature consistency checks manually using the unified issue list from all teammates, since teammates split by feature group cannot detect cross-feature inconsistencies.
 
 **Teammate Prerequisite**: Each teammate's spawn prompt MUST include the instruction: "Read CLAUDE.md Part 1 (immutable rules) if it exists. Follow its conventions."
 
@@ -56,9 +56,10 @@ Check `./plancasting/tech-stack.md` for `Session Language`. Generate all reports
    - List every BRD functional requirement (FR-xxx)
    - For each FR, identify corresponding PRD artifacts (US-xxx, SC-xxx, API-xxx)
    - Flag any FR with no corresponding PRD artifacts
-3. Create `./plancasting/_audits/spec-validation/` directory.
-4. Create `./plancasting/_audits/spec-validation/traceability-draft.md` with the initial matrix.
-5. Create task list for all teammates.
+3. Create `./plancasting/_audits/spec-validation/` directory (and `./plancasting/_audits/` parent if needed).
+4. Create `./plancasting/_audits/spec-validation/traceability-draft.md` with the initial matrix. Note: This draft is superseded by Teammate 1's `traceability-by-coverage.md`, which is the final traceability artifact.
+5. Determine the **MoSCoW → P0-P3 mapping** by reading `./plancasting/prd/02-feature-map-and-prioritization.md`. Default mapping: Must Have → P0, Should Have → P1, Could Have → P2, Won't Have → excluded. However, the PRD may use a more nuanced mapping — always prefer the PRD's actual mapping.
+6. Create task list for all teammates.
 
 ### Step 2: Spawn 3 Validation Teammates (Phase 2)
 
@@ -77,46 +78,47 @@ Validate that the PRD completely covers all BRD requirements.
 2. **BRD → PRD Reverse Traceability**: For every US-xxx:
    - Check if it traces to at least one BR-xxx or FR-xxx
    - For orphan stories, apply the **Orphan Story Decision Tree**:
-     - **(1) Indirect mapping**: Implements NFR/BRL/IR indirectly → document, flag as "BRD gap — recommend adding FR-xxx"
-     - **(2) PRD refinement or valid inference**: UX implementation of documented requirement or best-practice pattern → preserve, label as "PRD refinement". If it adds functional capability, also flag as BRD gap.
-     - **(3) Scope creep**: Neither (1) nor (2) → flag for removal or explicit approval
-   - Do NOT create FRs retroactively. The lead evaluates BRD gap flags in Phase 4.
+     - **(1) Indirect mapping**: Implements NFR/BRL/IR indirectly → document, flag as "BRD gap — recommend adding FR-xxx". Do NOT create the FR retroactively — the lead evaluates in Phase 4.
+     - **(2) PRD refinement or valid inference**: UX implementation of documented requirement or best-practice pattern → preserve, label as "PRD refinement" or "Valid inference". If it adds functional capability beyond UX polish, additionally flag as BRD gap.
+     - **(3) Scope creep**: Neither (1) nor (2) → flag for removal or explicit approval. Do NOT silently preserve.
 
 3. **Business Requirement Completeness**: Every BR-xxx has at least one FR. Product KPIs/OKRs align with business KPIs.
 
-4. **NFR Coverage**: Every NFR-xxx has a concrete PRD target. Target must be MORE specific than BRD.
+4. **NFR Coverage**: Every NFR-xxx has a concrete PRD target. Target must be MORE specific than BRD (e.g., BRD "high availability" → PRD "99.9% uptime with < 5min MTTR").
 
 5. **Security and Compliance Coverage**: Every SR-xxx and CR-xxx has corresponding PRD specification.
 
-Output: Complete traceability matrix and gap report with totals, coverage percentage, gaps by category.
+6. **Assumption Volume Re-check**: Read `./plancasting/brd/_review-log.md` (if exists). If Stage 1 flagged assumption percentage as CRITICAL (>30%), verify the operator has reviewed and confirmed (check for `Operator reviewed: YES` marker). If not reviewed, add a CRITICAL finding.
+
+Output: `traceability-by-coverage.md` and `gaps-by-coverage.md` in `./plancasting/_audits/spec-validation/`.
 
 #### Teammate 2: "consistency-validator"
 
 Validate consistency between and within BRD and PRD.
 
-1. **Terminology Consistency**: Compare glossaries. Flag terms used differently between or within documents.
+1. **Terminology Consistency**: Compare glossaries (bidirectional). Flag terms used differently between or within documents. For PRD-only terms: "PRD refinement (valid)" if UX/design terminology, "potential orphan term" if new domain concept.
 
 2. **Data Model Consistency**: Compare BRD data requirements (09) with PRD data model (11). Verify entities, relationships, data classification match. Flag PRD-only entities.
 
-3. **User Flow Consistency**: Verify PRD user flows (06) align with screen specs (08). Flag orphan screens and phantom screens.
+3. **User Flow Consistency**: Verify PRD user flows (06) align with screen specs (08). Flag orphan screens (defined but never referenced) and phantom screens (referenced but not specified).
 
-4. **API ↔ Screen Consistency**: Verify APIs support screens. Every data-displaying screen has fetch endpoint. Every data-submitting screen has accept endpoint. Data shapes match.
+4. **API ↔ Screen Consistency**: Verify APIs support screens. For BaaS architectures, treat query/mutation functions as "API endpoints." Every data-displaying screen has fetch endpoint. Every data-submitting screen has accept endpoint. Data shapes match.
 
 5. **Priority Consistency**: PRD P0-P3 aligns with BRD MoSCoW. Flag BRD "Must Have" mapped to PRD P2/P3.
 
 6. **ID Uniqueness**: No duplicates across all BRD and PRD files.
 
-Output: Consistency report by category with severity distribution.
+Output: `consistency-report.md` in `./plancasting/_audits/spec-validation/`.
 
 #### Teammate 3: "quality-and-feasibility-validator"
 
 Validate specification quality and feasibility.
 
-1. **Acceptance Criteria Quality**: Scan all user stories. Verify Given-When-Then format, testability, unambiguity, completeness (happy path AND error cases). Flag vague or untestable criteria.
+1. **Acceptance Criteria Quality**: Scan all user stories. Verify Given-When-Then format, testability (MEASURABLE — Then clause must be measurable with observable behavior), unambiguity, completeness (happy path AND error cases). Flag vague or untestable criteria. Provide corrected versions for flagged criteria.
 
-2. **Screen Specification Quality**: Verify all states documented (default, loading, empty, error, disabled), interaction behaviors, responsive behavior. Flag incomplete specs.
+2. **Screen Specification Quality**: Verify all states documented (default, loading, empty, error, disabled, hover, active, focused, offline where applicable). Interactive elements have behavior descriptions. Responsive behavior specified (not just "responsive").
 
-3. **API Specification Quality**: Verify fully typed schemas, all error responses, authentication requirements.
+3. **API Specification Quality**: Verify fully typed schemas (no "object" without structure), all error responses documented, authentication requirements stated.
 
 4. **Technical Feasibility**: Cross-reference with plancasting/tech-stack.md. Verify capabilities, performance targets, integration specs match actual APIs. Adapt to product type:
    - Mobile apps: platform-specific interaction patterns
@@ -125,7 +127,7 @@ Validate specification quality and feasibility.
 
 5. **Cross-Feature Interaction Completeness**: Review interaction matrix in PRD 02. Verify both features acknowledge each interaction. Identify undocumented interactions. Classify as CRITICAL (data consistency at risk), HIGH (feature cannot function), or MEDIUM (implicit). CRITICAL and HIGH must be added to PRD before Stage 3.
 
-Output: Quality report with issues, feasibility concerns, suggested fixes.
+Output: `quality-report.md` in `./plancasting/_audits/spec-validation/`.
 
 ### Step 3: Coordination During Execution (Phase 3)
 
@@ -135,12 +137,12 @@ Monitor progress. Facilitate cross-team findings:
 
 ### Step 4: Fix Specifications & Generate Report (Phase 4)
 
-1. **Cross-feature consistency checks** (ALWAYS performed):
-   - Build cross-feature entity matrix (shared entities, fields, relationships per feature group)
-   - Verify terminology consistency across feature groups
-   - Verify shared entity definitions match
+1. **Cross-feature consistency checks** (ALWAYS performed — whether validation was monolithic or split by feature group). Leverage Teammate 2's consistency analysis:
+   - List all shared entity types (User, Organization, Project, etc.)
+   - For each entity, extract all field references from every feature group — compare, flag differences
+   - Verify terminology consistent across feature groups
    - Verify API endpoint naming conventions consistent
-   - Verify cross-feature data flows have matching schemas
+   - For workflows spanning features, trace data flow and ensure schemas match at each handoff
 
 2. **Prioritize findings**:
    - CRITICAL: Must fix (blocks downstream) — missing requirements, contradictions, untestable criteria
@@ -154,16 +156,19 @@ Monitor progress. Facilitate cross-team findings:
    - Add missing user stories, screen specs, or API specs
    - Fix terminology (choose one term, update both documents)
    - Allocate new IDs from next available number, update `_context.md` registry
-   - Mark fixes with `> ✓ VALIDATED [YYYY-MM-DD]: [fix description]`
+   - Mark fixes with `> ✓ VALIDATED [YYYY-MM-DD]: [fix description]` (obtain date via `date +%Y-%m-%d`)
    - **Re-validate after fixes**: After fixing BRD files, re-validate affected PRD files. After fixing PRD files, verify cross-references still resolve. Check `_context.md` for consistency with modified IDs.
-   - **Iteration limit**: One re-validation pass. Fix new CRITICAL issues immediately but do NOT run second re-validation.
+   - **Iteration limit**: One fix-then-validate cycle per issue. If new CRITICAL issues appear during re-validation, document them and escalate to lead — do NOT automatically fix again. The lead documents new issues as 'Discovered During Fix Pass' in the report.
+   - Adding a missing US/SC for an existing FR is gap-closing (allowed). Adding entirely new FRs or BRs not in the original Business Plan is prohibited.
 
-4. **Generate `./plancasting/_audits/spec-validation/report.md`**:
+4. **Consolidate teammate outputs**: Read all output files from `./plancasting/_audits/spec-validation/`. Merge into unified prioritized issue list, removing duplicates.
+
+5. **Generate `./plancasting/_audits/spec-validation/report.md`**:
    - Executive summary with health score:
      - **Excellent**: 0 CRITICAL, 0 HIGH, ≤5 MEDIUM
      - **Good**: 0 CRITICAL, ≤3 HIGH, ≤10 MEDIUM
      - **Fair**: 0 CRITICAL, ≤5 HIGH
-     - **Poor**: Any CRITICAL remaining
+     - **Poor**: Any CRITICAL remaining OR >5 HIGH issues
    - Requirements traceability matrix with coverage percentage
    - Issues by category and severity
    - Issues fixed during validation
@@ -173,30 +178,46 @@ Monitor progress. Facilitate cross-team findings:
    - Specification completeness score
    - Recommendations for development team
 
-5. **Update version history** in BRD `00-cover-and-metadata.md` and PRD `01-product-overview.md`.
+6. **Update version history** in BRD `00-cover-and-metadata.md` and PRD `01-product-overview.md`.
 
-6. **Stage 2B Gate Decision**:
-   - **PASS**: All CRITICAL and HIGH resolved, zero blockers, coverage ≥95% → proceed to Stage 3
-   - **CONDITIONAL PASS**: All CRITICAL resolved, ≤3 HIGH remain (none P0-blocking), P0 FR coverage ≥95% (US + SC + API), overall ≥90% → proceed with documented exceptions
-   - **FAIL**: CRITICAL unresolved OR coverage <90% → STOP, remediate, re-run Stage 2B
+7. **Stage 2B Gate Decision**: After all fixes are applied, evaluate the gate (top to bottom, first match):
 
-   **P0 coverage mapping**: Read `./plancasting/prd/02-feature-map-and-prioritization.md` for feature-to-priority mapping. For each P0 feature, identify related FR-xxx IDs from the Feature Decomposition Map. Verify each has US + SC + API coverage.
+   > **Rules 1–4 are blocking gates evaluated first. Rules 5–8 evaluated ONLY if rules 1–4 all pass.**
 
-   **P0-blocking definition**: Issue prevents a P0 feature from being fully coded and tested. Examples: missing core data entities, undefined auth schema, broken API contracts for P0 features. Non-examples: documentation gaps, nice-to-have screen specs, performance optimizations.
+   1. Any unresolved CRITICAL issues? → **FAIL**
+   2. BRD assumption volume ≥ 30% AND operator has NOT confirmed review? (Check `./plancasting/brd/_review-log.md` for `Operator reviewed: YES`) → **FAIL**. Remediation: remediate Business Plan, re-run Stage 1, then re-run 2B.
+   3. **P0 feature coverage < 95%?** → **FAIL**. P0 coverage is an independent gate checked separately from overall coverage. P0 coverage ≥ 95% is the binding constraint.
+   4. Overall coverage < 90%? → **FAIL**
+   5. CRITICAL = 0 AND HIGH = 0 AND overall coverage ≥ 95%? → **PASS**
+   6. CRITICAL = 0 AND HIGH ≤ 3 AND no P0 blockers AND overall coverage ≥ 90%? → **CONDITIONAL PASS** (document each HIGH with root cause + remediation plan)
+   7. BRD assumption volume ≥ 30% AND HIGH ≤ 3 AND operator confirmed (`Operator reviewed: YES`)? → **CONDITIONAL PASS** (with caveat)
+   8. No rule matched? → **FAIL** (edge case — document and escalate)
 
-   Include the gate decision in the report.
+   **Coverage definitions**:
+   - **Complete coverage** for an FR = FR has at least one US AND at least one SC AND (at least one API OR documented as frontend-only)
+   - **Overall coverage** = (FRs with complete coverage / total FRs) × 100%
+   - **P0 coverage** = coverage calculated only for FRs mapped to P0 features (via Feature Decomposition Map)
+   - P0 coverage and overall coverage are **independent requirements** — both must meet thresholds
 
-7. Output summary: total issues found, blockers fixed, coverage percentage, quality scores.
+   **P0 Coverage Calculation**: Read `./plancasting/prd/02-feature-map-and-prioritization.md` for feature-to-priority mapping. For each P0 feature, identify related FR-xxx IDs from the Feature Decomposition Map. Verify each has coverage (US + SC + API).
+
+   **P0-blocking definition**: Issue prevents a P0 feature from being fully coded and tested. Examples: missing core data entities, undefined auth schema, broken API contracts. Non-examples: documentation gaps, nice-to-have screen specs, performance optimizations.
+
+   Include the gate decision in the report: "Stage 2B Outcome: [PASS | CONDITIONAL PASS | FAIL]"
+
+8. Output summary: total issues found, blockers fixed, coverage percentage, quality scores.
 
 ## Known Failure Patterns to Avoid
 
 1. **Terminology drift**: BRD uses "organization" while PRD uses "workspace" — different sessions, different context.
 2. **Coverage gaps from token limits**: BRD specifies 20 FRs but PRD only has stories for 15.
 3. **Cross-reference broken links**: PRD screen specs reference nonexistent API endpoints.
-4. **Quantified-to-vague regression**: BRD "99.9% uptime" becomes PRD "high availability".
-5. **Untestable acceptance criteria**: Syntactically correct Given/When/Then but semantically untestable.
+4. **Quantified-to-vague regression**: BRD "99.9% uptime" becomes PRD "high availability". PRD should NEVER weaken BRD specifications.
+5. **Untestable acceptance criteria**: Syntactically correct Given/When/Then but semantically untestable ("Then it works correctly").
 6. **Field name mismatches**: Data model has `organizationId` but API returns `orgId`.
 7. **Mermaid diagram syntax errors**: Always validate after editing.
+8. **Coverage gaps from feature decomposition**: BRD specifies N features but PRD only covers N-5 — entire feature groups omitted.
+9. **Orphan PRD features**: PRD includes features with no BRD traceability — indicates scope creep.
 
 ## Critical Rules
 
@@ -210,12 +231,18 @@ Monitor progress. Facilitate cross-team findings:
 8. The `> ✓ VALIDATED` marker must include the specific change made.
 9. NEVER delete content without checking downstream dependencies.
 10. If BRD+PRD exceeds context limits, split by feature group rather than validation type.
+11. ALWAYS use lowercase anchors in all cross-reference links (`#br-001` not `#BR-001`).
+12. **Quantification Rule**: PRD should NEVER weaken BRD specifications. If BRD specifies quantified targets, PRD must preserve or enhance them. Any regression from quantified to vague must be flagged and fixed.
 
 ## Output Specification
 
 | Output | Location | Description |
 |---|---|---|
 | Validation report | `./plancasting/_audits/spec-validation/report.md` | Health score, traceability matrix, issues, gate decision |
-| Traceability draft | `./plancasting/_audits/spec-validation/traceability-draft.md` | Initial FR → PRD artifact mapping |
+| Traceability by coverage | `./plancasting/_audits/spec-validation/traceability-by-coverage.md` | Complete FR → PRD artifact mapping |
+| Gaps by coverage | `./plancasting/_audits/spec-validation/gaps-by-coverage.md` | Coverage gaps with orphan story classifications |
+| Consistency report | `./plancasting/_audits/spec-validation/consistency-report.md` | Terminology, data model, flow, API consistency |
+| Quality report | `./plancasting/_audits/spec-validation/quality-report.md` | AC quality, screen quality, API quality, feasibility |
+| Traceability draft | `./plancasting/_audits/spec-validation/traceability-draft.md` | Initial FR → PRD artifact mapping (superseded by coverage) |
 | Updated BRD files | `./plancasting/brd/` | Fixes for BRD-side issues |
 | Updated PRD files | `./plancasting/prd/` | Fixes for PRD-side issues |

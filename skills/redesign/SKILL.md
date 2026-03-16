@@ -8,7 +8,7 @@ description: >-
   "run frontend redesign", "design elevation",
   or "replace the generic AI look",
   or when the transmute-pipeline agent reaches Stage 6P-R of the pipeline.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Stage 6P-R: Frontend Design Elevation (Interactive Redesign)
@@ -30,6 +30,8 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/redesign-detailed-gu
 ## Pipeline Position
 
 **Stage 6P-R** occupies the same pipeline slot as 6P (after all Stage 6 quality passes, before Stage 7 deployment). It is an ALTERNATIVE to standard 6P, not an addition. Run one or the other, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first (`git revert` the 6P commit).
+
+**Mutual Exclusion with 6P**: 6P and 6P-R are mutually exclusive. To switch from 6P to 6P-R: (1) commit all current work including 6P changes, (2) revert the 6P commit with `git revert <6P-commit-hash>`, (3) start a new session and run 6P-R.
 
 **Stage Sequence**: ... → 6V → [6R — only if 6V found A/B issues] → **6P-R** → 7 (Deploy) → 7V → 7D → 8 / 9
 
@@ -186,9 +188,16 @@ Generate `./plancasting/_audits/visual-polish/report.md` with design decisions, 
 
 ## Gate Decision
 
-- **PASS**: All design decisions implemented, visual review passed, validation clean → proceed to Stage 7
-- **CONDITIONAL PASS**: Minor visual issues remain but documented → proceed to Stage 7
-- **FAIL**: Critical visual issues, validation failures, or broken dark mode → fix before proceeding
+Gate uses **Critical/Major/Minor severity** classification (distinct from 6P's O/E/D categories):
+
+- **Critical**: Visual issues that break usability — invisible text, broken layout, inaccessible contrast, non-functional dark mode
+- **Major**: Noticeable inconsistencies — mixed font usage, token remnants, missing hover states across multiple pages
+- **Minor**: Subtle polish items — single-page spacing, minor alignment, optional animation refinement
+
+Outcomes:
+- **PASS**: All design decisions implemented, zero Critical issues, visual review passed, validation clean → proceed to Stage 7
+- **CONDITIONAL PASS**: Zero Critical issues, Minor visual issues remain but documented → proceed to Stage 7
+- **FAIL**: Any Critical visual issues, validation failures, or broken dark mode → fix before proceeding
 - **Phase 2 rejected**: User rejects design plan → abandon branch, fall back to standard 6P
 
 ## Critical Rules

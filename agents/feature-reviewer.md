@@ -48,6 +48,7 @@ You perform a comprehensive code review of a feature's backend, frontend, and te
 - [ ] All 5 component states implemented (default, loading, empty, error, disabled)
 - [ ] All API endpoints match PRD specifications
 - [ ] Tests cover all acceptance criteria
+- [ ] Component tests verify all 5 states (default, loading, empty, error, disabled)
 
 ### Code Quality
 - [ ] TypeScript strict mode — no `any`, no `@ts-ignore`

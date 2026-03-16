@@ -32,14 +32,24 @@ This stage uses the **`frontend-design` skill** (Claude Code plugin) for all aes
 
 **KEY CONSTRAINT**: This stage operates WITHIN the project's existing design system. You are NOT redesigning from scratch. You are elevating, adding, fixing, and enhancing within the design system's vocabulary.
 
+**Component modification decision matrix**:
+| Scenario | Action |
+|---|---|
+| Component needs hover transition but library doesn't support via className | Add transition via wrapper `<div className="transition-colors">`, do NOT replace component |
+| Component styling is completely incompatible with design direction | Escalate to Category D (document for design review), do NOT replace component |
+| Text contrast fails WCAG AA in dark mode | Adjust color variant via className (e.g., `dark:text-slate-200`), do NOT replace component |
+
+> **Component modification boundary**: Use the library's component API (className, props, variants) for styling changes. Escalate to Category D if the component API doesn't support the needed styling. NEVER replace a UI library component just for styling.
+
 ## Known Failure Patterns
 
-1. **Replacing UI library components wholesale**: ALWAYS use the library's component API to add styling -- never replace the component itself.
-2. **CSS specificity wars**: Use `!important` sparingly; prefer the library's theming/customization API.
-3. **Breaking existing dark mode**: ALWAYS add both light and dark variants when modifying colors.
-4. **Animation performance regression**: ONLY animate `transform` and `opacity`.
-5. **Font loading FOUT/FOIT**: Use `next/font` (or equivalent) with `display: swap`.
-6. **Overzealous enhancement scope**: Target high-impact pages -- do not polish every minor component.
+1. **Replacing UI library components wholesale**: Agent replaces buttons with custom-styled `<button>` elements. This breaks accessibility, variant consistency, and future updates. ALWAYS use the library's component API to add styling -- never replace the component itself.
+2. **CSS specificity wars**: Agent adds Tailwind classes overridden by library base styles. Use `!important` sparingly; prefer the library's theming/customization API.
+3. **Breaking existing dark mode**: Agent fixes light-mode contrast by hardcoding color without `dark:` variant. ALWAYS add both light and dark variants when modifying colors.
+4. **Animation performance regression**: Agent animates `width`, `height`, `top`, `left`. ONLY animate `transform` and `opacity`.
+5. **Font loading FOUT/FOIT**: Agent adds font via CDN without `font-display: swap`. Use `next/font` (or equivalent) with `display: swap`.
+6. **Overzealous enhancement scope**: Agent "improves" 50+ components when only 10 key screens need attention. Target high-impact pages.
+7. **Hybrid theme localStorage flicker**: Using `setTheme()` causes flash of wrong theme on page load. NEVER use `setTheme()` for initial theme -- use CSS `prefers-color-scheme` as default.
 
 ## Refinement Categories
 
@@ -48,26 +58,28 @@ Issues with a clear right/wrong answer. MUST fix these.
 
 | Issue Type | Detection Method | Fix Pattern |
 |---|---|---|
-| WCAG contrast failure (< 4.5:1 text, < 3:1 large text) | Automated contrast ratio check | Adjust text color or background |
-| Text invisible or near-invisible | AI vision analysis | Adjust color, add text-shadow, or change background |
-| Layout overflow at standard breakpoints | Screenshot at 320/768/1024/1440px | Fix with responsive utilities |
-| Content clipped by parent container | AI vision -- text/elements cut off | Fix overflow or adjust sizing |
-| Skeleton loader doesn't match content layout | Compare loading vs loaded screenshots | Adjust skeleton dimensions |
-| Focus ring missing on interactive elements | Tab through elements | Add `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2` |
-| Z-index stacking error | AI vision -- overlapping elements | Fix z-index hierarchy |
-| Dark mode unstyled section | Screenshot in dark mode | Add dark mode variants |
-| Image/icon not rendering | AI vision -- broken image placeholder | Fix asset path or provide fallback |
-| Touch target too small (< 44x44px mobile) | Measure in mobile screenshots | Increase padding/size |
+| WCAG contrast failure (< 4.5:1 text, < 3:1 large text) | Automated contrast ratio check on screenshots | Adjust text color or background to meet ratio |
+| Text invisible or near-invisible against background | AI vision analysis of screenshots | Adjust color, add text-shadow, or change background |
+| Layout overflow at any standard breakpoint | Screenshot at 320/768/1024/1440px widths | Fix overflow with proper responsive utilities |
+| Content clipped by parent container | AI vision -- text/elements cut off | Fix overflow property or adjust sizing |
+| Skeleton loader doesn't match content layout | Compare loading vs loaded screenshots | Adjust skeleton dimensions to match rendered content |
+| Focus ring missing on interactive elements | Tab through all interactive elements | Add `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2` |
+| Z-index stacking error (element hidden behind another) | AI vision -- overlapping elements | Fix z-index hierarchy |
+| Dark mode unstyled section (default white background persists) | Screenshot in dark mode | Add dark mode variants to unstyled sections |
+| Image/icon not rendering (broken src or missing asset) | AI vision -- broken image placeholder visible | Fix asset path or provide fallback |
+| Touch target too small (< 44x44px on mobile) | Measure interactive elements in mobile screenshots | Increase padding/size to meet minimum |
+
+**Category boundary guideline**: If the feature is BROKEN or INACCESSIBLE (violates standards, prevents functionality), it's Category O. If it WORKS but FEELS UNPOLISHED (lacks feedback, delight, or visual consistency), it's Category E.
 
 ### Category E: Enhancement (Pattern-Based, Apply & Verify)
-Issues where the fix follows established codebase patterns.
+Issues where the fix follows established patterns in the codebase.
 
 | Issue Type | Detection | Fix Pattern | Verify |
 |---|---|---|---|
 | Missing hover state | Interact with element | Add hover transition using existing patterns | Doesn't break layout |
 | Missing page transition animation | Navigate between pages | Add entry animation using motion library/CSS | Doesn't delay perceived load |
 | Inconsistent spacing | Compare across pages | Standardize to spacing scale tokens | Content fits at all breakpoints |
-| Empty state visually weak | AI vision -- sparse | Enhance with icon or CTA using existing design assets | CTA navigation works |
+| Empty state visually weak | AI vision -- sparse | Enhance with icon or CTA using existing design assets (do NOT source new illustrations -- document as Category D if none exist) | CTA navigation works |
 | Typography hierarchy flat | AI vision -- no hierarchy | Apply heading/subheading/body scale | Text doesn't overflow |
 | Card/container missing depth | AI vision -- flat | Add shadow or border using design tokens | Consistent with surrounding cards |
 | Loading state too plain | Observe loading state | Replace with skeleton matching content layout | Skeleton-to-content transition smooth |
@@ -85,13 +97,15 @@ Subjective improvements. Document as suggestions for human review -- do NOT appl
 | Micro-interaction opportunity | Interaction description, expected delight factor |
 | Overall aesthetic direction | Named direction, rationale, which pages change |
 
+Category D suggestions are for POST-LAUNCH review. They do NOT block Stage 7 deployment.
+
 ## Teammate Prompts
 
 ### Teammate 1: "objective-defect-fixer"
 **Scope**: ALL Category O issues
 
 Rules:
-- Use ONLY existing design system tokens
+- Use ONLY existing design system tokens (do NOT invent new colors, spacing, or shadows)
 - For contrast fixes, prefer adjusting text color over background
 - For responsive fixes, use project's breakpoint utilities
 - For dark mode fixes, use project's dark mode pattern
@@ -120,32 +134,34 @@ Rules:
 Rules:
 - If a fix/enhancement causes a regression at a different breakpoint, flag immediately (do NOT attempt to fix)
 - Capture comparison screenshots at 1440px, 768px, 375px
+- Compare with before screenshots in `./screenshots/visual-polish/before/`
 - Test mobile touch interactions
 - Verify page load performance hasn't degraded
 - Log in with test user for authenticated pages
+- Focus on HIGHEST-IMPACT screens first: (1) landing/home, (2) dashboard, (3) primary feature, (4) auth pages, (5) settings/billing
 
 **Sequencing**: Teammates 1 and 2 run in parallel. Teammate 3 runs AFTER both complete.
 
 ## Phase 1: Lead Visual Audit
 
 1. Read project context: `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/prd/08-screen-specifications.md`, 6V/6R reports
-2. Identify the design system: tokens, tailwind config, global styles, theme config, font imports, animation patterns
+2. Identify the design system: tokens, tailwind config, global styles, theme config, font imports, animation patterns. **Output a Design System Summary** (required).
 3. Establish validation baseline: `bun run typecheck`, `bun run lint`, `bun run test`
 4. Start the application (or reuse running instance)
-5. Screenshot all key screens at 3 breakpoints (1440, 768, 375) -- focus on 10-15 most user-facing screens
+5. Screenshot all key screens at 3 breakpoints (1440, 768, 375) -- focus on 10-15 most user-facing screens. Save to `./screenshots/visual-polish/before/`.
 6. AI Vision Analysis: check for Category O, E, and D issues
-7. Create Visual Polish Plan at `./plancasting/_audits/visual-polish/plan.md`
+7. Create Visual Polish Plan at `./plancasting/_audits/visual-polish/plan.md` -- must include Design System Summary
 8. Invoke `frontend-design` skill for enhancement guidance (if available). Save output as `./plancasting/_audits/visual-polish/design-guidelines.md`
 9. Assign teammates and prevent file conflicts -- document file assignments in plan
 
 ## Phase 3: Integration & Report
 
 1. Collect teammate results, check for regressions
-2. Fix regressions: revert the specific change, re-apply with responsive-safe approach
+2. Fix regressions: revert the specific change, re-apply with responsive-safe approach. **Max iteration guard**: If regressions persist after 2 revert-and-reapply cycles, document as known limitation.
 3. Run full validation: `bun run typecheck`, `bun run lint`, `bun run test`
-4. Generate Category D design brief using `frontend-design` skill (if available). Save as `./plancasting/_audits/visual-polish/design-elevation-brief.md`
+4. Generate Category D design brief using `frontend-design` skill (if available). Save as `./plancasting/_audits/visual-polish/design-elevation-brief.md`. Category D is for HUMAN REVIEW ONLY -- do NOT implement.
 5. Generate Visual Polish Report at `./plancasting/_audits/visual-polish/report.md`
-6. Save comparison screenshots
+6. Save comparison screenshots -- **before/after screenshots are required for every change**.
 
 ## Report Template
 
@@ -157,6 +173,15 @@ Rules:
 - **Commit**: [git hash before polish]
 - **Design System**: [UI library + version]
 - **Aesthetic Direction**: [from plancasting/tech-stack.md]
+
+## Design System Summary
+- Color tokens: [list]
+- Typography scale: [list]
+- Spacing scale: [list]
+- Animation patterns: [list]
+- Font families: [current fonts]
+- Theme: [light / dark / both]
+- UI Library: [name + version]
 
 ## Results
 - Category O (objective defects): [n] found, [n] fixed, [n] could not fix
@@ -174,6 +199,11 @@ Rules:
 
 ## Category D Design Elevation Brief
 See `./plancasting/_audits/visual-polish/design-elevation-brief.md`
+
+### Top 3 Suggestions (Summary)
+1. [Direction name]: [1-line description] -- [effort estimate]
+2. [Direction name]: [1-line description] -- [effort estimate]
+3. [Direction name]: [1-line description] -- [effort estimate]
 
 ## Responsive Verification
 | Screen | Desktop (1440) | Tablet (768) | Mobile (375) | Dark Mode |
@@ -204,6 +234,10 @@ See `./plancasting/_audits/visual-polish/design-elevation-brief.md`
 3. Request shutdown for all teammates
 4. Stop dev server if it was started by this stage
 
+## Session Recovery
+
+If the session disconnects mid-execution: start a new session, re-paste the prompt. The lead reads the existing report at `./plancasting/_audits/visual-polish/report.md` and the progress tracker to determine which teammates have completed. Resume from the first incomplete teammate.
+
 ## Critical Rules
 
 1. NEVER change functional behavior -- only visual presentation.
@@ -213,18 +247,18 @@ See `./plancasting/_audits/visual-polish/design-elevation-brief.md`
 5. ALWAYS take before/after screenshots.
 6. ALWAYS run validation after fixes.
 7. ALWAYS work at all 3 breakpoints.
-8. Teammate 3 focuses on HIGHEST-IMPACT screens first.
-9. ALWAYS respect dark mode pattern.
-10. Category O before Category E.
-11. The `frontend-design` skill guides INTENT, not implementation.
-12. Maximum 3 animation additions per page.
-13. AVOID modifying shared UI primitive components directly unless fixing Category O or applying global Category E.
-14. If 6R report shows FAIL, STOP.
-15. Treat contrast ratios as non-negotiable (WCAG AA minimum).
-16. ALWAYS preserve accessibility.
-17. The lead invokes `/frontend-design`, teammates read the output.
-18. Teammates 1 and 2 parallel, Teammate 3 sequential AFTER both.
-19. ALL browser interactions require the dev server to be running.
-20. Test user login required for authenticated screenshots.
-21. ALWAYS check for console errors during screenshots.
-22. Ensure NO two teammates modify the same file.
+8. ALWAYS respect dark mode pattern.
+9. Category O before Category E.
+10. The `frontend-design` skill guides INTENT, not implementation.
+11. Maximum 3 animation additions per page.
+12. AVOID modifying shared UI primitive components directly unless fixing Category O or applying global Category E.
+13. If 6R report shows FAIL, STOP.
+14. Treat contrast ratios as non-negotiable (WCAG AA minimum).
+15. ALWAYS preserve accessibility.
+16. The lead invokes `/frontend-design`, teammates read the output.
+17. Teammates 1 and 2 parallel, Teammate 3 sequential AFTER both.
+18. ALL browser interactions require the dev server to be running.
+19. Test user login required for authenticated screenshots.
+20. ALWAYS check for console errors during screenshots.
+21. Ensure NO two teammates modify the same file.
+22. ALWAYS include the Design System Summary in the polish plan -- this is a required output.

@@ -28,20 +28,20 @@ Examine `$1`:
 | `scaffold` | scaffold | 3 |
 | `implement` | implement | 5 |
 | `audit-completeness` or `audit` | audit-completeness | 5B |
-| `security` | audit-security | 6A |
-| `a11y` or `accessibility` | audit-a11y | 6B |
+| `security` or `audit-security` | audit-security | 6A |
+| `a11y` or `accessibility` or `audit-a11y` | audit-a11y | 6B |
 | `optimize` or `performance` | optimize | 6C |
 | `docs` or `documentation` | docs | 6D |
 | `refactor` | refactor | 6E |
 | `seed-data` or `seed` | seed-data | 6F |
 | `harden` or `resilience` | harden | 6G |
-| `prelaunch` | prelaunch | 6H |
+| `prelaunch` or `pre-launch` | prelaunch | 6H |
 | `verify` or `verification` | verify | 6V |
 | `remediate` or `remediation` | remediate | 6R |
 | `polish` | polish | 6P |
 | `redesign` or `frontend-redesign` or `design-elevation` | redesign | 6P-R |
-| `smoke` | smoke | 7V |
-| `user-guide` | user-guide | 7D |
+| `smoke` or `smoke-test` | smoke | 7V |
+| `user-guide` or `guide` | user-guide | 7D |
 | `feedback` | feedback | 8 |
 | `maintain` or `maintenance` | maintain | 9 |
 

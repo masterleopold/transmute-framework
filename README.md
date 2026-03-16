@@ -1,5 +1,7 @@
 # Transmute Framework
 
+> **v2.0.0** — Gate logic overhaul, credential tiers, scenario generation, path-scoped rules
+
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
 You write the plan. Transmute casts it into reality.
@@ -143,6 +145,32 @@ Stages **4** and **7** are manual and cannot be invoked via commands.
 
 The pipeline is **gate-enforced** — you cannot skip stages. Prerequisites are checked before each stage runs. If a stage fails, fix the issue and run `/transmute:cast resume`.
 
+### Gate Logic (v2.0.0)
+
+- **5B**: FAIL triggers RETRY (re-run Stage 5 for affected features) or ESCALATE (4+ Category C issues)
+- **6V**: Dual gate system — PASS skips 6R, CONDITIONAL PASS routes to 6R, FAIL stops pipeline. Supports three scope modes: `full`, `critical`, `diff`
+- **6R**: Max 3 remediation loops before escalation
+- **7V**: Binary gate — PASS proceeds to 7D, FAIL requires hotfix + re-deploy or rollback
+- **6P**: Issues categorized as Omission (O), Execution (E), or Design (D)
+- **6P-R**: Severity levels — Critical, Major, Minor
+- **6A/B/C**: Run as parallel agents for safe concurrent execution
+- **8 + 9**: NEVER run concurrently — feedback loop and dependency maintenance are mutually exclusive
+
+### Credential Tier System
+
+Four credential tiers gate pipeline progression:
+
+| Tier | Gate | Credentials |
+|------|------|-------------|
+| :red_circle: Placeholder | Before Stage 3 | No `YOUR_*_HERE`, `TODO_*`, `CHANGE_ME`, `PLACEHOLDER` patterns in `.env.local` |
+| :yellow_circle: Service | Before Stage 5 | Product service credentials must be real |
+| :orange_circle: Deploy | Before Stage 7 | Deployment credentials configured |
+| :large_blue_circle: Production | Before Stage 7V | Live environment credentials verified |
+
+### Progress Tracking (v2.0.0)
+
+Pipeline status now includes a **Blocked** state (`⏸ Blocked`) alongside existing statuses (`✅ Done`, `🔧 In Progress`, `⬜ Not Started`, `🔄 Needs Re-implementation`), enabling clear state transition tracking across all 25 stages.
+
 ## Agent Teams
 
 Several stages use Claude Code Agent Teams to parallelize work:
@@ -150,7 +178,8 @@ Several stages use Claude Code Agent Teams to parallelize work:
 - **Stage 1** (BRD): 5 writer agents + 3 review agents
 - **Stage 2** (PRD): Multiple writer agents producing 18 document sections
 - **Stage 5** (Implementation): Per-feature teams with backend, frontend, test, and reviewer agents
-- **Stage 6A–6C**: Three audit stages run as parallel agents
+- **Stage 6A–6C**: Three audit stages run as parallel safety agents (concurrent execution safe by design)
+- **Stage 6V/7V**: Scenario generation via `feature_scenario_generation.md` template for systematic test coverage
 
 ## Project Output
 
@@ -201,7 +230,16 @@ transmute-framework/
 │       └── check-prerequisites.sh
 └── templates/
     ├── CLAUDE.md                # Project CLAUDE.md template
-    └── progress.md              # Progress tracking template
+    ├── progress.md              # Progress tracking template
+    ├── execution-guide.md       # Pipeline execution reference
+    ├── feature_scenario_generation.md  # 6V/7V scenario generation
+    └── rules-templates/         # 6 path-scoped rules templates
+        ├── _api-contracts-template.md
+        ├── _auth-template.md
+        ├── _backend-template.md
+        ├── _data-model-template.md
+        ├── _frontend-template.md
+        └── _testing-template.md
 ```
 
 ## Prerequisites
@@ -209,6 +247,51 @@ transmute-framework/
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
 - Node.js v18+ (v20.17.0+ for Stage 7D)
 - A business plan (markdown or PDF files)
+
+## Changelog
+
+### v2.0.0
+
+**Gate Logic Overhaul**
+- 5B: FAIL now triggers RETRY (re-run Stage 5 for affected features) or ESCALATE (4+ Category C issues)
+- 6V: Dual gate system — PASS/CONDITIONAL PASS/FAIL routing with scenario-driven verification
+- 6R: Max 3 remediation loops before mandatory escalation
+- 7V: Binary gate — PASS or FAIL (hotfix + re-deploy / rollback)
+- 8 + 9: NEVER concurrent rule enforced
+
+**Credential Tier System**
+- Four tiers (:red_circle: Placeholder, :yellow_circle: Service, :orange_circle: Deploy, :large_blue_circle: Production) with specific credential names gating pipeline progression at Stages 3, 5, 7, and 7V
+
+**Scenario Generation**
+- New `templates/feature_scenario_generation.md` for systematic 6V/7V test scenario creation from PRD features and user flows
+
+**New Template Files**
+- `templates/execution-guide.md` — pipeline execution reference
+- `templates/feature_scenario_generation.md` — scenario generation for 6V/7V
+- 6 rules-templates: `_api-contracts-template.md`, `_auth-template.md`, `_backend-template.md`, `_data-model-template.md`, `_frontend-template.md`, `_testing-template.md`
+
+**Enhanced Progress Tracking**
+- Added `⏸ Blocked` status to progress file alongside existing states
+- State transition diagram for pipeline flow visualization
+
+**Path-Scoped Rules Enhancements**
+- Confidence hierarchy for rule prioritization
+- Auto-promote threshold for validated rules
+- Staleness review for outdated path-scoped rules
+
+**6V Scope Modes**
+- Three verification modes: `full` (all features), `critical` (P0/P1 only), `diff` (changed files only)
+
+**6P / 6P-R Categorization**
+- 6P: Issues categorized as Omission (O), Execution (E), or Design (D)
+- 6P-R: Severity levels — Critical, Major, Minor
+
+**Parallel Safety**
+- 6A/B/C explicitly designed for safe concurrent execution as parallel agents
+
+### v1.0.0
+
+- Initial release: 25-stage pipeline from business plan to production deployment
 
 ## Contributing
 

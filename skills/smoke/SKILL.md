@@ -7,24 +7,25 @@ description: >-
   "check if production is working", "run post-deployment verification",
   "run stage 7V", or "verify the deployed application",
   or when the transmute-pipeline agent reaches Stage 7V of the pipeline.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Production Smoke Verification — Stage 7V
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/smoke-detailed-guide.md` for the full verification checklist, report template, known failure patterns, and rollback guidance.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/smoke-detailed-guide.md` for the full verification checklist, report template, known failure patterns, and rollback guidance. Read `${CLAUDE_SKILL_ROOT}/references/feature-scenario-generation.md` for the scenario generation algorithm.
 
 ## Prerequisites
 
-1. Verify the production URL is accessible and responding.
-2. Check `./plancasting/_launch/readiness-report.md` exists. If it shows FAIL, stop and report the blocker. If READY or CONDITIONAL PASS with documented minor issues, proceed.
+1. Verify the production URL is accessible and responding. Check with `curl -sI <production-url> | head -1` (expect HTTP 200 or 301/302). If unreachable, STOP and verify deployment status.
+2. Check `./plancasting/_launch/readiness-report.md` exists. If it shows FAIL, stop and report the blocker. If READY or CONDITIONAL PASS with documented minor issues, proceed. If it does not exist, proceed but note in the report: "Stage 6H pre-launch verification was not completed."
 3. Verify `./plancasting/_audits/visual-verification/report.md` or `./plancasting/_audits/visual-polish/report.md` exists. Warn if neither is found.
-4. Create output directories:
+4. Verify scenario generation file exists: `./plancasting/transmute-framework/feature_scenario_generation.md`. If missing, copy from the Transmute Framework Template directory. See CLAUDE.md § "Pre-6V Setup" for copy instructions.
+5. Create output directories:
    ```bash
    mkdir -p ./plancasting/_audits/production-smoke
    mkdir -p ./screenshots/production
    ```
-5. Read `CLAUDE.md`, `plancasting/tech-stack.md`, and check `plancasting/tech-stack.md` for the `Session Language` setting. Generate all reports in the specified language.
+6. Read `CLAUDE.md`, `plancasting/tech-stack.md`, and check `plancasting/tech-stack.md` for the `Session Language` setting. Generate all reports in the specified language.
 
 ## Inputs
 
@@ -40,11 +41,13 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/smoke-detailed-guide
 
 ## Execution Flow
 
-This is a single-agent sequential check. Target completion: 25-45 minutes. If the application exceeds 50+ pages or 10+ integrations, consider running a scoped Stage 6V (`critical` mode) against the production URL instead.
+This is a single-agent sequential check. Target completion: 25-45 minutes (3-5 min scenario generation + 15-25 min core checks + 5-8 min for 6R/6P/navigation verification + 2-5 min performance/integrations). If the application exceeds 50+ pages or 10+ integrations, consider running a scoped Stage 6V (`critical` mode) against the production URL instead.
 
 ### Step 0: Generate Smoke Scenario Matrix
 
 Before any verification, generate a targeted test plan. Save to `./plancasting/_audits/production-smoke/smoke-scenario-matrix.md`.
+
+**Generation mode: SMOKE** — P0/P1 features only, happy path Feature Scenarios + one authenticated/unauthenticated Auth Context check per route. No Entity State, Role Permission, or Negative Scenarios. Target: 15 scenarios max.
 
 **If 6V scenario matrix exists**: Filter to P0 + P1 feature scenarios only, happy path, no negative variants. Filter auth contexts to unauthenticated + one authenticated role. Skip entity state and role permission scenarios. Target ~10-15 scenarios.
 
@@ -54,21 +57,21 @@ Before any verification, generate a targeted test plan. Save to `./plancasting/_
 
 ### Steps 1-3: Infrastructure and Baseline
 
-1. **Infrastructure Checks**: Verify DNS resolution, SSL certificate validity, HTTPS redirect, and security headers. Use CLI tools (`nslookup`, `openssl`, `curl`) if available; fall back to Playwright browser tools.
+1. **Infrastructure Checks**: Verify DNS resolution, SSL certificate validity (not expired, not self-signed), HTTPS redirect (HTTP -> HTTPS), and security headers (CSP, X-Frame-Options, etc.). Use CLI tools (`nslookup`, `openssl`, `curl`) if available; fall back to Playwright browser tools.
 
-2. **Environment Variable Spot-Check**: Check for missing or misconfigured env vars. Verify BaaS URLs, auth provider URLs, naming consistency across all `process.env.*` reads, and backend deployment target. Cross-check third-party service tier limits.
+2. **Environment Variable Spot-Check**: Check for missing or misconfigured env vars. Verify BaaS URLs, auth provider URLs, naming consistency across all `process.env.*` reads, and backend deployment target. Cross-check third-party service tier limits. **Early AI model validation**: Check all AI model IDs used in code against the provider's documentation; send a 1-token test request for each model to verify they exist and respond.
 
-3. **Reuse 6V Playwright Tests** (if `e2e/verification/` exists): Run them against production URL with `BASE_URL=https://[domain]`.
+3. **Reuse 6V Playwright Tests** (if `e2e/verification/` exists): Run them against production URL with `BASE_URL=https://[domain]`. **Flaky = FAIL**: If any test requires a retry to pass, treat it as FAIL for gate purposes — production flakiness is unacceptable.
 
 ### Steps 4-8: Core Verification
 
 4. **Critical Page Load Verification**: Test all public pages in a FRESH browser context (no cookies/localStorage). Verify HTTP 200, correct body content (not login page served with 200), and no auth console errors. Test protected route redirect behavior. Test authenticated pages after logging in as a test user. For each page: verify HTTP 200, no console errors, content renders, CSS loads, JS executes, data loads, take screenshot.
 
-5. **6R Fix Verification** (if 6R report exists): Re-test each auto-fixed issue on production. If any fix is missing, flag as CRITICAL and check deployed commit hash.
+5. **6R Fix Verification** (if 6R report exists): Re-test each auto-fixed issue on production. Verify deployed commit hash matches 6R report commit hash. If any fix is missing, flag as CRITICAL and check deployed commit hash.
 
-6. **6P/6P-R Visual Polish Verification** (if visual polish report exists): Spot-check top 3 most impactful visual changes survived production build. Flag missing changes as MEDIUM severity.
+6. **6P/6P-R Visual Polish Verification** (if visual polish report exists): Spot-check top 3 most impactful visual changes survived production build. **6P-R branch merge check**: If 6P-R was used (check for `design-plan.md`), verify `redesign/frontend-elevation` branch was merged to main before deployment. Flag missing changes as MEDIUM severity.
 
-7. **Navigation Smoke Test** (~5 min max): Test desktop sidebar, footer, mobile nav, sub-navigation tabs. Check CSS styling intact at both viewports. Flag invisible/unstyled links as CRITICAL.
+7. **Navigation Smoke Test** (~5 min max): Test desktop sidebar, footer, mobile nav, sub-navigation tabs. Check CSS styling intact at both viewports. Flag invisible/unstyled links as CRITICAL (likely Tailwind CSS purging).
 
 8. **Critical User Flow Verification**: Execute P0 scenarios from smoke matrix. Follow dependency graph. If P0 fails, mark dependents as BLOCKED. Fall back to minimum flows if no matrix exists.
 
@@ -78,7 +81,7 @@ Before any verification, generate a targeted test plan. Save to `./plancasting/_
 
 10. **Performance Spot-Check**: Measure TTFB and LCP for landing page and dashboard. Flag if >2x slower than dev.
 
-11. **Third-Party Integration Verification**: Verify auth, database, payments, email, analytics, error monitoring, webhooks, real-time connections. **CRITICAL**: Verify AI model IDs first (grep codebase, send minimal test request). Run external API health checks with minimal requests (cost warning: real API calls against production keys). Verify OAuth integration health for each connected service.
+11. **Third-Party Integration Verification**: Verify auth, database, payments, email, analytics, error monitoring, webhooks, real-time connections. **CRITICAL**: Verify AI model IDs first (grep codebase, send minimal test request). Run external API health checks with minimal requests (cost warning: real API calls against production keys). Verify OAuth integration health for each connected service (check redirect_uri matches, client IDs, provider app registration).
 
 ## Output
 
@@ -87,9 +90,20 @@ Generate `./plancasting/_audits/production-smoke/report.md` following the report
 ## Gate Decision
 
 - **PASS**: All critical flows work, all pages load, no console errors, all external APIs respond 2xx. Proceed to Stage 7D (User Guide Generation).
-- **FAIL**: Any critical flow broken, pages don't load, critical navigation failure, external API health check fails, or 6R fixes missing from deployment. Immediate action required per rollback guidance.
+- **FAIL**: Any critical flow broken, pages don't load, critical navigation failure (invisible/unstyled links), external API health check fails, or 6R fixes missing from deployment. Immediate action required per rollback guidance.
 
-Stage 7V is binary (PASS or FAIL) -- there is no CONDITIONAL PASS. Non-critical visual issues do not trigger FAIL; document them for Stage 8.
+Stage 7V is binary (PASS or FAIL) -- there is no CONDITIONAL PASS. **Flaky = FAIL**: If a scenario fails once but passes on retry, treat it as FAIL. Production flakiness is unacceptable. Non-critical visual issues do not trigger FAIL; document them for Stage 8.
+
+**FAIL decision tree**: (1) If issue is localized (1-2 files, <100 LOC fix): hotfix in code, re-deploy, re-run 7V. (2) If issue affects multiple systems or requires >2 hours to fix: execute rollback (`git revert HEAD`), verify reverted deploy is stable, investigate offline.
+
+## Failure Escalation Protocol
+
+| Failure Type | Action |
+|---|---|
+| Auth completely broken (login 500s) | Rollback deployment immediately |
+| Core data query empty (DB inaccessible) | Check backend deployment status; rollback if needed |
+| SSR hydration errors on landing page | Check Tailwind CSS purging; hotfix if CSS issue |
+| 3rd-party integration failure | Do NOT rollback; escalate to operator to verify API keys |
 
 ## Critical Rules
 
@@ -100,6 +114,7 @@ Stage 7V is binary (PASS or FAIL) -- there is no CONDITIONAL PASS. Non-critical 
 5. If ANY critical flow fails, follow rollback guidance. Do NOT mark as "known issue for later."
 6. Keep this stage FAST -- 25-45 minutes max.
 7. ALWAYS compare against Stage 6V results for deployment-specific regressions.
+7a. Flaky scenarios = FAIL in production. Do NOT mark as passing if it required a retry.
 8. ALWAYS clean up test accounts after verification.
 9. ALWAYS verify test user login works BEFORE authenticated page checks.
 10. ALWAYS test public utility routes (`/sitemap.xml`, `/robots.txt`, `/api/health`) WITHOUT authentication.

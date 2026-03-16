@@ -18,7 +18,11 @@ After Stage 5 implementation and Stage 6 quality passes, the product is function
 
 Analyze the RUNNING application's visual quality, identify UI issues (visibility, layout, typography, spacing, motion, responsiveness), and automatically refine the frontend to production-grade aesthetic quality. Lead a multi-agent visual polish project using Claude Code Agent Teams.
 
+**Mutual Exclusivity**: This stage (6P) and Stage 6P-R (Frontend Design Elevation) are alternatives — run exactly ONE, not both. If 6P has already been run and you want to switch to 6P-R, revert 6P changes first.
+
 **Relationship to `frontend-design` skill**: If available, the `frontend-design` skill provides aesthetic guidance and design direction. Polish uses it for enhancement decisions but never replaces the project's existing design system.
+
+**Category System Note**: This stage uses DIFFERENT categories than 6V/6R. 6P categories: O (objective defects), E (enhancements), D (design elevation). 6V/6R categories: A/B (agent-fixable), C (human judgment). Do NOT confuse the two systems.
 
 Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/polish-detailed-guide.md` for full refinement categories, teammate prompts, design system integration, and report templates.
 
@@ -72,11 +76,13 @@ Adapt to your `plancasting/tech-stack.md`: CSS framework, UI library, component 
 ### Category O: Objective Defects (Auto-Fix)
 Issues with a clear right/wrong answer: WCAG contrast failures, invisible text, layout overflow, clipped content, skeleton mismatch, missing focus rings, z-index errors, dark mode unstyled sections, broken images, small touch targets. MUST fix all.
 
+**Category boundary guideline**: If the feature is BROKEN or INACCESSIBLE (violates standards, prevents functionality), it's Category O. If it WORKS but FEELS UNPOLISHED (lacks feedback, delight, or visual consistency), it's Category E.
+
 ### Category E: Enhancement (Pattern-Based, Apply & Verify)
 Follow established codebase patterns: missing hover states, missing page transitions, inconsistent spacing, weak empty states, flat typography hierarchy, missing card depth, plain loading states, inconsistent form inputs. Apply then verify visually.
 
 ### Category D: Design Elevation (Document Only)
-Subjective improvements for human review: font pairing, color palette, hero visual impact, illustration style, micro-interaction opportunities, overall aesthetic direction. Document as suggestions -- do NOT apply.
+Subjective improvements for human review: font pairing, color palette, hero visual impact, illustration style, micro-interaction opportunities, overall aesthetic direction. Document as suggestions -- do NOT apply. Category D suggestions are for POST-LAUNCH review and do NOT block Stage 7 deployment.
 
 ## Phase 1: Lead Visual Audit
 
@@ -84,7 +90,7 @@ Complete BEFORE spawning teammates:
 
 1. **Read project context**: `./CLAUDE.md`, `./plancasting/tech-stack.md`, `./plancasting/prd/08-screen-specifications.md`, 6V/6R reports
 
-2. **Identify the design system**: Search in order -- design tokens file, tailwind config, global CSS, plancasting/tech-stack.md design direction, theme config, font imports, animation patterns. Output a Design System Summary.
+2. **Identify the design system**: Search in order -- design tokens file, tailwind config, global CSS, plancasting/tech-stack.md design direction, theme config, font imports, animation patterns. **Output a Design System Summary** documenting: color tokens, spacing scale, typography scale, shadow tokens, border-radius tokens, animation patterns, font families, and theme variants (dark mode). This summary is required for teammate reference.
 
 3. **Establish validation baseline**: `bun run typecheck`, `bun run lint`, `bun run test`
 
@@ -95,14 +101,17 @@ Complete BEFORE spawning teammates:
    - Authenticated pages (log in with test user from `./e2e/constants.ts`)
    - Dark mode (if supported)
    - Reuse 6V screenshots if available and recent
+   - **Before/after screenshot requirement**: Save all pre-polish screenshots to `./screenshots/visual-polish/before/`. These are REQUIRED for comparison in the final report.
 
 6. **AI Vision Analysis**: For each screenshot, check for Category O (objective), Category E (enhancement), and Category D (elevation) issues.
 
-7. **Create Visual Polish Plan** at `./plancasting/_audits/visual-polish/plan.md` with design system summary, triage, and issue tables.
+7. **Create Visual Polish Plan** at `./plancasting/_audits/visual-polish/plan.md` with **design system summary** (required output), triage, issue tables, and file assignments.
 
 8. **Invoke `frontend-design` skill** (if available): Generate enhancement guidelines. Save to `./plancasting/_audits/visual-polish/design-guidelines.md`. If unavailable, teammates use project's existing design patterns.
 
 9. **Assign teammates and prevent file conflicts**: Document file assignments in plan. NO two teammates may modify the same file.
+
+**Scope Prioritization**: Focus on HIGH-IMPACT pages first: (1) landing/marketing pages, (2) auth pages (signup/login), (3) primary dashboard, (4) core feature pages (P0/P1). Polish secondary pages only after key pages pass visual review. Target: 10-15 key screens.
 
 ## Phase 2: Spawn Teammates
 
@@ -120,11 +129,11 @@ Re-verify ALL modified screens at 1440px, 768px, 375px plus dark mode. Flag regr
 ## Phase 3: Integration & Report
 
 1. Collect teammate results. Check for regressions from Teammate 3.
-2. Fix regressions: revert specific change, re-apply with responsive-safe approach, re-verify.
+2. Fix regressions: revert specific change, re-apply with responsive-safe approach, re-verify. **Max iteration guard**: If regressions persist after 2 revert-and-reapply cycles, document as known limitation.
 3. Run full validation: `bun run typecheck`, `bun run lint`, `bun run test`. ALL must pass.
-4. Generate Category D design brief using `frontend-design` skill (if available). Save as `./plancasting/_audits/visual-polish/design-elevation-brief.md`.
+4. Generate Category D design brief using `frontend-design` skill (if available). Save as `./plancasting/_audits/visual-polish/design-elevation-brief.md`. Category D is for HUMAN REVIEW ONLY -- do NOT implement.
 5. Generate Visual Polish Report at `./plancasting/_audits/visual-polish/report.md`.
-6. Save comparison screenshots to `./screenshots/visual-polish/before/` and `./screenshots/visual-polish/after/`.
+6. Save comparison screenshots to `./screenshots/visual-polish/before/` and `./screenshots/visual-polish/after/`. **Before/after screenshots are required** for every change in the report.
 
 ## Phase 4: Shutdown
 

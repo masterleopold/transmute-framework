@@ -16,6 +16,11 @@ This is slow and error-prone. Stage 6R automates the mechanical fixes (typically
 
 **Stage Sequence**: ... -> 6H (Pre-Launch) -> 6V (Verification) -> **6R (this stage)** -> 6P or 6P-R (Visual Polish or Redesign) -> 7 (Deploy) -> 7V (Production Smoke) -> 7D (User Guide) -> 8 (Feedback) -> 9 (Maintenance)
 
+> **Category System Note**: This stage uses a DIFFERENT category system than Stage 5B:
+> - **5B Categories** (size-based): A = <30 lines per file, B = 30-100 lines AND <150 total, C = >=100 lines or unbuilt features
+> - **6R Categories** (fixability-based): A = auto-fixable code issue, B = semi-auto fixable, C = needs human judgment
+> Classify based on FIXABILITY, not severity. A critical bug that's easy to fix is Category A; a minor issue requiring architectural change is Category C.
+
 ## Fixability Taxonomy
 
 Every 6V failure falls into one of three categories:
@@ -41,7 +46,7 @@ These issues have a likely correct fix based on codebase patterns, but the fix c
 
 | Issue Type | Fix Pattern | Verify |
 |---|---|---|
-| Button onClick calls undefined function | Wire to the correct existing function | Verify the function signature matches, the mutation exists |
+| Button onClick calls undefined function | Wire to the correct existing function: (1) Check `handleX` in same component, (2) check project hooks, (3) if neither exists, escalate to C | Verify the function signature matches, the mutation exists |
 | Conditional tab incorrectly enabled/disabled | Fix the status check logic | Verify the complete status matrix |
 | Form submission has no feedback | Add toast notification or redirect using project's existing patterns | Verify the mutation actually succeeds |
 | Auth redirect after login doesn't return to original page | Fix the redirect logic to use the `redirect` query param | Verify the redirect param is properly URL-encoded and doesn't enable open redirect |
@@ -65,7 +70,7 @@ These issues have a likely correct fix based on codebase patterns, but the fix c
 1. **Fix cascade**: Fixing issue A introduces issue B. ALWAYS run typecheck + affected tests after each fix batch.
 2. **Middleware whitelist over-broadening**: Adding `/api/*` to PUBLIC_ROUTES instead of specific endpoints. ALWAYS add the EXACT route.
 3. **Stub page without proper auth**: Creating a stub `page.tsx` for an authenticated route but forgetting auth guards.
-4. **Fix the symptom, not the cause**: ALWAYS check git blame/context before wiring.
+4. **Fix the symptom, not the cause**: Before wiring a button to a function: (1) Verify function exists, (2) check git blame -- if recently deleted with "defer feature", may be intentional, (3) if truly missing, escalate to Category C. Do NOT create stub functions.
 5. **Mobile nav divergence**: ALWAYS copy the EXACT same visibility conditions.
 6. **i18n key added in English only**: Check `plancasting/tech-stack.md` for supported languages.
 7. **Category mis-classification**: ALWAYS verify the fix target actually exists before applying.
@@ -123,18 +128,51 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
 
 3. **Targeted re-verification**: Verify each fix using Playwright browser tools. For public route fixes: use `browser_close` + fresh session. For auth redirect fixes: test both directions. Quick regression sweep of ~5-10 key pages.
 
-4. **Update 6V report**: Append remediation results section to `./plancasting/_audits/visual-verification/report.md`.
+   **3-breakpoint verification**: For UI fixes, verify at 1440px, 768px, and 375px to ensure responsive behavior is maintained.
+
+   **Tier-based screenshot handling**:
+   - Category A: Single screenshot at primary breakpoint is sufficient
+   - Category B: Before/after screenshots at all 3 breakpoints
+   - Responsive layout fixes: Always verify at mobile (375px)
+
+   **Regression detection**: Compare NEW failures against original 6V report. If regressions from 6R fixes: revert, move to Category C. If unrelated: document as "New finding (not caused by 6R)".
+
+4. **Update 6V report**: Append remediation results section to `./plancasting/_audits/visual-verification/report.md`. Update the `## Gate Decision` section to reflect post-remediation state.
 
 5. **Generate remediation report** at `./plancasting/_audits/runtime-remediation/report.md`.
 
-6. **Commit all changes**: `git add src/ <backend-dir>/ plancasting/_audits/runtime-remediation/ plancasting/_audits/visual-verification/report.md && git commit -m "fix: Stage 6R auto-remediation -- [n] issues resolved"`
+6. **Extract verified fix patterns as rules** (see CLAUDE.md 'Path-Scoped Rules'):
+   For each verified Category A/B fix, evaluate if the pattern is generalizable:
+   - **HIGH confidence** (verified working fix across 2+ features): Append to `.claude/rules/*.md`
+   - **MEDIUM confidence** (single-feature but likely generalizable): Append to `plancasting/_rules-candidates.md`
+   - 6R rules are inherently higher confidence than 5B rules (battle-tested)
 
-7. **Save commit hash**: `git rev-parse HEAD > ./plancasting/_audits/runtime-remediation/last-remediated-commit.txt`
+7. **Commit all changes**: `git add src/ <backend-dir>/ plancasting/_audits/runtime-remediation/ plancasting/_audits/visual-verification/report.md .claude/rules/ plancasting/_rules-candidates.md && git commit -m "fix: Stage 6R auto-remediation -- [n] issues resolved, [n] rules extracted"`
+
+8. **Save commit hash**: `git rev-parse HEAD > ./plancasting/_audits/runtime-remediation/last-remediated-commit.txt`
+
+## Unfixable Violation Protocol
+
+If a runtime issue requires architectural changes beyond this stage's scope:
+1. Document in `./plancasting/_audits/runtime-remediation/category-c-escalations.md`
+2. Mark as 'REQUIRES HUMAN DECISION'
+3. Include in final report under 'Category C Escalations'
+4. Continue fixing remaining A/B issues -- do not block the loop
+
+## Post-3-Loops Escalation
+
+After 3 completed loops, if Category A/B issues persist:
+- Escalate ALL remaining A/B to Category C
+- Update gate to CONDITIONAL PASS
+- Create `remaining-blockers.md` as authoritative list of unresolved issues
+- Operator must: (a) manually resolve, re-run 6V, reset loop-count.txt to 0, OR (b) document as known limitations and proceed to 6P
 
 ## Report Template
 
 ```markdown
 # Runtime Remediation Report -- Stage 6R
+
+> **Category System**: This report uses 6R's fixability-based categories (A = auto-fix, B = semi-auto, C = needs human), which are DIFFERENT from Stage 5B's size-based categories.
 
 ## Summary
 - **Remediation Date**: [date]
@@ -163,13 +201,23 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
 ### Medium (can fix post-deploy)
 ### Low (nice to have)
 
+## Loop Tracking
+- **Current loop**: [N] / 3 (max 3 completed fix-verify loops)
+- **Previous loop report**: [path or "N/A -- first loop"]
+
 ## Gate Decision
 - **PASS**: All critical/high issues resolved
 - **CONDITIONAL PASS**: Some high-severity issues remain but documented
 - **FAIL**: Critical issues remain that block deployment
 
+**Loop limit rule**: After 3 completed loops, if A/B issues persist, escalate to Category C. Update gate to CONDITIONAL PASS and proceed to 6P/6P-R.
+
+## Rules Extracted
+- HIGH confidence (auto-promoted): [n] rules added to `.claude/rules/`
+- MEDIUM confidence (staged): [n] candidates added to `plancasting/_rules-candidates.md`
+
 ## Next Steps
-- If PASS: proceed to Stage 6P or 6P-R (Visual Polish or Redesign) -> Deploy -> 7V -> 7D
+- If PASS: proceed to Stage 6P/6P-R -> 7 (Deploy) -> Stage 7V -> Stage 7D
 - If CONDITIONAL PASS: human reviews remaining issues
 - If FAIL: human resolves Category C critical issues, then re-run 6V -> 6R
 ```
@@ -189,5 +237,9 @@ Fix types: Backend Function Returns Wrong Shape, Auth Context Not Propagated, Qu
 11. For i18n fixes: check ALL language files.
 12. For stub pages: ALWAYS include proper auth guards, loading states, and error handling.
 13. If 6V report has zero failures, output a clean report and exit.
-14. Maximum 3 remediation loops.
+14. Maximum 3 remediation loops. Counter tracks COMPLETED runs:
+    - After 1st session completes -> file contains `1`
+    - After 2nd session completes -> file contains `2`
+    - After 3rd session completes -> file contains `3`
+    - When you read `3` at start -> STOP immediately. Do NOT increment to 4.
 15. ALWAYS respect the project's file organization conventions.

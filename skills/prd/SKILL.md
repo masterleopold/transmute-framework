@@ -52,19 +52,19 @@ If BRD gaps are found during PRD generation, use this decision tree:
 2. **Requires business judgment**: Mark with `> ⚠️ ASSUMPTION:` and note in `_brd-issues.md`
 3. **Blocking**: Escalate in status message
 
-Do NOT modify BRD files. Document issues in `./plancasting/prd/_brd-issues.md`. If no issues found, do NOT create this file.
-
-**BRD Issue Classification**:
+Do NOT modify BRD files. Document issues in `./plancasting/prd/_brd-issues.md` with classification:
 - **BLOCKING**: Empty/corrupted BRD files → STOP
 - **CRITICAL-BUT-RECOVERABLE**: BRD gap but can continue with best interpretation → Continue, document, flag
 - **NON-BLOCKING**: Incomplete but workable with assumptions → Continue
 
+If no BRD issues found, do NOT create this file. Stage 2B reads `_brd-issues.md` (if it exists) and maps classifications: BLOCKING → CRITICAL, CRITICAL-BUT-RECOVERABLE → HIGH, NON-BLOCKING → MEDIUM/LOW.
+
 ### Step 3: Build Feature Decomposition Map
 
-1. Verify full-scope coverage: cross-check BRD's master feature inventory against all FR-xxx entries
+1. Verify full-scope coverage: cross-check BRD's master feature inventory against all FR-xxx entries. Every feature must have at least one FR.
 2. Group ALL BRD functional requirements into logical product features/modules
 3. Create `./plancasting/prd/_context.md` containing:
-   - Feature Decomposition Map (feature ID → related BR/FR/NFR IDs) — COMPLETE
+   - **Feature Decomposition Map** (feature ID → related BR/FR/NFR IDs) — COMPLETE. This map is the authoritative source for which BRD requirements belong to which product feature. It is referenced by Stage 2B for P0 coverage calculations and by Stage 3 for scaffold organization.
    - Technology stack summary
    - Master PRD ID registry with expanded ranges:
      - EPIC-001–EPIC-099, US-001–US-499, JS-001–JS-149, SC-001–SC-699
@@ -99,7 +99,7 @@ Emphasize: Generate test specifications and scenarios, NOT test code. Cross-feat
 
 ### Step 5: Token Budget Management
 
-Safe budget: ~25K tokens per agent. Estimate output sizes before spawning.
+Safe budget: output token limit minus 7K headroom per agent (see tech-stack.md § Model Specifications). Estimate output sizes before spawning.
 
 **Known heavy files** (likely need splitting for 30+ feature products):
 - `04-epics-and-user-stories.md` — split by epic group
@@ -121,7 +121,7 @@ After all teammates complete:
    - **Test coverage**: Every user flow has E2E test scenarios
 3. **Cross-story dependency validation**:
    - Build directed dependency graph from US Dependencies fields
-   - Verify acyclic (no circular dependencies)
+   - **Verify acyclic** (no circular dependencies) — if cycles found, document and break by removing the weakest dependency link
    - Verify no P0 story depends on P1/P2/P3
    - Verify no story depends on lower-priority epic's story
 4. Generate `18-glossary-and-cross-references.md` with BRD traceability matrix and cross-feature interaction matrix
@@ -132,7 +132,7 @@ After all teammates complete:
 
 Spawn 3 review agents reading ALL PRD files, BRD files, and Business Plan.
 
-**completeness-reviewer**: FR → US coverage (target ≥95%), acceptance criteria quality, all states documented, API completeness (schemas + errors), user flow coverage, onboarding flows.
+**completeness-reviewer**: FR → US coverage (target ≥95%), acceptance criteria quality (measurable Given-When-Then), all states documented, API completeness (schemas + errors), user flow coverage, onboarding flows.
 
 **consistency-reviewer**: No contradictions across files, no duplicate stories, consistent terminology/priorities/complexity, screen-flow alignment, API-screen data shape alignment, navigation accommodates all features, valid BRD traceability, test coverage.
 
@@ -173,7 +173,7 @@ Spawn 3 review agents reading ALL PRD files, BRD files, and Business Plan.
 | Output | Location | Description |
 |---|---|---|
 | PRD files | `./plancasting/prd/` | 18 numbered markdown files (01-18) |
-| Shared context | `./plancasting/prd/_context.md` | Feature map, ID registry, glossary |
+| Shared context | `./plancasting/prd/_context.md` | Feature Decomposition Map, ID registry, glossary |
 | BRD issues | `./plancasting/prd/_brd-issues.md` | BRD quality issues (only if found) |
 | Review log | `./plancasting/prd/_review-log.md` | Quality review findings |
 | Navigation hub | `./plancasting/prd/README.md` | File descriptions, role-specific reading order |

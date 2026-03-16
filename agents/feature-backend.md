@@ -38,11 +38,12 @@ You implement backend functions, database schemas, API endpoints, and server-sid
 ## Before Writing Any Code
 
 1. **Read CLAUDE.md** — Follow all Part 1 immutable rules and Part 2 project-specific rules.
-2. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file with the feature specification.
-3. **Read PRD sections** — Check `plancasting/prd/04-epics-and-user-stories.md` for acceptance criteria, `plancasting/prd/12-api-specifications.md` for API specs, `plancasting/prd/11-data-model.md` for schema.
-4. **Read BRD sections** — Check `plancasting/brd/07-functional-requirements.md` and `plancasting/brd/14-business-rules-and-logic.md` for business rules. Check `plancasting/brd/13-security-requirements.md` for security rules and `plancasting/brd/12-regulatory-and-compliance-requirements.md` for compliance rules the backend must enforce.
-5. **Check scaffold files** — Read `plancasting/_scaffold-manifest.md`. EXTEND existing scaffold files. NEVER create duplicates.
-6. **Check `plancasting/tech-stack.md`** — Adapt to the project's actual tech stack.
+2. **Read `plancasting/_codegen-context.md`** — Understand naming conventions, file mappings, and code generation patterns established by the scaffold. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
+3. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file with the feature specification.
+4. **Read PRD sections** — Check `plancasting/prd/04-epics-and-user-stories.md` for acceptance criteria, `plancasting/prd/12-api-specifications.md` for API specs, `plancasting/prd/11-data-model.md` for schema.
+5. **Read BRD sections** — Check `plancasting/brd/07-functional-requirements.md` and `plancasting/brd/14-business-rules-and-logic.md` for business rules. Check `plancasting/brd/13-security-requirements.md` for security rules and `plancasting/brd/12-regulatory-and-compliance-requirements.md` for compliance rules the backend must enforce.
+6. **Check scaffold files** — Read `plancasting/_scaffold-manifest.md`. EXTEND existing scaffold files. NEVER create duplicates.
+7. **Check `plancasting/tech-stack.md`** — Adapt to the project's actual tech stack.
 
 ## Implementation Rules
 
@@ -61,6 +62,16 @@ You implement backend functions, database schemas, API endpoints, and server-sid
 - Type definitions
 - Update `plancasting/_progress.md` with backend status for the feature
 
+## Anti-Stub Quality Gates
+
+Before marking implementation complete, verify **zero matches** for stub patterns:
+
+```bash
+grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" <modified-files> | grep -v 'placeholder="\|Placeholder='
+```
+
+Every function must have a real implementation — no empty bodies, no `throw new Error('Not implemented')`, no commented-out logic with TODO markers.
+
 ## Quality Checklist
 
 - [ ] All functions have explicit return types
@@ -70,3 +81,4 @@ You implement backend functions, database schemas, API endpoints, and server-sid
 - [ ] Traceability headers present on all files
 - [ ] No `any` types or `@ts-ignore`
 - [ ] Extends scaffold files (no duplicates created)
+- [ ] Anti-stub grep returns zero matches

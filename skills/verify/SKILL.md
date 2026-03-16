@@ -27,6 +27,7 @@ Read the scenario generation guide at `${CLAUDE_SKILL_ROOT}/references/feature-s
    mkdir -p ./screenshots/automated
    mkdir -p ./screenshots/criteria
    mkdir -p ./screenshots/vision
+   mkdir -p ./screenshots/visual-verification/baseline
    mkdir -p ./e2e/verification
    ```
 3. Verify Playwright browsers are installed:
@@ -39,6 +40,8 @@ Read the scenario generation guide at `${CLAUDE_SKILL_ROOT}/references/feature-s
 - **`full`** (default) -- All screens in `plancasting/prd/08-screen-specifications.md`. ~30-60 min.
 - **`critical`** -- P0/P1 features only. ~15-30 min.
 - **`diff`** -- Only screens related to files changed since last verification. ~10-20 min. **Note**: `last-verified-commit.txt` is created at the END of a 6V run, so `diff` mode only works on the second or subsequent run. If the file does not exist, automatically falls back to `full`.
+
+**How to specify scope**: Append `MODE: full`, `MODE: critical`, or `MODE: diff` on a new line after pasting the prompt, or as a separate follow-up message. Default is `full`.
 
 **Important**: This stage uses the **FULL** generation mode (all priorities) of the Feature Scenario Matrix. Do not use `critical` or `diff` scope unless explicitly requested by the user.
 
@@ -120,11 +123,35 @@ Interactive behavior and keyboard navigation. Tasks: form/modal/dropdown/tab tes
 4. Commit generated test files if any
 5. Save commit hash: `git rev-parse HEAD > ./plancasting/_audits/visual-verification/last-verified-commit.txt`
 
-## Gate Decision
+## Gate Decision (Dual System)
 
-- **PASS**: Zero critical failures, >90% acceptance criteria pass, all pages load
-- **CONDITIONAL PASS**: 1-3 high-severity issues, >80% criteria pass
-- **FAIL**: Any critical failure (page won't load, core flow broken, auth broken)
+The gate uses TWO systems -- the final gate is the WORSE of the two:
+
+**Percentage-based system**:
+- **PASS**: >90% acceptance criteria pass, all pages load
+- **CONDITIONAL PASS**: 80-90% criteria pass
+- **FAIL**: <80% criteria pass
+
+**Fixability-based category system** (uses `6V-` prefix to distinguish from 5B):
+- **6V-A** (auto-fixable): broken links, dead code, incorrect imports -- 6R fixes automatically
+- **6V-B** (semi-auto): stub components, missing loading states -- 6R fixes with effort
+- **6V-C** (human judgment): architectural issues, design decisions -- 6R cannot fix
+
+**Dual-system decision matrix**:
+
+| Percentage | Categories Present | Final Gate | Next Stage |
+|---|---|---|---|
+| PASS (>90%) | None (zero issues) | PASS | -> 6P/6P-R |
+| PASS (>90%) | A/B only | CONDITIONAL PASS | -> 6R -> 6P/6P-R |
+| PASS (>90%) | C only | PASS | -> 6P/6P-R (document C for human) |
+| PASS (>90%) | Mixed A/B + C | CONDITIONAL PASS | -> 6R -> 6P/6P-R (document remaining C) |
+| CONDITIONAL (80-90%) | A/B present | CONDITIONAL PASS | -> 6R -> 6P/6P-R |
+| CONDITIONAL (80-90%) | C only | CONDITIONAL PASS | -> 6P/6P-R (document C for human) |
+| FAIL (<80%) | Any | FAIL | Manual fix + re-run 6V |
+
+## Flaky Scenario Handling
+
+A flaky scenario fails inconsistently (fails once, passes on retest). Retest a failing scenario once. If it passes on retest: mark as "FLAKY -- cause TBD" in the Issues table. In 6V, flaky scenarios are informational (do not count toward gate failure). In 7V (production), flaky scenarios count as FAIL.
 
 ## Next Steps
 
@@ -166,5 +193,6 @@ Interactive behavior and keyboard navigation. Tasks: form/modal/dropdown/tab tes
 | Verification Matrix (gap-fill) | `./plancasting/_audits/visual-verification/verification-matrix.md` |
 | Verification Report | `./plancasting/_audits/visual-verification/report.md` |
 | Last Verified Commit | `./plancasting/_audits/visual-verification/last-verified-commit.txt` |
+| Baseline Screenshots | `./screenshots/visual-verification/baseline/` |
 | Playwright Test Files | `e2e/verification/*.spec.ts` |
 | Screenshots | `./screenshots/automated/`, `./screenshots/criteria/`, `./screenshots/vision/` |

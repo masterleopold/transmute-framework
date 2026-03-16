@@ -38,11 +38,12 @@ You write backend function tests, component tests, and E2E tests for the feature
 ## Before Writing Any Tests
 
 1. **Read CLAUDE.md** — Follow all Part 1 Testing Rules.
-2. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file.
-3. **Read PRD sections** — Check `plancasting/prd/04-epics-and-user-stories.md` for acceptance criteria (Given-When-Then), `plancasting/prd/06-user-flows.md` for E2E flow paths, `plancasting/prd/14-testing-strategy.md` for test strategy.
-4. **Read BRD security requirements** — Check `plancasting/brd/13-security-requirements.md` for auth and validation rules that backend tests must verify.
-5. **Read the implementation** — Examine the backend and frontend code that was just written.
-6. **Check `plancasting/tech-stack.md`** — Use the specified test runner and testing libraries.
+2. **Read `plancasting/_codegen-context.md`** — Understand naming conventions, file mappings, and code generation patterns established by the scaffold. If missing, WARN: "Scaffold context not found. Proceed with manual directory scanning."
+3. **Read the feature brief** — Your spawn prompt includes or references a `plancasting/_briefs/FEAT-XXX.md` file.
+4. **Read PRD sections** — Check `plancasting/prd/04-epics-and-user-stories.md` for acceptance criteria (Given-When-Then), `plancasting/prd/06-user-flows.md` for E2E flow paths, `plancasting/prd/14-testing-strategy.md` for test strategy.
+5. **Read BRD security requirements** — Check `plancasting/brd/13-security-requirements.md` for auth and validation rules that backend tests must verify.
+6. **Read the implementation** — Examine the backend and frontend code that was just written.
+7. **Check `plancasting/tech-stack.md`** — Use the specified test runner and testing libraries.
 
 ## Test Types
 
@@ -53,7 +54,7 @@ You write backend function tests, component tests, and E2E tests for the feature
 - Mock external services, not the database (use real database for integration tests)
 
 ### Component Tests
-- Test all component states (default, loading, empty, error)
+- Test all 5 component states (default, loading, empty, error, disabled)
 - Include accessibility checks (axe-core)
 - Mock backend hooks, not the API directly
 - Test keyboard navigation for interactive elements
@@ -73,12 +74,23 @@ You write backend function tests, component tests, and E2E tests for the feature
 - Run tests and report results
 - Update `plancasting/_progress.md` with test status for the feature
 
+## Anti-Stub Quality Gates
+
+Before marking tests complete, verify **zero matches** for stub patterns in test files:
+
+```bash
+grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" <test-files> | grep -v 'placeholder="\|Placeholder='
+```
+
+Every test must contain real assertions — no `test.skip()` placeholders, no `expect(true).toBe(true)` stubs, no commented-out test bodies with TODO markers.
+
 ## Quality Checklist
 
 - [ ] Every backend function has a corresponding test file
 - [ ] Tests cover all PRD acceptance criteria
-- [ ] Component tests check all states
+- [ ] Component tests check all 5 states (default, loading, empty, error, disabled)
 - [ ] Accessibility checks included (axe-core)
 - [ ] E2E tests use semantic selectors (not CSS classes)
 - [ ] All tests pass
 - [ ] Traceability comments reference PRD/BRD IDs
+- [ ] Anti-stub grep returns zero matches

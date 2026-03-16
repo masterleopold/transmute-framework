@@ -18,11 +18,25 @@ Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/audit-detailed-guide
 ## Why This Stage Exists
 
 Stage 5 builds all features sequentially. In practice, a recurring pattern emerges: backend implementations are thorough, but many frontend components remain as stubs — scaffold-quality code with placeholder text, unconnected hooks, or missing interactive behavior. This happens because:
-- The orchestrator's context window degrades over hours of feature-by-feature implementation
+- Even with the pipeline model's full context window (see tech-stack.md), quality degrades over extended sessions as accumulated context competes with per-feature attention
 - Per-feature quality gates become less rigorous as the session progresses
 - Frontend teammates produce "looks done" output that passes a fatigued quality gate
 
-This stage runs with a FRESH context window, focused SOLELY on finding and fixing these gaps.
+This stage runs with a FRESH context window, focused SOLELY on finding and fixing these gaps. It is the hard gate between implementation and QA.
+
+## Category System (Size-Based — Different from 6V/6R)
+
+Issues found during this audit are classified into three SIZE-BASED categories:
+
+- **Category A**: <30 non-blank non-comment lines per affected file — stub text replacement, dead links, missing simple states
+- **Category B**: 30-100 lines per file AND <150 lines total across all affected files — component body rebuild, form handler wiring, modal content population
+- **Category C**: >=100 lines in any single file OR >=150 lines total across all affected files OR unbuilt features — escalate to Stage 5 re-run
+
+> This differs from Stage 6V/6R, which classifies by FIXABILITY (A = auto-fixable, B = semi-auto, C = needs human judgment). Size-based categories here determine whether the fix is small enough for a 5B teammate to handle or requires a full Stage 5 re-run.
+
+**Multi-file classification rule**: Category A — all files need <30 lines each. Category B — largest file needs <100 lines AND total across all files <150 lines. Category C — largest file needs >=100 lines OR total >=150 lines. If ambiguous, default to the higher category.
+
+**What Stage 5B Does NOT Do**: Does NOT create entirely new backend functions (Stage 5), refactor architecture (6E), add error handling patterns (6G), or fix security issues (6A). If a fix requires >100 lines of net-new code in a single file, it's Category C and gets escalated.
 
 ## Prerequisite Checks
 
@@ -85,25 +99,16 @@ Before running any scans, read `plancasting/tech-stack.md` to determine actual d
    - Dead onClick / href="#" detection
    - Mock data in production components
    - Unconnected hooks (useState with empty/hardcoded values)
+   - Missing loading/error states (components using hooks without isLoading check)
    - Empty or near-empty page files
    - Duplication pattern detection (bloated pages with zero component imports)
    - Scaffold manifest cross-reference
 
 4. **Cross-reference PRD against implementation**: For each feature verify routes, backend functions, UI components, hooks, and acceptance criteria coverage.
 
-5. **Classify findings into three categories**:
+5. **Classify findings into three categories** (see Category System above and detailed guide for full classification rules):
 
-   **Size-based category system**:
-
-   **Category A — Quick Fix** (< 30 lines per file): Stub text replacement, missing handlers, missing states, simple orphan cleanup, missing i18n keys, dead links, missing responsive classes.
-
-   **Category B — Medium Fix** (30-100 lines per file): Components needing real UI, hooks needing real data connections, forms needing submission logic, modals needing content, duplication fixes, bloated page decomposition.
-
-   **Category C — Large Gap** (≥ 100 lines per file, escalate): New hooks/backend functions that should exist, single files needing 100+ lines, entirely unbuilt frontend features, features where both backend AND frontend are stubs. Mark in `plancasting/_progress.md` as Needs Re-implementation.
-
-   **Multi-file rule**: Classify by LARGEST single-file change. Independent issues in same feature classified separately.
-
-   **Scope boundaries — what 5B does NOT audit**: Design quality (that's 6P/6P-R), security (6A), performance (6C). 5B focuses strictly on implementation completeness.
+   **Fixing Priority Within A/B Categories**: (1) Fix P0/P1 critical user flow issues first. (2) Then P2/P3. (3) Within each flow, backend before frontend. (4) Within each layer, integration gaps before stubs.
 
 6. **Generate audit report** at `./plancasting/_audits/implementation-completeness/report.md`
 
@@ -113,12 +118,14 @@ Before running any scans, read `plancasting/tech-stack.md` to determine actual d
 
 Apply the early exit decision table:
 
-| Cat A/B count | Cat C count | Action |
-|---|---|---|
-| 0 | 0 | Skip Phase 2-3 -> PASS |
-| 0 | 1-3 | Skip Phase 2-3, document Cat C -> CONDITIONAL PASS |
-| 0 | 4+ | Skip Phase 2-3, document Cat C -> FAIL (Stage 5 re-run) |
-| 1+ | any | Spawn teammates for A/B fixes, document Cat C |
+| Cat A/B count | Cat C count | Gate Decision | Action |
+|---|---|---|---|
+| 0 | 0 | PASS | Skip Phase 2-3 -> Stage 6 |
+| 0 | 1-3 | CONDITIONAL PASS | Skip Phase 2-3, document Cat C -> Stage 6 |
+| 0 | 4-5 | FAIL-RETRY | Skip Phase 2-3, document Cat C -> re-run 5B (max 3 runs) |
+| 0 | 6+ (or total unfixed >=6) | FAIL-ESCALATE | Skip Phase 2-3, document Cat C -> re-run Stage 5 |
+| 1+ | any | *(after fixes)* | Spawn teammates for A/B fixes, document Cat C |
+| any (Run 4+) | any | FAIL-ESCALATE | Skip Phase 2 auto-fixes, reclassify remaining A/B as Cat C |
 
 Spawn Teammates 1 and 2 in parallel. Teammate 3 MUST wait until both complete.
 
@@ -141,14 +148,14 @@ Spawn Teammates 1 and 2 in parallel. Teammate 3 MUST wait until both complete.
 - Run full test suite (typecheck, lint, unit, integration, E2E)
 - Run final stub scan — must return zero results
 - Run orphan component scan
-- Spot-check all pages with Category B fixes + 5 random pages
+- Spot-check all pages with Category B fixes + additional random pages (coverage by feature count: <10 features = all pages; 10-30 = 50%; >30 = 30%, plus all Category B pages)
 - Report results in structured format
 
 ### Phase 3: Coordination
 
 While teammates work:
 1. Monitor for Category C escalations — document in `plancasting/_progress.md`
-2. If FAIL gate triggered (4+ Cat C), note systemic frontend failure in audit report
+2. If FAIL-ESCALATE gate triggered (6+ Cat C, or 6+ total unfixed, or 3 consecutive FAIL-RETRY), note systemic frontend failure in audit report
 3. Resolve conflicts between backend and frontend fixes
 4. Reclassify any fix exceeding Category B scope (>100 lines) as Category C
 
@@ -157,7 +164,7 @@ While teammates work:
 After all teammates complete:
 
 1. **Update audit report** at `./plancasting/_audits/implementation-completeness/report.md` with:
-   - Summary (total issues by category, fixed counts)
+   - Summary (total issues by category, fixed counts, Run Number)
    - Fix summary (components fixed, orphans deleted, i18n keys added, backend functions fixed)
    - Verification results (TypeScript, lint, unit tests, E2E, stub scan, orphan scan)
    - Gate decision
@@ -168,13 +175,22 @@ After all teammates complete:
 
 3. **Gate Decision**:
    - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs remain -> Stage 6
-   - **CONDITIONAL PASS**: Zero A/B remaining, 1-3 Cat C documented -> Stage 6 with known gaps
-   - **FAIL-RETRY**: 1+ A/B unfixed OR test failures from 5B fixes -> re-run 5B
+   - **CONDITIONAL PASS**: All A/B fixes attempted; 0-2 A/B remain unfixed, OR all A/B fixed AND 1-3 Cat C documented -> Stage 6 with known gaps
+   - **FAIL-RETRY**: 3+ A/B unfixed, OR test failures from 5B fixes, OR 4-5 Cat C -> re-run 5B (max 3 re-runs; 3 consecutive FAIL-RETRY = auto-escalate to FAIL-ESCALATE)
    - **FAIL-ESCALATE**: 6+ Cat C issues, OR 6+ total unfixed issues, OR 3 consecutive FAIL-RETRY reports -> re-run Stage 5 for affected features
 
-### Phase 5: Shutdown
+### Phase 5: Rule Extraction (Post-Gate)
 
-Shut down all teammates. Output final summary: gate decision, issues fixed, escalations.
+After gate decision, extract implementation lessons as path-scoped rules (see CLAUDE.md 'Path-Scoped Rules'):
+
+1. Scan audit findings for repeatable patterns across 2+ features
+2. Generate rule candidates with Source Stage, Evidence, Trigger, Rule Text, Target File, Confidence, Affected Features
+3. Route by confidence: HIGH (2+ features) -> `.claude/rules/`, MEDIUM/LOW -> `plancasting/_rules-candidates.md`
+4. Update CLAUDE.md Part 2 Path-Scoped Rules table if HIGH confidence rules added
+
+### Phase 6: Shutdown
+
+Shut down all teammates. Output final summary: gate decision, issues fixed, escalations, rules extracted (count by confidence level).
 
 ## Session Recovery
 
@@ -182,9 +198,10 @@ If interrupted:
 1. Check if `./plancasting/_audits/implementation-completeness/report.md` exists.
 2. If it has Fix Summary + Verification Results: skip to Phase 4.
 3. If it has Fix Summary but no Verification Results: check which teammates finished, re-spawn incomplete ones, then spawn Teammate 3.
-4. If no Fix Summary: proceed to Phase 2.
+4. If it has Issues Found but no Fix Summary: skip to Phase 2.
 5. If report does not exist: restart from Phase 1.
 6. Check `plancasting/_progress.md` for features already marked as Needs Re-implementation.
+7. Determine Run Number: If existing report has Run Number, increment by 1. If Run 4+, skip Phase 2 auto-fixes — escalate all remaining A/B to Category C.
 
 ## Critical Rules
 

@@ -21,7 +21,7 @@ This is a LIGHTER pass than 6V — it focuses on "does the deployed app work?" n
 These patterns were identified from real deployments and are invisible to dev/test environments:
 
 1. **Environment variable naming mismatch**: One file reads `ANTHROPIC_API_KEY` while others read `MYAPP_ANTHROPIC_API_KEY` (a prefixed variant) — the mismatched reference silently returns `undefined`, passes all tests (which mock env vars), and only fails in production.
-2. **Backend deployment target wrong**: Frontend's backend URL env var points to the dev backend instead of production — all production requests go to dev data.
+2. **Backend deployment target wrong**: Frontend's backend URL env var points to the dev backend instead of production — all production requests go to dev data. **Detection**: Check the backend URL environment variable in the hosting platform's config. **Fix**: Update to production backend URL, then re-deploy. **Classification**: FAIL gate item.
 3. **AI model ID hallucination**: Stage 5 agents may use non-existent or outdated model IDs. These pass tests (which mock API calls) but fail with 400/404 in production.
 4. **OAuth redirect URI mismatch**: The `redirect_uri` constructed during OAuth init differs from the one used in the callback handler — the provider rejects the request.
 5. **Service tier limit exceeded**: Sandbox timeout set to 2 hours but the free tier cap is 1 hour — API returns 400, feature silently fails.
@@ -39,6 +39,7 @@ This prompt is intentionally stack-agnostic — it verifies the deployed applica
 - Test runner: use your project's Playwright command (e.g., `bunx playwright test` vs `npx playwright test`)
 - Backend deployment: adapt rollback commands to your BaaS/backend (Convex, Supabase, Firebase, etc.)
 - Hosting platform: adapt env var checks to your host (Vercel, Netlify, Cloudflare, etc.)
+- **Browser tools**: This stage uses Playwright MCP browser tools. If unavailable, use curl-based HTTP checks and capture screenshots via the project's test framework.
 Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actual conventions.
 
 ## Detailed Verification Checklist
@@ -46,6 +47,8 @@ Always read `CLAUDE.md` and `plancasting/tech-stack.md` for your project's actua
 ### 0. Generate Smoke Scenario Matrix (MUST run FIRST)
 
 Before any verification, generate a targeted test plan for production smoke testing.
+
+**Generation mode: SMOKE** — P0/P1 features only, happy path Feature Scenarios + one authenticated/unauthenticated Auth Context check per route. No Entity State, Role Permission, or Negative Scenarios. Target: 15 scenarios max.
 
 **If the 6V scenario matrix exists** (`./plancasting/_audits/visual-verification/feature-scenario-matrix.md`):
 1. Read the 6V matrix
@@ -116,6 +119,8 @@ Checklist:
 
 ### 2. Environment Variable Spot-Check
 
+**Early AI model validation**: Check all AI model IDs used in code against the provider's documentation. Send a 1-token test request for each model to verify they exist and respond. If any model ID is invalid, flag as CRITICAL.
+
 Before testing pages, check for common env var issues:
 - Navigate to the app and view page source or `__NEXT_DATA__` (for Next.js) — check that `NEXT_PUBLIC_*` values are present and not `"undefined"` or empty
 - If the hosting platform CLI is available, cross-check against `.env.local.example`
@@ -133,6 +138,8 @@ If Stage 6V generated Playwright test files in `e2e/verification/`, run them aga
 BASE_URL=https://[production-domain] bunx playwright test e2e/verification/ --grep "@verification" --retries=2
 ```
 Verify `playwright.config.ts` reads `BASE_URL` from environment. If no test files exist, skip and proceed with manual checks.
+
+**Flaky = FAIL**: If any test requires a retry to pass (reported as 'flaky' in Playwright output), treat it as FAIL for gate purposes — production flakiness is unacceptable. Do NOT mark a scenario as passing if it required a retry.
 
 ### 4. Critical Page Load Verification
 
@@ -155,7 +162,7 @@ Test these pages:
 2. Response body is the **expected page content** (not an HTML login page served with 200 status)
 3. No auth-related console errors (`token undefined`, `session expired`, `unauthorized`)
 
-Also verify protected route redirect: Navigate to `/dashboard` and `/settings/profile` in the same unauthenticated context — verify they redirect to `/login?redirect=[path]`.
+Also verify protected route redirect: Navigate to `/dashboard` and `/settings/profile` in the same unauthenticated context — verify they redirect to `/login?redirect=[path]`. Protected routes MUST redirect with the redirect query param. Missing param = MEDIUM severity (poor UX).
 
 If ANY public page redirects to login, this is a **CRITICAL** failure — the auth middleware is blocking public routes in production.
 
@@ -179,9 +186,11 @@ Read the 6R report "Auto-Fixed (Category A)" and "Semi-Auto-Fixed (Category B)" 
 | i18n key added | Navigate to the page — verify translated text appears, not raw key string |
 | Broken href fixed | Click the link — verify it navigates to the correct destination |
 
-If ANY 6R fix is NOT present in production, flag as **CRITICAL**. Check deployed commit hash vs. 6R report commit hash.
+If ANY 6R fix is NOT present in production, flag as **CRITICAL**. Check deployed commit hash vs. 6R report commit hash (stored in `./plancasting/_audits/runtime-remediation/last-remediated-commit.txt`).
 
 ### 6. Stage 6P/6P-R Visual Polish Verification (if visual polish report exists)
+
+**6P-R branch merge check**: If 6P-R was used (check for `./plancasting/_audits/visual-polish/design-plan.md` — only 6P-R creates this), verify `redesign/frontend-elevation` branch was merged to main before deployment. If NOT merged, flag as **CRITICAL** and abort rest of 7V.
 
 Quick visual spot-check (3-5 minutes max):
 1. Read the visual polish report's applied changes tables
@@ -322,7 +331,7 @@ Generate `./plancasting/_audits/production-smoke/report.md`:
 - Total 6R fixes: [n]
 - Verified in production: [n]
 - Missing in production: [n] — [list]
-- Deployment commit matches 6R: YES / NO
+- Deployment commit matches 6R: YES / NO (deployed: [hash], 6R: [hash])
 
 ## 6P/6P-R Visual Polish Verification (if applicable)
 - Total visual polish changes: [n]
@@ -377,12 +386,16 @@ Generate `./plancasting/_audits/production-smoke/report.md`:
 
 ## Gate Decision
 - **PASS**: All critical flows work, all pages load, no console errors, all external APIs respond 2xx
-- **FAIL**: Any critical flow broken OR pages don't load OR critical navigation failure OR external API health check fails — immediate action required
+- **FAIL**: Any critical flow broken OR pages don't load OR critical navigation failure OR external API health check fails OR 6R fixes missing — immediate action required
+
+Note: Stage 7V is binary (PASS or FAIL) — there is no CONDITIONAL PASS. Flaky = FAIL. Non-critical visual issues documented but do not affect gate.
 
 ## Next Steps
 - If PASS: proceed to Stage 7D (User Guide Generation)
 - If FAIL due to deployment config: fix config, redeploy, re-run 7V
 - If FAIL due to code regression: rollback deployment (git revert), investigate, fix, redeploy, re-run 7V
+
+**FAIL decision tree**: (1) Localized issue (1-2 files): hotfix, re-deploy, re-run 7V. (2) Multi-system issue: rollback (`git revert HEAD`), verify, investigate offline.
 
 ## Issues Found
 [Detailed list of any issues with severity and recommended action]
@@ -410,6 +423,22 @@ If a critical failure is found:
    - Re-run this smoke check against the corrected deployment
    - Document the root cause for future prevention
 
+## Failure Escalation Protocol
+
+| Failure Type | Action |
+|---|---|
+| Auth completely broken (login 500s) | Rollback deployment immediately. Document in rollback-log.md |
+| Core data query empty (DB inaccessible) | Check backend deployment status. Rollback if needed |
+| SSR hydration errors on landing page | Check Tailwind CSS purging. Hotfix if CSS issue, rollback if structural |
+| 3rd-party integration failure | Do NOT rollback. Escalate to operator to verify API keys and service status |
+
+**Agent Abort Procedure** (for Tier 1 failures — Auth broken, DB inaccessible, landing page non-functional):
+1. Stop all further verification checks.
+2. Do NOT attempt fixes — 7V is verification-only.
+3. Output partial report with gate decision FAIL.
+4. Recommend rollback or hotfix + re-deploy + re-run 7V.
+5. Do NOT proceed to Stage 7D.
+
 ## Test Account Cleanup
 
 **Production data hygiene**: Minimize test data in production. Use clearly identifiable names (e.g., `smoke-test-YYYY-MM-DD-xxxxx`). Clean up immediately after verification.
@@ -418,3 +447,12 @@ After verification completes:
 - Delete or deactivate any test accounts/organizations created during the smoke test
 - If the app uses soft delete, mark test entities with `deletedAt` immediately
 - If cleanup is not possible without admin access, document the test account details for manual cleanup
+- **Cleanup scope**: Only clean up accounts created DURING THIS 7V run. Pre-existing test accounts should be preserved unless explicitly requested.
+
+## Shutdown & Cleanup
+
+After verification completes (regardless of gate decision):
+1. **Close browser session**: Use `browser_close` to end the Playwright browser session cleanly.
+2. **Clean up test accounts**: Follow the Test Account Cleanup protocol above.
+3. **Save the report**: Verify `./plancasting/_audits/production-smoke/report.md` is saved.
+4. **Commit verification artifacts**: `git add plancasting/_audits/production-smoke/ screenshots/production/ && git commit -m 'test: Stage 7V production smoke verification'`.

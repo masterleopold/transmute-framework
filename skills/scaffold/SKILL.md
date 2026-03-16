@@ -13,7 +13,7 @@ version: 1.0.0
 
 Lead a multi-agent code generation project to produce a complete, development-ready project scaffolding from the existing PRD, with full traceability back to PRD specifications, BRD requirements, and the original Business Plan.
 
-Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/scaffold-detailed-guide.md` for the complete teammate instructions, code generation guidelines, and coordination protocol.
+Read the detailed guide at `${CLAUDE_SKILL_ROOT}/references/scaffold-detailed-guide.md` for the complete teammate instructions, code generation guidelines, rules-templates processing, and coordination protocol.
 
 ## Critical Framing: Full-Build Approach
 
@@ -29,8 +29,8 @@ Before proceeding, verify ALL of these conditions. Stop with a clear error messa
 4. Verify spec validation passed: check `plancasting/_audits/spec-validation/report.md` for PASS or CONDITIONAL PASS. If FAIL or missing: STOP — "Stage 3 requires spec validation. Run Stage 2B first."
 5. Verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return no matches.
 6. Validate credential tiers from `plancasting/tech-stack.md`:
-   - 🔴 Pipeline infrastructure credentials must be present
-   - 🟡 Product service credentials should be present (WARN if missing — can be added before Stage 5)
+   - Red tier pipeline infrastructure credentials (TRANSMUTER_ANTHROPIC_API_KEY, E2B_API_KEY, SANDBOX_AUTH_TOKEN) must be present
+   - Yellow tier product service credentials should be present (WARN if missing — can be added before Stage 5)
 
 ## Known Failure Patterns
 
@@ -78,7 +78,7 @@ Spawn all teammates simultaneously. Each has a distinct domain. See the detailed
 - Page components with data loading for every screen in PRD
 - Layouts, loading states, error boundaries, 404 states
 - Root layout with providers, metadata, font/theme config
-- Logo, favicon, and app icons from product logo in plancasting/tech-stack.md (generate favicon, apple-touch-icon, and OG image from logo if available)
+- Logo, favicon, and app icons from product logo in plancasting/tech-stack.md
 - Backend client provider component
 
 **Teammate 3: "ui-components"**
@@ -126,13 +126,36 @@ After all teammates complete:
 
 2. Finalize `plancasting/_scaffold-manifest.md` — the explicit handoff from Stage 3 to Stage 5. Map every component to its target page, every hook to its consuming components and backend functions.
 
-3. Generate `ARCHITECTURE.md` with system architecture diagram (mermaid), directory structure, data flow diagrams, cross-feature flows, auth flow, feature flag flow, and PRD-to-code traceability matrix.
+3. **Generate `ARCHITECTURE.md`** with system architecture diagram (mermaid), directory structure, data flow diagrams, cross-feature flows, auth flow, feature flag flow, and PRD-to-code traceability matrix.
 
-4. Update `CLAUDE.md` Part 2 ONLY — fill in placeholder sections with actual project details. NEVER modify Part 1.
+4. Update `CLAUDE.md` Part 2 ONLY — fill in placeholder sections with actual project details. NEVER modify Part 1. Replace ALL bracketed placeholders (`[PROJECT_NAME]`, `[e.g., ...]`, `[N]`) with actual values.
 
-5. Fix any inconsistencies found during review.
+5. **Generate `.claude/rules/` starter rules**:
+   - Create the `.claude/rules/` directory
+   - Read the rule templates from `./plancasting/transmute-framework/rules-templates/` (6 template files: `_backend-template.md`, `_frontend-template.md`, `_api-contracts-template.md`, `_auth-template.md`, `_testing-template.md`, `_data-model-template.md`)
+   - For each template, render into a real rule file by:
+     a. Replacing directory placeholders (`[BACKEND_DIR]`, `[FRONTEND_DIR]`, etc.) with actual project paths from `tech-stack.md`
+     b. Replacing tech-stack-specific placeholders (`[VALIDATOR_SYSTEM]`, `[ERROR_TYPE]`, `[AUTH_HELPER]`, etc.) with actual values derived from `tech-stack.md`
+     c. Adding correct `globs` frontmatter based on actual project paths
+     d. Setting `Source: Stage 3` and `Evidence: tech-stack.md` on each rule
+     e. Removing all `<!-- TODO: Stage 3 — ... -->` comments and template banners
+   - Write rendered files to `.claude/rules/backend.md`, `.claude/rules/frontend.md`, `.claude/rules/api-contracts.md`, `.claude/rules/auth.md`, `.claude/rules/testing.md`, `.claude/rules/data-model.md`
+   - Respect limits: max 15 rules per file, max 8 files total
 
-6. Output final summary: file counts, PRD coverage percentages (target: 100% for screens, APIs, data entities), cross-feature touchpoints, test file counts, feature flags, unresolved issues.
+6. **Create `plancasting/_rules-candidates.md`** with a header explaining the staging workflow, candidate format, and confidence criteria (per CLAUDE.md § 'Path-Scoped Rules'). Starts with zero candidates — Stages 5B and 6R will populate it.
+
+7. **Update the Path-Scoped Rules table** in CLAUDE.md Part 2 with actual rule files (paths, globs, rule counts).
+
+8. **Copy framework files into project**: Copy `execution-guide.md` and `feature_scenario_generation.md` from the Transmute Framework Template into `./plancasting/transmute-framework/` so they are available for later stages (6V, 7V) without depending on the template location.
+
+9. Fix any inconsistencies found during review.
+
+10. Output final summary: file counts, PRD coverage percentages (target: 100% for screens, APIs, data entities), cross-feature touchpoints, test file counts, feature flags, unresolved issues.
+
+11. **Gate Decision**:
+    - **PASS**: All required output files exist, PRD coverage ≥ 95%, CLAUDE.md Part 2 fully populated, `_progress.md` lists all features, `.claude/rules/` populated → proceed to Stage 4
+    - **CONDITIONAL PASS**: PRD coverage ≥ 80% with gaps documented, all critical P0 features scaffolded → proceed to Stage 4 with noted gaps
+    - **FAIL**: PRD coverage < 80%, required output files missing, or CLAUDE.md Part 2 not populated → re-run Stage 3
 
 ### Phase 5: Shutdown
 
@@ -173,6 +196,8 @@ Upon completion, the following artifacts must exist:
 | Progress tracker | `plancasting/_progress.md` | All features listed, all marked Not Started |
 | Architecture doc | `ARCHITECTURE.md` | System diagrams, directory structure, traceability |
 | CLAUDE.md (updated) | `CLAUDE.md` | Part 2 filled with project-specific config |
+| Rules (starter) | `.claude/rules/*.md` | 6 rule files rendered from templates |
+| Rules candidates | `plancasting/_rules-candidates.md` | Empty staging file for future rule candidates |
 | Backend schema + functions | `[backend-dir]/` | Complete schema, all domain function files |
 | Frontend pages | `[pages-dir]/` | All routes with layouts, loading, error states |
 | UI components | `src/components/` | All feature components, design system |
@@ -182,3 +207,4 @@ Upon completion, the following artifacts must exist:
 | CI/CD | `.github/workflows/` | ci.yml, deploy.yml, preview.yml |
 | Project config | Root | package.json, tsconfig, eslint, tailwind, etc. |
 | README | `README.md` | Setup, development, testing, deployment guide |
+| Framework files | `plancasting/transmute-framework/` | execution-guide.md, feature_scenario_generation.md |

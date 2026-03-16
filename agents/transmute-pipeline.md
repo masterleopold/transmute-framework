@@ -46,8 +46,9 @@ Business Plan → Tech Stack → BRD → PRD → Spec Validation → Scaffold �
 1. **State Management**: Read `plancasting/_progress.md` to determine current pipeline state. If it does not exist, start from Stage 0.
 2. **Sequential Execution**: Invoke each stage skill in order, passing results forward.
 3. **Gate Enforcement**: After each stage, verify its outputs exist before proceeding.
-4. **Parallel Stages**: Stages 6A, 6B, 6C can run in parallel (spawn 3 agents). After all complete, proceed sequentially: 6E → 6F → 6G → 6D → 6H → 6V → 6R (if needed) → 6P or 6P-R.
+4. **Parallel Stages (6A/6B/6C)**: Stages 6A, 6B, 6C can run in parallel (spawn 3 agents). **Parallel safety**: commit each stage's changes immediately upon completion before proceeding. Shared config files (e.g., `next.config.ts`, `middleware.ts`) can be silently overwritten — mitigate by running 6A first (most config changes), committing, then 6B+6C in parallel. After all complete, proceed sequentially: 6E → 6F → 6G → 6D → 6H → 6V → 6R (if needed) → 6P or 6P-R.
 5. **Recovery**: If a stage fails, log the failure in `plancasting/_progress.md` and stop. The user can fix the issue and run `/transmute:cast resume`.
+6. **Stages 8 + 9**: **NEVER concurrent** — both modify `package.json` and lock files. Run one, commit, then the other.
 
 ## Stage Execution Protocol
 
@@ -95,7 +96,20 @@ For each stage:
 ### 5B Gate
 - **PASS** (zero Category C issues) → proceed to Stage 6
 - **CONDITIONAL PASS** (1–3 Category C documented) → proceed to Stage 6
-- **FAIL** (4+ Category C) → set affected features to `🔄 Needs Re-implementation` in `plancasting/_progress.md`, re-run Stage 5, then re-run 5B
+- **FAIL-RETRY** (4–5 Category C, or <6 total unfixed) → set affected features to `🔄 Needs Re-implementation` in `plancasting/_progress.md`, re-run Stage 5, then re-run 5B
+- **FAIL-ESCALATE** (6+ Category C, OR 6+ total unfixed across all categories combined) → stop pipeline, escalate to operator for manual intervention
+- **Auto-escalation**: 3 consecutive FAIL-RETRY reports automatically escalate to FAIL-ESCALATE
+
+### 6V Gate (Dual System)
+
+6V uses a **dual gate**: percentage-based (≥90% / 80–90% / <80%) AND fixability-based categories (A = auto-fixable, B = code-fixable, C = human-judgment). The gate result is the **worse** of the two. Components with mixed categories are classified by most severe issue. Use `6V-` prefix in reports to distinguish from 5B categories.
+
+**Modes** (append when invoking 6V):
+- `MODE: full` — Comprehensive verification of all components, pages, API routes, and state management (default). Use for first verification or after major changes.
+- `MODE: critical` — Verification of P0/P1 features and critical user flows only. Use for time-constrained runs.
+- `MODE: diff` — Verification of only screens/components affected by recent changes since the last 6V run. Use for incremental re-verification.
+
+**Pre-6V Setup Check**: Before invoking 6V, verify that `./plancasting/transmute-framework/feature_scenario_generation.md` exists. If missing, stop and instruct the operator to copy it into place. The 6V and 7V prompts read this file internally.
 
 ### Post-6V Routing
 | 6V Result | Next Step |
@@ -108,6 +122,8 @@ For each stage:
 ### Post-6R
 - PASS/CONDITIONAL PASS → proceed to 6P or 6P-R
 - FAIL → resolve, re-run 6V → 6R
+- **Max 3 completed loops**: After 3 loops, persistent issues escalate to Category C. Operator may: (a) manually fix remaining issues, re-run 6V to confirm, then proceed to 6P or 6P-R, OR (b) document remaining issues as known limitations and proceed. Choose based on severity and available time.
+- **Rule extraction**: Successful Category A/B fixes are captured as verified fix patterns in `.claude/rules/` (highest confidence — battle-tested).
 
 ### 6P vs 6P-R Selection
 
@@ -136,9 +152,16 @@ If 6P-R Phase 2 is rejected by the user: revert the `redesign/frontend-elevation
 - 6P-R PASS/CONDITIONAL PASS → merge `redesign/frontend-elevation` to main, Stage 7 → 7V → 7D (re-run 7D to recapture screenshots)
 - 6P-R Phase 2 rejected → fall back to standard 6P
 
-### 7V Gate
+### 6P Categories
+6P uses **O/E/D** defect categories (distinct from 6V's A/B/C):
+- **O** (Objective defects) — measurable issues: broken layouts, contrast failures, missing states
+- **E** (Enhancements) — improvements within existing design system
+- **D** (Design elevation) — polish that elevates the overall design quality
+
+### 7V Gate (Binary)
 - PASS → proceed to 7D
 - FAIL → hotfix + re-deploy or rollback
+- **Flaky = FAIL** in production (informational-only in 6V). Production must be deterministically stable.
 
 ## Resume Protocol
 
@@ -156,10 +179,13 @@ Stage 0 is INTERACTIVE — it requires user input. When reaching Stage 0:
 
 ## Credential Gates
 
-Before proceeding past certain stages, verify credentials:
-- **Before Stage 3**: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local` must return no matches
-- **Before Stage 5**: Product service credentials must be real
-- **Before Stage 7**: Deployment credentials configured
+Before proceeding past certain stages, verify credentials: `grep -E 'YOUR_.*_HERE|TODO_.*|CHANGE_ME|PLACEHOLDER|^[A-Z_]+=\s*$' .env.local`
+
+**Credential tier color coding**:
+- 🔴 Obtain before Stage 3, deploy to backend after Stage 3: pipeline infrastructure (`TRANSMUTER_ANTHROPIC_API_KEY`, `E2B_API_KEY`, `SANDBOX_AUTH_TOKEN`)
+- 🟡 Before Stage 5 (preferably before Stage 3): product services (auth, payments, email, AI)
+- 🟠 Before Stage 7: deployment (hosting, domains, CDN)
+- 🔵 Before Stage 7D: documentation (Mintlify, optional)
 
 ## Progress File Format
 

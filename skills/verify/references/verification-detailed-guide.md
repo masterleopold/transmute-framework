@@ -46,12 +46,14 @@ Based on observed AI-assisted build outcomes, these are the most common runtime 
 4. **Redirect loops**: Protected page -> `/login` -> session check -> redirect back -- infinite loop
 5. **Button click does nothing**: Button renders and is clickable but `onClick` handler is broken
 6. **Sub-navigation tab 404s**: Tabbed layouts have links to sub-routes where the `page.tsx` was never created
-7. **Mobile-only navigation gaps**: Mobile nav contains different links than the desktop sidebar
+7. **Mobile-only navigation gaps**: Mobile bottom bar or hamburger menu contains different links than the desktop sidebar
 
 ### Integration Failures (~15% of issues)
 1. **Cross-feature navigation dead ends**: Feature A links to Feature B but uses wrong URL or passes wrong params
 2. **Dashboard aggregation showing zeros**: Dashboard widgets query data that hasn't been seeded or the query joins are broken
 3. **Form -> backend -> UI feedback gap**: Form submits successfully but the success toast or redirect doesn't fire
+
+**Screenshot baseline**: Establish a visual baseline by capturing screenshots of all Feature Scenario pages at the START of 6V. Store in `./screenshots/visual-verification/baseline/`. These enable regression comparison.
 
 ## Execution Modes
 
@@ -171,6 +173,41 @@ d. Compile Navigation Checklist with every unique href/route
 - Teammate 3: same user as Teammate 1 (read-only)
 - Teammate 4: elevated permissions test user (enterprise/admin tier)
 
+## Gate Decision (Dual System)
+
+The gate uses TWO systems -- the final gate is the WORSE of the two:
+
+**Percentage-based system**:
+- **PASS**: Zero critical failures, >90% acceptance criteria pass, all pages load
+- **CONDITIONAL PASS**: 1-3 high-severity issues, >80% criteria pass
+- **FAIL**: Any critical failure (page won't load, core flow broken, auth broken)
+
+**Fixability-based category system** (uses `6V-` prefix):
+- **6V-A** (auto-fixable): broken links, dead code, incorrect imports
+- **6V-B** (semi-auto): stub components, missing loading states
+- **6V-C** (human judgment): architectural issues, design decisions
+
+These categories classify *fixability*, not severity. A critical bug that's easy to fix is 6V-A; a minor issue requiring architectural change is 6V-C. Components with mixed categories are classified by most severe issue.
+
+**Dual-system decision matrix** -- use the WORSE of the two systems:
+
+| Percentage | Categories Present | Final Gate | Next Stage |
+|---|---|---|---|
+| PASS (>90%) | None (zero issues) | PASS | -> 6P/6P-R |
+| PASS (>90%) | A/B only | CONDITIONAL PASS | -> 6R -> 6P/6P-R |
+| PASS (>90%) | C only | PASS | -> 6P/6P-R (document C for human) |
+| PASS (>90%) | Mixed A/B + C | CONDITIONAL PASS | -> 6R -> 6P/6P-R (document remaining C) |
+| CONDITIONAL (80-90%) | A/B present | CONDITIONAL PASS | -> 6R -> 6P/6P-R |
+| CONDITIONAL (80-90%) | C only | CONDITIONAL PASS | -> 6P/6P-R (document C for human) |
+| FAIL (<80%) | Any | FAIL | Manual fix + re-run 6V |
+
+## Flaky Scenario Handling
+
+A flaky scenario fails inconsistently (fails once, passes on retest).
+- Retest a failing scenario once. If it passes on retest: mark as "FLAKY -- cause TBD" in the Issues table.
+- In 6V: flaky scenarios are informational (do not count toward gate failure).
+- In 7V (production): flaky scenarios count as FAIL -- production must be deterministic.
+
 ## Phase 4: Verification Report
 
 ### Report Template
@@ -254,18 +291,22 @@ d. Compile Navigation Checklist with every unique href/route
 - Screenshots: `./screenshots/automated/`, `./screenshots/criteria/`, `./screenshots/vision/`
 
 ## Gate Decision
-- **PASS**: Zero critical failures, >90% acceptance criteria pass, all pages load
-- **CONDITIONAL PASS**: 1-3 high-severity issues, >80% criteria pass
-- **FAIL**: Any critical failure (page won't load, core flow broken, auth broken)
+[Apply dual-system decision matrix -- use the WORSE of percentage and category systems]
 
 ## Failure Categorization (for 6R routing)
+
+**Category definitions** (for 6R routing):
+- **6V-A** (auto-fixable): broken links, dead code, incorrect imports -- 6R fixes automatically
+- **6V-B** (semi-auto): stub components, missing loading states -- 6R fixes with effort
+- **6V-C** (human judgment): architectural issues, design decisions -- 6R cannot fix
+
 | # | Ref | Issue | Category | Rationale |
 |---|-----|-------|----------|-----------|
-| 1 | SC-NNN | [description] | A (auto-fix) | [why auto-fixable] |
+| 1 | SC-NNN | [description] | 6V-A (auto-fix) | [why auto-fixable] |
 
-- Category A (auto-fixable): [n]
-- Category B (semi-auto): [n]
-- Category C (human judgment): [n]
+- Category 6V-A (auto-fixable): [n]
+- Category 6V-B (semi-auto): [n]
+- Category 6V-C (human judgment): [n]
 
 ## Next Steps
 - If PASS: skip 6R -> proceed to Stage 6P or 6P-R (Visual Polish or Redesign)

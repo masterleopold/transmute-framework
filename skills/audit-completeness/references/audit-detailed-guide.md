@@ -23,20 +23,31 @@ This reference contains the full automated stub scan scripts, teammate fix instr
 
 Replace ALL placeholder paths before running. Set variables based on `plancasting/tech-stack.md`:
 - `BACKEND_DIR` — e.g., `convex/`
+- `FRONTEND_DIR` — e.g., `src/`
 - `COMPONENTS_DIR` — e.g., `src/components/features/`
 - `PAGES_DIR` — e.g., `src/app/`
 - `HOOKS_DIR` — e.g., `src/hooks/`
+- `PAGE_FILE` — e.g., `page.tsx` (Next.js App Router), `+page.svelte` (SvelteKit), `route.tsx` (Remix)
 
 ### Guard: Verify Placeholders Were Replaced
 
 ```bash
+set -e
 BACKEND_DIR="[backend-dir]"
+FRONTEND_DIR="[frontend-dir]"
 COMPONENTS_DIR="[components-dir]"
 PAGES_DIR="[pages-dir]"
 HOOKS_DIR="[hooks-dir]"
-for placeholder in "$BACKEND_DIR" "$COMPONENTS_DIR" "$PAGES_DIR" "$HOOKS_DIR"; do
+PAGE_FILE="page.tsx"
+for placeholder in "$BACKEND_DIR" "$FRONTEND_DIR" "$COMPONENTS_DIR" "$PAGES_DIR" "$HOOKS_DIR"; do
   if echo "$placeholder" | grep -q '^\['; then
     echo "ERROR: $placeholder was not replaced. See Stack Adaptation section." && exit 1
+  fi
+done
+# Verify directories actually exist
+for dir in "$BACKEND_DIR" "$FRONTEND_DIR" "$COMPONENTS_DIR" "$PAGES_DIR" "$HOOKS_DIR"; do
+  if [ ! -d "$dir" ]; then
+    echo "WARNING: Directory $dir does not exist. Check your Stack Adaptation values."
   fi
 done
 ```
@@ -44,13 +55,13 @@ done
 ### 1. Text-Pattern Stub Detection
 
 ```bash
-grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" src/ "$BACKEND_DIR" --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" | grep -v 'placeholder="\|Placeholder='
+grep -rn "implementation pending\|pending feature build\|⚠️ STUB\|TODO \[Stage 5\]\|Coming soon\|Not yet implemented\|PLACEHOLDER" "$FRONTEND_DIR" "$BACKEND_DIR" --include="*.tsx" --include="*.ts" --include="*.jsx" --include="*.js" | grep -v 'placeholder="\|Placeholder='
 ```
 
 ### 2. Minimal Component Detection (< 20 lines)
 
 ```bash
-for file in $(find "$COMPONENTS_DIR" -name "*.tsx" -not -name "*.test.*" -not -name "index.ts"); do
+for file in $(find "$COMPONENTS_DIR" \( -name "*.tsx" -o -name "*.vue" -o -name "*.svelte" -o -name "*.jsx" \) -not -name "*.test.*" -not -name "index.ts"); do
   lines=$(wc -l < "$file")
   if [ "$lines" -lt 20 ]; then
     echo "THIN COMPONENT: $file ($lines lines)"
@@ -61,25 +72,27 @@ done
 ### 3. Orphan Component Detection
 
 ```bash
-for file in $(find "$COMPONENTS_DIR" -name "*.tsx" -not -name "*.test.*" -not -name "index.ts"); do
-  component_name=$(basename "$file" .tsx)
-  import_count=$(grep -rn "from.*${component_name}\|import.*${component_name}" src/ --include="*.tsx" --include="*.ts" -l | grep -v "$file" | grep -v ".test." | wc -l)
+for file in $(find "$COMPONENTS_DIR" \( -name "*.tsx" -o -name "*.vue" -o -name "*.svelte" -o -name "*.jsx" \) -not -name "*.test.*" -not -name "index.ts"); do
+  component_name=$(basename "$file" | sed 's/\.[^.]*$//')
+  import_count=$(grep -rn "from.*${component_name}\|import.*${component_name}" "$FRONTEND_DIR" --include="*.tsx" --include="*.ts" --include="*.vue" --include="*.svelte" --include="*.jsx" -l | grep -v "$file" | grep -v ".test." | wc -l)
   if [ "$import_count" -eq 0 ]; then
     echo "ORPHAN: $file (imported by 0 files)"
   fi
 done
 ```
 
+Note: This scan may produce false positives for components consumed through barrel re-exports (index.ts). Before marking as ORPHAN, verify it is not re-exported via an index.ts barrel file.
+
 ### 4. Dead onClick / href="#" Detection
 
 ```bash
-grep -rn 'href="#"\|onClick={() => {}}\|onClick={() => null)\|onSubmit={(e) => { e.preventDefault' src/ --include="*.tsx"
+grep -rn 'href="#"\|onClick={() => {}}\|onClick={() => null)\|onSubmit={(e) => { e.preventDefault' "$FRONTEND_DIR" --include="*.tsx"
 ```
 
 ### 5. Mock Data in Production Components
 
 ```bash
-grep -rn "mockData\|Mock.*=\|MOCK_\|sampleData\|dummyData\|fakeData" src/ --include="*.tsx" --include="*.ts" | grep -v "__tests__\|.test.\|.spec.\|stories\|seed"
+grep -rn "mockData\|Mock.*=\|MOCK_\|sampleData\|dummyData\|fakeData" "$FRONTEND_DIR" --include="*.tsx" --include="*.ts" | grep -v "__tests__\|.test.\|.spec.\|stories\|seed"
 ```
 
 ### 6. Unconnected Hooks
@@ -97,10 +110,10 @@ Requires manual inspection — flag files that use useQuery but don't check isLo
 ### 8. Empty or Near-Empty Page Files
 
 ```bash
-for file in $(find "$PAGES_DIR" -name "page.tsx"); do
+for file in $(find "$PAGES_DIR" -name "$PAGE_FILE"); do
   lines=$(wc -l < "$file")
-  if [ "$lines" -lt 15 ]; then
-    echo "THIN PAGE: $file ($lines lines)"
+  if [ "$lines" -lt 20 ]; then
+    echo "THIN PAGE (likely stub): $file ($lines lines — investigate: pages <20 lines with 3+ hook imports but empty renders are stubs)"
   fi
 done
 ```
@@ -108,9 +121,9 @@ done
 ### 9. Duplication Pattern: Bloated Pages with Zero Component Imports
 
 ```bash
-for file in $(find "$PAGES_DIR" -name "page.tsx"); do
-  hook_imports=$(grep -c "from.*@/hooks/" "$file" 2>/dev/null || echo 0)
-  component_imports=$(grep -c "from.*@/components/features/" "$file" 2>/dev/null || echo 0)
+for file in $(find "$PAGES_DIR" -name "$PAGE_FILE"); do
+  hook_imports=$(grep -c "from.*hooks/" "$file" 2>/dev/null || echo 0)
+  component_imports=$(grep -c "from.*$COMPONENTS_DIR" "$file" 2>/dev/null || echo 0)
   lines=$(wc -l < "$file")
   if [ "$hook_imports" -gt 2 ] && [ "$component_imports" -eq 0 ] && [ "$lines" -gt 50 ]; then
     echo "DUPLICATION SUSPECT: $file ($lines lines, $hook_imports hook imports, 0 component imports)"
@@ -123,11 +136,11 @@ done
 ```bash
 if [ -f "./plancasting/_scaffold-manifest.md" ]; then
   echo "--- Scaffold Manifest Cross-Reference ---"
-  grep "src/components/features/" ./plancasting/_scaffold-manifest.md | while read -r line; do
-    component_path=$(echo "$line" | grep -o "src/components/features/[^ |]*")
+  grep "$COMPONENTS_DIR" ./plancasting/_scaffold-manifest.md | while read -r line; do
+    component_path=$(echo "$line" | grep -o "$COMPONENTS_DIR[^ |]*")
     if [ -n "$component_path" ] && [ -f "$component_path" ]; then
       component_name=$(basename "$component_path" .tsx)
-      import_count=$(grep -rn "from.*${component_name}\|import.*${component_name}" src/ --include="*.tsx" --include="*.ts" -l | grep -v "$component_path" | grep -v ".test." | wc -l)
+      import_count=$(grep -rn "from.*${component_name}\|import.*${component_name}" "$FRONTEND_DIR" --include="*.tsx" --include="*.ts" -l | grep -v "$component_path" | grep -v ".test." | wc -l)
       if [ "$import_count" -eq 0 ]; then
         echo "MANIFEST ORPHAN: $component_path (listed in manifest but imported by 0 files)"
       fi
@@ -140,7 +153,7 @@ fi
 
 ## Issue Classification Rules
 
-### Category A — Quick Fix (< 30 lines per file)
+### Category A — Quick Fix (< 30 non-blank non-comment lines per file)
 - Stub text replacement (placeholder -> real content)
 - Missing onClick/onSubmit handlers (wire to existing hooks)
 - Missing loading/error/empty states (add using existing patterns)
@@ -149,7 +162,7 @@ fi
 - Dead href="#" links (replace with real routes)
 - Missing responsive classes
 
-### Category B — Medium Fix (30-100 lines per file)
+### Category B — Medium Fix (30-100 lines per file AND <150 lines total across all affected files)
 - Components needing real UI (replace scaffold body with functional component)
 - Hooks needing real data connections (replace useState mock with useQuery)
 - Forms needing real submission logic
@@ -158,16 +171,28 @@ fi
 - **Duplication fixes**: Page has inline UI + orphan component -> move inline code into component, refactor page to import
 - **Bloated page decomposition**: Page with 200+ lines -> extract into scaffold components
 
-### Category C — Large Gap (escalate for Stage 5 re-run if 4+ issues)
+### Category C — Large Gap (escalate; 1-3 = CONDITIONAL PASS, 4-5 = FAIL-RETRY, 6+ = FAIL-ESCALATE)
+
+This threshold is a HARD gate. Do NOT classify 4 Category C issues as CONDITIONAL PASS. If a 4th Category C issue is found mid-audit, the gate automatically becomes FAIL.
+
 Escalate if ANY of these are true:
 1. Requires creating entirely new hooks or backend functions that the scaffold should have created (check `plancasting/_scaffold-manifest.md` or `plancasting/_codegen-context.md` as source of truth)
 2. A single file needs more than 100 lines of net-new code
 3. Entire features where frontend is completely unbuilt (scaffold files exist but implementation entirely missing)
 4. Features where both backend AND frontend are stubs
+- Features requiring significant new component architecture
 - Mark in `plancasting/_progress.md` as Needs Re-implementation with detailed notes
 
+**Category C example**: `useUserProfile` hook is listed in `_codegen-context.md` but was never created. Creating it requires a new backend query, frontend hook, and 150+ lines of component code. This is NOT a stub fix — it's a missing feature requiring Stage 5 re-implementation.
+
 ### Multi-File Classification Rule
-Classify by the LARGEST single-file change. Example: component fix (50 lines) + new hook creation (150 lines) = Category C overall. Multiple independent issues in same feature are classified separately.
+Category A — all files need <30 lines each. Category B — largest file needs <100 lines AND total across all files <150 lines. Category C — largest file needs >=100 lines OR total >=150 lines across all affected files. If ambiguous, default to the higher category. Multiple independent issues in same feature classified separately.
+
+### Scope Boundaries — What 5B Does NOT Audit
+- Design quality (that's 6P/6P-R)
+- Security (6A)
+- Performance (6C)
+- 5B focuses strictly on implementation completeness
 
 ---
 
@@ -178,6 +203,8 @@ Classify by the LARGEST single-file change. Example: component fix (50 lines) + 
 Read CLAUDE.md first (especially Frontend Rules and Design & Visual Identity). Read `plancasting/tech-stack.md` for design direction and UI component library. Read the audit report at `./plancasting/_audits/implementation-completeness/report.md`.
 
 **MANDATE**: Replace every stub with a FUNCTIONAL implementation. You are NOT writing new features — the backend is already complete. You are connecting frontend components to the existing backend.
+
+**CRITICAL BOUNDARY**: If a component needs a backend function/hook that doesn't exist, DO NOT create it. Report it as a Category C issue to the lead. Missing backend functions indicate Stage 3 or Stage 5 incompleteness.
 
 ### Fix Patterns
 
@@ -191,7 +218,7 @@ Read CLAUDE.md first (especially Frontend Rules and Design & Visual Identity). R
 1. Find correct custom hook in `src/hooks/`
 2. Replace useState/mock with hook's return value
 3. Add loading/error state handling
-4. If hook doesn't exist, create following existing patterns
+4. If hook doesn't exist, check `_codegen-context.md` / `_scaffold-manifest.md`. If listed (should have been scaffolded), escalate as Category C. If not listed, create if <100 lines; otherwise escalate.
 
 **Dead Handlers (noop -> real)**:
 1. Find mutation/action in `src/hooks/` and backend dir
@@ -207,7 +234,7 @@ Read CLAUDE.md first (especially Frontend Rules and Design & Visual Identity). R
 
 **Orphan Components**:
 - SHOULD be rendered: find correct page and import it
-- Page already implements UI inline: DELETE the orphan
+- Page already implements UI inline: DELETE the orphan (verify no other files import it first)
 - Duplicates another: DELETE and update imports
 
 **Duplication Pattern (inline page UI + orphan component)**:
@@ -225,7 +252,7 @@ Read CLAUDE.md first (especially Frontend Rules and Design & Visual Identity). R
 4. Page imports and composes components, passing only needed props
 
 **Missing i18n Keys**:
-- Add to `src/messages/en.json` (and other locales). Follow existing convention.
+- Add to the project's i18n message file (check CLAUDE.md or tech-stack.md for path). Follow existing convention.
 
 ### Verification (Non-Negotiable)
 
@@ -298,13 +325,14 @@ Read CLAUDE.md (Commands and Testing). Start dev server before running E2E tests
 
 4. **Orphan component scan**: Report any remaining orphans.
 
-5. **Spot-check** ALL pages with Category B fixes + 5 random pages:
+5. **Spot-check** ALL pages with Category B fixes + additional random pages (coverage by feature count: <10 features = all pages; 10-30 = 50% every 2nd page alphabetically; >30 = 30% every 3rd page alphabetically, plus all Category B pages):
    a. Open page source
-   b. Verify component imports from `src/components/features/`
+   b. Verify component imports from `[components-dir]`
    c. Verify no raw `useState()` for server-derived data
    d. Verify page JSX renders imported components
    e. Verify sibling `loading.tsx` and `error.tsx` exist
    f. Run app, navigate, verify no blank screens or console errors
+   g. Verify responsive behavior at 3 breakpoints (375px, 768px, 1440px)
 
 Report in exact format:
 - TypeScript: pass/fail (error count)
@@ -320,8 +348,10 @@ Report in exact format:
 
 ## Phase 3: Coordination
 
+**Mandatory file conflict prevention**: Before spawning, assign mutually exclusive file sets to Teammates 1 and 2. If shared files exist, assign them to Teammate 1 exclusively. Teammate 2 MUST NOT modify frontend-owned files.
+
 1. Monitor for Category C escalations — document in `plancasting/_progress.md`
-2. If FAIL gate triggered (4+ Cat C): note systemic frontend failure in audit report, recommend FULL Stage 5 re-run rather than targeted fixes
+2. If FAIL-ESCALATE gate triggered (6+ Cat C, OR 6+ total unfixed, OR 3 consecutive FAIL-RETRY): note systemic frontend failure in audit report, recommend FULL Stage 5 re-run rather than targeted fixes
 3. Resolve conflicts between backend and frontend fixes. If both modify same file, lead reviews and merges.
 4. If teammate stuck on fix exceeding Category B scope (>100 lines), reclassify as Category C and move on.
 
@@ -336,6 +366,7 @@ Save to `./plancasting/_audits/implementation-completeness/report.md`:
 
 ## Summary
 - **Audit Date**: [date]
+- **Run Number**: [1 | 2 | 3 | 4+]
 - **Total Issues Found**: [N]
   - Category A (Quick Fix): [n] -> [n] fixed
   - Category B (Medium Fix): [n] -> [n] fixed
@@ -361,13 +392,14 @@ Save to `./plancasting/_audits/implementation-completeness/report.md`:
 
 ## Gate Decision
 - **PASS**: All A/B fixed, zero Cat C, all tests pass, zero stubs -> Stage 6
-- **CONDITIONAL PASS**: Zero A/B remaining, 1-3 Cat C documented -> Stage 6 with known gaps
-- **FAIL (re-run 5B)**: 1+ A/B unfixed OR test failures from 5B fixes
-- **FAIL (re-run Stage 5)**: 4+ Cat C OR systemic implementation failure
+- **CONDITIONAL PASS**: All A/B fixes attempted; 0-2 A/B remain unfixed, OR all A/B fixed AND 1-3 Cat C documented -> Stage 6 with known gaps
+- **FAIL-RETRY**: 3+ A/B unfixed, OR test failures from 5B fixes, OR 4-5 Cat C -> re-run 5B (max 3 runs; 3 consecutive FAIL-RETRY = auto-escalate)
+- **FAIL-ESCALATE**: 6+ Cat C, OR 6+ total unfixed, OR 3 consecutive FAIL-RETRY -> re-run Stage 5 for affected features
 - **FAIL recovery actions**:
-  - Unfixed A/B: Re-run 5B with targeted fixes
-  - 4+ Cat C: Re-run Stage 5 for affected features, then re-run 5B
-  - Test failures: Diagnose source — if 5B fixes caused it, fix tests; if pre-existing, escalate
+  - Unfixed A/B: Diagnose root cause, re-run 5B with targeted fixes
+  - 4-5 Cat C: Operator addresses or sets features to Needs Re-implementation, re-run 5B to re-scan
+  - 6+ Cat C: Set features to Needs Re-implementation, re-run Stage 5, then re-run 5B
+  - Test failures: Diagnose — if 5B fixes caused it, fix tests; if pre-existing, escalate
 
 ## Category C Escalations (if any)
 [List features needing Stage 5 re-run with specific gaps]
@@ -380,14 +412,45 @@ Save to `./plancasting/_audits/implementation-completeness/report.md`:
 
 ## Early Exit Decision Table
 
-| Cat A/B count | Cat C count | Action |
-|---|---|---|
-| 0 | 0 | Skip Phase 2-3 -> PASS |
-| 0 | 1-3 | Skip Phase 2-3, document Cat C -> CONDITIONAL PASS |
-| 0 | 4+ | Skip Phase 2-3, document Cat C -> FAIL (Stage 5 re-run) |
-| 1+ | any | Spawn teammates for A/B fixes, document Cat C |
+| Cat A/B count | Cat C count | Gate Decision | Lead Action |
+|---|---|---|---|
+| 0 | 0 | PASS | Skip Phase 2-3 -> generate report -> Stage 6 |
+| 0 | 1-3 | CONDITIONAL PASS | Skip Phase 2-3, document Cat C -> Stage 6 |
+| 0 | 4-5 | FAIL-RETRY | Skip Phase 2-3, document Cat C -> re-run 5B (max 3 runs) |
+| 0 | 6+ (or total unfixed >=6) | FAIL-ESCALATE | Skip Phase 2-3, document Cat C -> re-run Stage 5 |
+| 1+ | any | *(after fixes)* | Spawn teammates for A/B fixes, document Cat C |
+| any (Run 4+) | any | FAIL-ESCALATE | Skip Phase 2 auto-fixes, reclassify all remaining A/B as Cat C |
 
-When skipping Phase 2-3, the lead MUST still generate the audit report with gate decision and Category C details. Downstream stages check for this file's existence.
+When skipping Phase 2-3, the lead MUST still generate the audit report with gate decision and Category C details. Phase 4 (report) and Phase 5 (rule extraction) ALWAYS run regardless of early exit. Downstream stages check for this file's existence.
+
+---
+
+## Phase 5: Rule Extraction (Post-Gate)
+
+After gate decision, extract implementation lessons as path-scoped rules:
+
+1. **Scan audit findings for repeatable patterns**: Group by root cause (e.g., "missing soft-delete filter in 4 queries", "useState instead of useQuery in 3 components"). Only extract tech-stack-specific, generalizable patterns.
+
+2. **Generate rule candidates**:
+   ```markdown
+   ### [Pattern Title]
+   - **Source Stage**: 5B
+   - **Evidence**: [Category/finding IDs]
+   - **Trigger**: [File paths/patterns]
+   - **Rule Text**: [Concise directive — max 3 sentences]
+   - **Target File**: [.claude/rules/*.md]
+   - **Confidence**: HIGH / MEDIUM / LOW
+   - **Affected Features**: [FEAT-IDs]
+   ```
+
+3. **Route by confidence**:
+   - **HIGH** (2+ features with clear pattern): Append to `.claude/rules/*.md` with evidence comment
+   - **MEDIUM** (single feature but generalizable): Append to `plancasting/_rules-candidates.md`
+   - **LOW** (edge case): Append to `plancasting/_rules-candidates.md`
+
+4. Update CLAUDE.md Part 2 Path-Scoped Rules table if HIGH rules added. Do NOT modify Part 1.
+
+5. Stage updated `.claude/rules/` files and `plancasting/_rules-candidates.md` in the audit commit.
 
 ---
 
@@ -395,10 +458,11 @@ When skipping Phase 2-3, the lead MUST still generate the audit report with gate
 
 1. Check if `./plancasting/_audits/implementation-completeness/report.md` exists
 2. If report has Fix Summary + Verification Results: Phase 2+3 completed -> skip to Phase 4 for gate decision
-3. If report has Fix Summary but no Verification Results: check which teammates finished (Fix Summary shows counts > 0). Re-spawn incomplete teammates, then spawn Teammate 3.
-4. If no Fix Summary section: Phase 2 not started -> proceed to Phase 2
+3. If report has Fix Summary but no Verification Results: check which teammates finished. Re-spawn incomplete teammates, then spawn Teammate 3.
+4. If report has Issues Found but no Fix Summary: Phase 2 not started -> proceed to Phase 2
 5. If report does not exist: restart from Phase 1
 6. Check `plancasting/_progress.md` for features already marked as Needs Re-implementation
+7. Determine Run Number: If existing report has Run Number, increment by 1. If Run 4+ (third re-run), skip Phase 2 auto-fixes — escalate all remaining A/B to Category C.
 
 ---
 
@@ -414,3 +478,5 @@ When skipping Phase 2-3, the lead MUST still generate the audit report with gate
 8. If component fix requires non-existent backend changes, classify as Category C.
 9. Goal is completeness, not perfection. Every feature FUNCTIONAL. Polish happens in Stage 6.
 10. Fix, don't redesign. Maintain Stage 5's architectural decisions.
+
+**5B Quality Standard**: 5B fixes should bring components from 'scaffold' to 'working' — happy path complete, loading/error states present, no obvious bugs. This is NOT production polish (Stage 6P handles that). The bar is: 'does this work as described in the PRD?'

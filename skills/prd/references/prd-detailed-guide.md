@@ -4,6 +4,8 @@
 
 You are a senior product manager and technical product lead acting as the TEAM LEAD for a multi-agent PRD generation project. Generate a comprehensive, development-ready Product Requirement Document (PRD) from the existing BRD, with full traceability back to both the BRD and the original Business Plan.
 
+**Stage Sequence**: Business Plan → 0 (Tech Stack) → 1 (BRD) → **2 (this stage)** → 2B (Spec Validation) → 3+4 (Scaffold + CLAUDE.md) → 5 (Implementation) → 5B (Audit) → 6A/6B/6C (parallel) → 6E → 6F → 6G → 6D → 6H → 6V → 6R → 6P/6P-R → 7 (Deploy) → 7V → 7D → 8 (Feedback) / 9 (Maintenance)
+
 ## Critical Framing: Full-Build Approach
 
 This PRD defines the COMPLETE product to be built and launched as a single release. No MVP, no phased rollout, no feature deferral. The BRD already captures ALL requirements without phasing. This PRD translates ALL of those into development-ready specifications.
@@ -20,13 +22,13 @@ BRD defines WHAT the business needs. PRD defines WHAT the product must do and HO
 
 ## Known Failure Patterns
 
-1. **Tautological acceptance criteria**: Criteria must be independently testable with specific, observable outcomes.
-2. **Screen specs missing interaction behavior**: Every interactive element must have defined behavior for all input methods.
+1. **Tautological acceptance criteria**: Criteria must be independently testable with specific, observable outcomes. "When they create a project, then a project is created" is tautological — must include what "created" means (saved to database, visible in list, creator assigned as owner).
+2. **Screen specs missing interaction behavior**: Every interactive element must have defined behavior for all input methods (click, hover, keyboard, form submission).
 3. **API specs with no error responses**: Every endpoint must define error responses (400, 401, 403, 404, 409, 500) with response body shapes.
 4. **Data model missing query indexes**: Every query pattern must have a supporting index.
 5. **Happy-path-only user flows**: Every flow must include at least one error path.
 6. **Screen specs referencing wrong UI library**: ALWAYS check `plancasting/tech-stack.md` for the UI library and use actual component names.
-7. **Feature flags misused as phased rollout**: Feature flags are for operational kill switches only.
+7. **Feature flags misused as phased rollout**: Feature flags are for operational kill switches, A/B experiments, and permission gating only.
 
 ## Input
 
@@ -46,7 +48,29 @@ Adapt based on product type in `plancasting/tech-stack.md`:
 
 ## Output
 
-Generate PRD as markdown files under `./plancasting/prd/` directory.
+Generate PRD as markdown files under `./plancasting/prd/` directory:
+- `01-product-overview.md` — Product vision, personas, success metrics, KPIs/OKRs
+- `02-feature-map-and-prioritization.md` — Feature map with P0-P3, cross-feature interaction matrix
+- `03-release-plan.md` — Single-launch release plan, Gantt chart, feature flag registry
+- `04-epics-and-user-stories.md` — Epics with user stories (Given-When-Then AC, dependencies)
+- `05-job-stories.md` — JTBD stories with triggers, outcomes, emotional context
+- `06-user-flows.md` — Mermaid user flow diagrams (happy, alt, error paths)
+- `07-information-architecture.md` — IA, navigation structure, sitemap
+- `08-screen-specifications.md` — Per-screen component inventory, states, responsive, a11y
+- `09-interaction-patterns.md` — Design system interaction patterns, micro-interactions
+- `10-system-architecture.md` — Architecture diagrams, service boundaries
+- `11-data-model.md` — Complete ER diagram, entity definitions, indexes
+- `12-api-specifications.md` — Every endpoint with schemas, errors, auth, pagination
+- `13-technical-specifications.md` — Implementation details, cron jobs, background processing
+- `14-testing-strategy.md` — Test specifications and scenarios (not code)
+- `15-non-functional-specifications.md` — Performance, scalability, availability targets
+- `16-operational-readiness.md` — Deployment, monitoring, alerting, incident response
+- `17-dependencies-and-risks.md` — Dependencies, risks, mitigation for full-build approach
+- `18-glossary-and-cross-references.md` — Glossary, BRD traceability matrix, cross-feature matrix
+- `_context.md` — Feature Decomposition Map, ID registry, glossary, personas
+- `_brd-issues.md` — BRD quality issues (only if found)
+- `_review-log.md` — Quality review findings
+- `README.md` — Navigation guide with role-specific reading order
 
 ## Agent Team Architecture
 
@@ -67,8 +91,8 @@ Generate PRD as markdown files under `./plancasting/prd/` directory.
 Steps:
 1. Read and internalize all BRD, Business Plan, and tech-stack files.
 2. Create `./plancasting/prd/` directory.
-3. Verify full-scope coverage of BRD feature inventory.
-4. Build Feature Decomposition Map (feature ID → related BR/FR/NFR IDs).
+3. Verify full-scope coverage of BRD feature inventory — cross-check master feature inventory against all FR-xxx entries.
+4. Build **Feature Decomposition Map** (feature ID → related BR/FR/NFR IDs). This map is the authoritative mapping used by Stage 2B for P0 coverage calculations and by Stage 3 for scaffold organization.
 5. Create `./plancasting/prd/_context.md` with:
    - Feature Decomposition Map (COMPLETE)
    - Technology stack summary
@@ -95,13 +119,15 @@ Spawn 5 teammates with full context, Feature Decomposition Map, file assignments
 - Single launch release plan
 - Feature flags for ops/experiments/permissions — NOT phased rollout
 - Gantt chart showing parallel workstreams
+- Cross-feature interaction matrix in feature map
 
 #### Teammate 2: "user-stories"
 **Files**: 04-epics-and-user-stories.md, 05-job-stories.md, 06-user-flows.md
 - EVERY BRD FR must have at least one user story
-- Every US must include Dependencies field
+- Every US must include Dependencies field (comma-separated US-xxx IDs, or "None")
 - Cross-feature user flows critical for full-build approach
 - Minimum 3 Given-When-Then acceptance criteria per story
+- Story map visualization showing persona x journey stage x stories
 
 #### Teammate 3: "screen-specs"
 **Files**: 07-information-architecture.md, 08-screen-specifications.md, 09-interaction-patterns.md
@@ -126,7 +152,7 @@ Spawn 5 teammates with full context, Feature Decomposition Map, file assignments
 
 ### Token Budget Management
 
-Safe budget per agent: ~25K tokens.
+Safe budget per agent: output token limit minus 7K headroom (see tech-stack.md § Model Specifications).
 
 #### Estimation Heuristics
 - User story (3+ AC, dependencies): ~300-500 tokens
@@ -137,6 +163,12 @@ Safe budget per agent: ~25K tokens.
 - Technical spec: ~300-600 tokens
 - +30% overhead for tables, diagrams, cross-references
 
+#### Estimation Formula
+
+```
+Total ≈ (User Stories × 400) + (Screen Specs × 750) + (API Endpoints × 600) + (User Flows × 550) + (Diagrams × 300) + 3000 overhead
+```
+
 #### Known Heavy Files (likely need splitting)
 - `04-epics-and-user-stories.md` — SPLIT BY EPIC GROUP
 - `08-screen-specifications.md` — SPLIT BY FEATURE MODULE
@@ -146,6 +178,10 @@ Safe budget per agent: ~25K tokens.
 - Good: Group FRs sharing same screen, same user action trigger, AND same error/success states
 - Bad: Group FRs with different delivery channels, failure modes, or testing strategies
 - Never group FRs from different epics
+
+Story grouping examples:
+- **Good grouping**: "User can create, edit, and delete a task" — same entity, same screen, shared error/success states → group into one US with 3 acceptance criteria blocks
+- **Bad grouping**: "User can create a task AND receive email notification" — different systems, different failure modes → separate USs
 
 ### Phase 3: Coordination During Execution
 
@@ -159,13 +195,13 @@ Facilitate cross-team dependencies. When teammates finalize IDs, write to `_cont
    - Cross-feature integration audit
    - ID uniqueness, cross-references, terminology, assumptions, mermaid validation
    - Screen coverage (US → SC), API coverage (SC → API), Test coverage (flow → E2E)
-3. Cross-story dependency validation:
-   - Build directed dependency graph
-   - Verify acyclic (no circular dependencies)
+3. **Cross-story dependency validation**:
+   - Build directed dependency graph from US Dependencies fields
+   - **Verify acyclic** (no circular dependencies) — if cycles found, document the cycle and break by removing the weakest dependency link (the link whose removal causes the least disruption to the development order)
    - Verify no P0 depends on P1/P2/P3
    - Verify no story depends on lower-priority epic's story
-4. Generate `18-glossary-and-cross-references.md`
-5. Generate `README.md` with role-specific reading order
+4. Generate `18-glossary-and-cross-references.md` with BRD traceability matrix and cross-feature interaction matrix
+5. Generate `README.md` with role-specific reading order (PM, Designer, Engineer, QA)
 6. Fix structural inconsistencies
 
 ### Phase 5: Deep Quality Review
@@ -173,7 +209,7 @@ Facilitate cross-team dependencies. When teammates finalize IDs, write to `_cont
 Spawn 3 review agents:
 
 #### Review Agent 1: "completeness-reviewer"
-Focus: Coverage (≥95% target), acceptance criteria quality, all states documented, API completeness, user flow coverage, job stories, feature flags, onboarding flows.
+Focus: Coverage (≥95% target), acceptance criteria quality (measurable Given-When-Then with specific observable outcomes), all states documented, API completeness, user flow coverage, job stories, feature flags, onboarding flows.
 
 #### Review Agent 2: "consistency-reviewer"
 Focus: No contradictions, no duplicates, consistent terminology/priorities/complexity, screen-flow alignment, API-screen alignment, data model support, navigation accommodates all features, valid BRD traceability, test coverage.
@@ -204,21 +240,11 @@ Severity definitions:
 - **MEDIUM**: Quality issue that reduces clarity but doesn't block development.
 - **LOW**: Polish issue — formatting, terminology drift, optimization suggestion.
 
-#### Estimation Formula
-
-```
-Total ≈ (User Stories × 400) + (Screen Specs × 750) + (API Endpoints × 600) + (User Flows × 550) + (Diagrams × 300) + 3000 overhead
-```
-
-Story grouping examples:
-- **Good grouping**: "User can create, edit, and delete a task" — same entity, same screen, shared error/success states → group into one US with 3 acceptance criteria blocks
-- **Bad grouping**: "User can create a task AND receive email notification" — different systems, different failure modes → separate USs
-
 ### Phase 6: Remediation
 
 1. Consolidate, remove duplicates
 2. Quality Gate: CRITICAL/HIGH = mandatory
-3. Fix root causes; preserve BRD traceability
+3. Fix root causes; preserve BRD traceability; generate complete specs for coverage gaps, not stubs
 4. Second pass if >15 CRITICAL+HIGH fixes
 5. Document in `./plancasting/prd/_review-log.md`
 6. Final Summary: counts, BRD coverage, cross-feature interactions, assumptions, diagrams, quality metrics
@@ -234,13 +260,13 @@ Verify all files exist in `./plancasting/prd/`.
 3. **Development Readiness**: Engineer can implement without asking questions.
 4. **State Coverage**: default, loading, empty, populated, error, disabled, hover, active, focused, offline.
 5. **Edge Cases**: 0 items, 1 item, 10,000 items, concurrent edits.
-6. **Cross-Feature Interactions**: Explicitly document how features interact.
-7. **Completeness**: Generate assumptions for gaps.
+6. **Cross-Feature Interactions**: Explicitly document how features interact. Cross-feature interaction documentation is critical for the full-build approach — features that the Business Plan originally described as separate phases now interact from day one.
+7. **Completeness**: Generate assumptions for gaps. Mark with `> ⚠️ ASSUMPTION:` blockquotes.
 8. **Consistency**: Use `_context.md` terminology.
 9. **Mermaid Diagrams**: For all visual representations.
 10. **Cross-references**: Relative markdown links between PRD and back to BRD.
 11. **Professional Tone**: Clear, precise, session language.
 12. **ID Formats**: Follow `_context.md` ranges.
-13. **Given-When-Then**: All acceptance criteria strictly.
+13. **Given-When-Then**: All acceptance criteria strictly. Then clauses must be measurable with observable behavior or business metrics.
 14. **JSON Schemas**: All API bodies with types, constraints, examples.
-15. **Onboarding Consideration**: Progressive disclosure, guided tours for complete product.
+15. **Onboarding Consideration**: Progressive disclosure, guided tours for complete product. Users encounter the full product on day one — onboarding must manage cognitive load.

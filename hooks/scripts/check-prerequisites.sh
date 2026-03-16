@@ -103,6 +103,14 @@ case "$SKILL_NAME" in
       echo "BLOCK: Stage 6E (Refactor) requires the security audit. Run '/transmute:cast security' first."
       exit 1
     fi
+    if [[ ! -f "./plancasting/_audits/accessibility/report.md" ]]; then
+      echo "BLOCK: Stage 6E (Refactor) requires the accessibility audit. Run '/transmute:cast a11y' first."
+      exit 1
+    fi
+    if [[ ! -f "./plancasting/_audits/performance/report.md" ]]; then
+      echo "BLOCK: Stage 6E (Refactor) requires the performance audit. Run '/transmute:cast optimize' first."
+      exit 1
+    fi
     ;;
 
   seed-data|harden)
@@ -114,10 +122,14 @@ case "$SKILL_NAME" in
     ;;
 
   docs)
-    # Stage 6D: Requires 5B, optimally after 6G
+    # Stage 6D: Requires 5B, optimally after 6G (all code changes finalized)
     if [[ ! -f "./plancasting/_audits/implementation-completeness/report.md" ]]; then
       echo "BLOCK: Stage 6D (Documentation) requires the implementation completeness audit. Run '/transmute:cast audit' first."
       exit 1
+    fi
+    # Warn if running before 6G (code may still change)
+    if [[ ! -f "./plancasting/_audits/resilience/report.md" ]]; then
+      echo "INFO: Stage 6D is optimal after Stage 6G (resilience hardening). If code changes after 6D, re-run 6D to update docs."
     fi
     ;;
 
@@ -132,9 +144,13 @@ case "$SKILL_NAME" in
     ;;
 
   verify)
-    # Stage 6V: Requires 6H
+    # Stage 6V: Requires 6H + feature scenario generation template
     if [[ ! -f "./plancasting/_launch/readiness-report.md" ]]; then
       echo "BLOCK: Stage 6V (Verification) requires pre-launch report. Run '/transmute:cast prelaunch' first."
+      exit 1
+    fi
+    if [[ ! -f "./plancasting/transmute-framework/feature_scenario_generation.md" ]]; then
+      echo "BLOCK: Stage 6V (Verification) requires plancasting/transmute-framework/feature_scenario_generation.md. Copy it from the plugin's templates directory."
       exit 1
     fi
     ;;
@@ -164,7 +180,15 @@ case "$SKILL_NAME" in
     ;;
 
   smoke)
-    # Stage 7V: Requires deployment (Stage 7 — manual, no file check possible)
+    # Stage 7V: Requires 6V report + 6H readiness report + deployment
+    if [[ ! -f "./plancasting/_audits/visual-verification/report.md" ]]; then
+      echo "BLOCK: Stage 7V (Production Smoke) requires visual verification report (6V). Run '/transmute:cast verify' first."
+      exit 1
+    fi
+    if [[ ! -f "./plancasting/_launch/readiness-report.md" ]]; then
+      echo "BLOCK: Stage 7V (Production Smoke) requires pre-launch readiness report (6H). Run '/transmute:cast prelaunch' first."
+      exit 1
+    fi
     echo "INFO: Stage 7V (Production Smoke) — ensure the app is deployed before running."
     ;;
 
