@@ -1,10 +1,17 @@
 # Transmute Framework
 
-> **v3.0.0** — 22nd-pass audit sync: gate precision, cross-template consistency, Session Language propagation, safety hardening
+[![GitHub Release](https://img.shields.io/github/v/release/masterleopold/transmute-framework)](https://github.com/masterleopold/transmute-framework/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/masterleopold/transmute-framework)](https://github.com/masterleopold/transmute-framework/stargazers)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-blueviolet)](https://docs.anthropic.com/en/docs/claude-code)
+
+**Turn a business plan into a deployed product — autonomously.**
 
 A Claude Code plugin that transforms business plans into production-ready products through **Plan Casting** — a 25-stage automated pipeline where AI agent teams read your business plan, generate specifications, scaffold a project, implement every feature, audit and harden the codebase, deploy it, and produce documentation.
 
 You write the plan. Transmute casts it into reality.
+
+**Try it**: [transmuter.3mergen.com](https://transmuter.3mergen.com/)
 
 ## What is Plan Casting?
 
@@ -541,6 +548,10 @@ transmute-framework/
 ### v1.0.0
 
 - Initial release: 25-stage pipeline from business plan to production deployment
+
+## Built With Transmute
+
+> Have you built something with Transmute? [Open an issue](https://github.com/masterleopold/transmute-framework/issues/new?template=feature_request.md&title=%5BShowcase%5D+) to get featured!
 
 ## Contributing
 

@@ -2,6 +2,38 @@
 
 Thank you for your interest in contributing to Transmute. This guide covers how the plugin is structured and how to make changes.
 
+## Getting Started
+
+1. **Fork** the repository on GitHub
+2. **Clone** your fork locally:
+   ```bash
+   git clone https://github.com/<your-username>/transmute-framework.git
+   cd transmute-framework
+   ```
+3. **Create a branch** for your work:
+   ```bash
+   git checkout -b feat/my-change
+   ```
+4. **Make your changes** and test them
+5. **Commit** with a descriptive message:
+   ```bash
+   git commit -m "feat(stage-name): description of change"
+   ```
+6. **Push** and open a Pull Request against `main`
+
+### Commit Message Convention
+
+Use conventional commits: `type(scope): description`
+
+| Type | Use for |
+|------|---------|
+| `feat` | New features, new stages |
+| `fix` | Bug fixes, gate corrections |
+| `docs` | Documentation changes |
+| `refactor` | Code restructuring without behavior change |
+| `style` | Formatting, whitespace |
+| `chore` | Maintenance, tooling |
+
 ## Plugin Architecture
 
 ```
@@ -61,6 +93,18 @@ There is no automated test suite — the plugin is prompt engineering, not tradi
 1. Create a test project with a simple business plan in `plancasting/businessplan/`
 2. Run the modified stage: `/transmute:cast <stage-name>`
 3. Verify the output matches expectations
+
+## Areas Needing Help
+
+We welcome contributions in these areas:
+
+- **New stage ideas** — additional pipeline stages for specific workflows
+- **Documentation improvements** — clearer explanations, examples, tutorials
+- **Gate logic refinements** — edge case handling, better error messages
+- **Template improvements** — better starter rules, more robust CLAUDE.md template
+- **Bug reports** — especially for specific tech stack + business plan combinations
+
+Look for issues labeled [`good first issue`](https://github.com/masterleopold/transmute-framework/labels/good%20first%20issue) or [`help wanted`](https://github.com/masterleopold/transmute-framework/labels/help%20wanted) for entry points.
 
 ## Reporting Issues
 
