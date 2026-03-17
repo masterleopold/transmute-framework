@@ -27,7 +27,7 @@ Each candidate follows this structure:
 
 ```markdown
 ### [Descriptive Title]
-- **Source Stage**: 5B / 6R
+- **Source Stage**: 5B / 6R (valid values: `5B` or `6R` only — other stages generate rules directly to `.claude/rules/` at HIGH confidence)
 - **Date Added**: [YYYY-MM-DD — required for staleness policy's 60-day check]
 - **Evidence**: [issue ID, commit hash, or PRD ref]
 - **Trigger**: [what situation triggers this rule]
@@ -50,7 +50,9 @@ See also CLAUDE.md Part 1 § 'Path-Scoped Rules (`.claude/rules/`)' for the full
 
 <!-- Stages 5B and 6R append candidates below this line. HIGH confidence rules from Stages 5B and 6R go directly to `.claude/rules/` (bypassing this candidates file), while MEDIUM/LOW confidence rules are staged here for operator review. -->
 
-> **Example entry** (for reference only — delete this block when the first real candidate is added):
+<!-- EXAMPLE START — Stage 5B/6R: Delete everything between EXAMPLE START and EXAMPLE END markers before appending the first real candidate. -->
+
+> **Example entry** (for reference only):
 >
 > ### Convex Query Requires Index for Pagination
 > - **Source Stage**: 5B
@@ -61,3 +63,5 @@ See also CLAUDE.md Part 1 § 'Path-Scoped Rules (`.claude/rules/`)' for the full
 > - **Target File**: `.claude/rules/backend.md`
 > - **Confidence**: MEDIUM (single feature — generalizable pattern, but needs confirmation in a second feature to promote to HIGH)
 > - **Affected Features**: FEAT-002
+
+<!-- EXAMPLE END -->
