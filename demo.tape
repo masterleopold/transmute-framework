@@ -2,43 +2,23 @@
 # Usage: vhs demo.tape
 
 Output demo.gif
-Output demo.mp4
 
 Set FontSize 16
 Set Width 1200
 Set Height 600
 Set Theme "Catppuccin Mocha"
 Set Padding 20
-Set TypingSpeed 50ms
+Set TypingSpeed 40ms
 
-# Show the project setup
-Type "cd ~/my-saas-project"
-Enter
-Sleep 500ms
-
-Type "ls plancasting/businessplan/"
-Enter
-Sleep 800ms
-
-# Simulate file listing output
-Type "# business-plan.md  market-analysis.md  features.md"
+# Start directly with the command
+Type "/transmute:cast"
 Enter
 Sleep 1s
 
-# Launch Claude Code with plugin
-Type "claude --plugin-dir ~/transmute-framework"
-Enter
-Sleep 2s
-
-# Run the pipeline
-Type "/transmute:cast"
-Enter
-Sleep 1.5s
-
-# Simulate pipeline output
+# Pipeline output
 Type "# ⚡ Transmute Framework v3.0.0 — Plan Casting Pipeline"
 Enter
-Sleep 500ms
+Sleep 400ms
 Type "# "
 Enter
 Type "# ┌─────────────────────────────────────────────┐"
@@ -77,12 +57,12 @@ Type "# │  Stage 7D: User Guide             ✅ Done   │"
 Enter
 Type "# └─────────────────────────────────────────────┘"
 Enter
-Sleep 500ms
+Sleep 400ms
 Type "# "
 Enter
 Type "# 🎉 Plan Casting complete! Your product is live."
 Enter
-Sleep 500ms
+Sleep 400ms
 Type "# 📦 Deployed to: https://my-saas-project.vercel.app"
 Enter
-Sleep 3s
+Sleep 2.5s
