@@ -13,6 +13,8 @@ You write the plan. Transmute casts it into reality.
 
 **Try it**: [transmuter.3mergen.com](https://transmuter.3mergen.com/)
 
+![Transmute Framework Demo](demo.gif)
+
 ## What is Plan Casting?
 
 Plan Casting is the philosophy behind Transmute: **build everything in the business plan**. No MVP, no phased delivery, no feature cutting. Features are implemented in priority order (P0 → P3), but all are built. AI agent teams work autonomously through 25 stages — from tech stack selection to production deployment and user documentation.
