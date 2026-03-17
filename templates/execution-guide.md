@@ -1876,6 +1876,23 @@ The most common failure mode for Stage 6V. The stage cannot proceed without a ru
 - Check that the auth cookie/token is being set correctly (inspect browser storage)
 - If using session-based auth, verify the session endpoint returns a valid token
 
+#### Stage 5/6V: OAuth sign-in fails silently or redirects to error page
+
+**Symptoms**: User clicks "Continue with Google/GitHub", gets redirected to auth provider error page ("Something went wrong") or returns to callback page with "Authentication failed" error.
+
+**Diagnostic steps** (in order):
+1. Check the full error URL in the browser — auth providers encode `error` and `error_description` in query parameters
+2. Check backend/serverless function logs for the actual HTTP status code and error body from the auth provider's token exchange endpoint
+3. Verify credentials match: compare `client_id` and API key in your environment against the auth provider dashboard (character-by-character — `Q` vs `0`, `l` vs `1` are common typos)
+4. Verify the authorize URL includes ALL required parameters — `response_type=code` is commonly omitted
+5. Verify the token exchange uses the correct authentication method (body vs header) per the provider's API docs
+6. Check for intermediate auth states (email verification, MFA) that require user interaction before the token is issued
+
+**Solutions**:
+- Use the auth provider's API reference documentation (not cached knowledge) to verify the exact parameter format for authorize and token exchange endpoints
+- Add error response logging to the token exchange code — never throw generic "auth failed" without logging the provider's actual error body
+- Test the authorize URL with `curl -D - -o /dev/null "<authorize_url>"` — a 302 to the identity provider means success; a 302 to an error page means the request is malformed
+
 #### Stage 7V: Pages load blank in production but work in dev
 
 **Symptoms**: All pages return HTTP 200 but render blank white screen. Dev server works fine.

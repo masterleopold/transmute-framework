@@ -44,6 +44,17 @@ globs: ["[AUTH_DIR]/**", "[MIDDLEWARE_PATH]"]
 - Session tokens must be stored in `[TOKEN_STORAGE]` (e.g., httpOnly cookies, not localStorage).
 - Handle token expiration gracefully — redirect to sign-in with a return URL; never expose session tokens in URLs, logs, or error messages.
 
+## OAuth / External Auth Provider Integration
+
+<!-- Conditional: Include this section ONLY if the auth provider (per tech-stack.md) uses OAuth/OIDC flows (e.g., WorkOS, Auth0, Clerk with OAuth, Supabase Auth with third-party providers). Omit for password-only or magic-link-only auth. -->
+<!-- TODO: Stage 3 — replace with actual OAuth configuration for your auth provider. Source: tech-stack.md, auth provider documentation | Confidence: HIGH -->
+
+- **Authorize URL completeness**: When constructing OAuth authorize URLs, always include ALL required OAuth2 parameters: `response_type=code`, `client_id`, `redirect_uri`, `state` (CSRF), and any provider-specific parameters. Consult your auth provider's API reference — do NOT rely on memory or assumed defaults.
+- **Token exchange method**: Read the auth provider's token exchange documentation to determine the correct authentication method. Common patterns: `client_secret` in the JSON request body (most User Management APIs), `Authorization: Basic` header (standard OAuth2), or `Authorization: Bearer` header (admin APIs only). Using the wrong method causes "Invalid client secret" errors.
+- **Callback session establishment**: The OAuth callback page MUST store the session in ALL required locations before navigating away. Typical locations: `[TOKEN_STORAGE]` (e.g., localStorage, httpOnly cookie), auth state event dispatch, and cookie-setting endpoint. If ANY storage step is skipped, the user will be redirected back to login immediately after sign-in.
+- **Intermediate auth states**: OAuth token exchange may return intermediate states instead of a token — e.g., `email_verification_required`, `mfa_challenge_required`, `organization_selection_required`. The callback page MUST handle these states with appropriate UI (verification code input, MFA prompt, org selector) rather than treating them as errors. Consult the auth provider's "authentication errors" documentation for the full list of intermediate states.
+- **Redirect URI consistency**: The redirect URI sent in the authorize request, registered in the auth provider dashboard, and used in the callback page MUST be identical (scheme, host, port, path). Mismatches cause silent failures. Verify by comparing: code → dashboard → callback.
+
 ## Role Checks
 
 <!-- TODO: Stage 3 — replace with actual role/permission model. Source: tech-stack.md, BRD security requirements | Confidence: HIGH -->

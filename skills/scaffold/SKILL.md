@@ -41,6 +41,7 @@ Avoid these common scaffolding failures:
 3. **Dependency version conflicts**: ALWAYS verify compatibility before adding dependencies.
 4. **Wrong directory structure**: Creating `pages/` router when `plancasting/tech-stack.md` specifies App Router, or vice versa.
 5. **Missing cross-feature references**: Hooks or functions that reference data from multiple features must be wired correctly from the start.
+6. **OAuth callback missing session persistence**: Callback page completes token exchange but never stores the session client-side — user bounces back to login. The callback MUST: (a) exchange code, (b) handle intermediate auth states, (c) persist session in ALL storage locations, (d) THEN navigate away.
 
 ## Execution Phases
 
