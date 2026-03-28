@@ -21,12 +21,49 @@ Plan Casting is the philosophy behind Transmute: **build everything in the busin
 
 ## Installation
 
+### Install from GitHub (recommended)
+
+In Claude Code, run:
+
+```
+/plugin
+```
+
+1. Navigate to the **Marketplaces** tab
+2. Select **Add marketplace** and enter: `masterleopold/transmute-framework`
+3. Navigate to the **Discover** tab
+4. Find **transmute** and install it
+
+After this, just run `claude` — Transmute loads automatically in every session. No extra flags needed.
+
+You can choose a scope during installation:
+
+| Scope | Effect |
+|---|---|
+| **user** (default) | Available in all your projects |
+| **project** | Shared with your team via `.claude/settings.json` |
+| **local** | Only you, only this repository |
+
+### Try It (one-time)
+
 ```bash
 git clone https://github.com/masterleopold/transmute-framework.git
 claude --plugin-dir ./transmute-framework
 ```
 
-Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed and authenticated.
+This loads the plugin for the current session only. You'll need to pass `--plugin-dir` each time.
+
+### Updating
+
+```
+/plugin
+```
+
+Navigate to the **Installed** tab and select **Update** next to transmute, or run `/reload-plugins` to refresh all plugins.
+
+### Requirements
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed and authenticated
 
 ## Quick Start
 
